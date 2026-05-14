@@ -13,7 +13,8 @@ return static function (App $app): void {
     $container = $app->getContainer();
     $jwtMw     = $container?->get(JwtAuthMiddleware::class);
 
-    $app->group('/api', static function ($g) use ($jwtMw) {
+    // Group callback cannot be static — Slim rebinds $this to the container
+    $app->group('/api', function ($g) use ($jwtMw) {
         $g->get ('/health', [HealthController::class, 'check']);
 
         // Auth
