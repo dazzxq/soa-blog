@@ -89,11 +89,13 @@ final class UserController
             throw new DomainError(400, 'VALIDATION_FAILED', 'login và password là bắt buộc.');
         }
 
+        // Native prepared statements (ATTR_EMULATE_PREPARES=false) don't
+        // allow reusing a named placeholder, so bind login twice.
         $stmt = Db::pdo()->prepare(
             'SELECT id, username, email, password_hash, display_name, avatar_url, created_at
-             FROM users WHERE username = :l OR email = :l LIMIT 1'
+             FROM users WHERE username = :uname OR email = :email LIMIT 1'
         );
-        $stmt->execute([':l' => $login]);
+        $stmt->execute([':uname' => $login, ':email' => $login]);
         $row = $stmt->fetch();
 
         if (!$row || !password_verify($password, $row['password_hash'])) {
