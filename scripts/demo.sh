@@ -41,13 +41,17 @@ curl -s "$BASE/api/posts/$POST_ID/full" | jq '.data | {id, title, author: .autho
 
 echo
 echo "==[7] Orphan-prevention: comment for a non-existent post → expect 404 POST_NOT_FOUND"
-curl -s -w "\n  HTTP %{http_code}\n" -X POST "$BASE/api/posts/9999999/comments" \
-  -H "$JSON" -H "Authorization: Bearer $TOKEN_BOB" -d '{"body":"orphan attempt"}' | jq '.error // .'
+HTTP=$(curl -s -o /tmp/demo-r7.json -w "%{http_code}" -X POST "$BASE/api/posts/9999999/comments" \
+  -H "$JSON" -H "Authorization: Bearer $TOKEN_BOB" -d '{"body":"orphan attempt"}')
+echo "  HTTP $HTTP"
+jq '.error // .' /tmp/demo-r7.json
 
 echo
 echo "==[8] Data-integrity: Alice tries to delete her post (has comments) → expect 409 POST_HAS_COMMENTS"
-curl -s -w "\n  HTTP %{http_code}\n" -X DELETE "$BASE/api/posts/$POST_ID" \
-  -H "Authorization: Bearer $TOKEN_ALICE" | jq '.error // .'
+HTTP=$(curl -s -o /tmp/demo-r8.json -w "%{http_code}" -X DELETE "$BASE/api/posts/$POST_ID" \
+  -H "Authorization: Bearer $TOKEN_ALICE")
+echo "  HTTP $HTTP"
+jq '.error // .' /tmp/demo-r8.json
 
 echo
 echo "==[9] Direct backend access is blocked (services don't bind to host)"
