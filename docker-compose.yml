@@ -1,0 +1,113 @@
+x-svc-healthcheck: &svc-healthcheck
+  test: ["CMD", "wget", "-q", "-O-", "http://localhost:80/health"]
+  interval: 10s
+  timeout: 3s
+  retries: 6
+  start_period: 20s
+
+services:
+  mariadb:
+    image: mariadb:10.11
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      USER_SVC_DB_PASS: ${USER_SVC_DB_PASS}
+      POST_SVC_DB_PASS: ${POST_SVC_DB_PASS}
+      COMMENT_SVC_DB_PASS: ${COMMENT_SVC_DB_PASS}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./db:/docker-entrypoint-initdb.d:ro
+    networks: [blog-net]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  user-service:
+    build: ./services/user-service
+    environment:
+      DB_HOST: mariadb
+      DB_NAME: blog_users
+      DB_USER: user_svc
+      DB_PASS: ${USER_SVC_DB_PASS}
+    networks: [blog-net]
+    depends_on:
+      mariadb: { condition: service_healthy }
+    healthcheck: *svc-healthcheck
+    restart: unless-stopped
+
+  post-service:
+    build: ./services/post-service
+    environment:
+      DB_HOST: mariadb
+      DB_NAME: blog_posts
+      DB_USER: post_svc
+      DB_PASS: ${POST_SVC_DB_PASS}
+    networks: [blog-net]
+    depends_on:
+      mariadb: { condition: service_healthy }
+    healthcheck: *svc-healthcheck
+    restart: unless-stopped
+
+  comment-service:
+    build: ./services/comment-service
+    environment:
+      DB_HOST: mariadb
+      DB_NAME: blog_comments
+      DB_USER: comment_svc
+      DB_PASS: ${COMMENT_SVC_DB_PASS}
+    networks: [blog-net]
+    depends_on:
+      mariadb: { condition: service_healthy }
+    healthcheck: *svc-healthcheck
+    restart: unless-stopped
+
+  gateway:
+    build: ./gateway
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      USER_SERVICE_URL: http://user-service:80
+      POST_SERVICE_URL: http://post-service:80
+      COMMENT_SERVICE_URL: http://comment-service:80
+      RATE_LIMIT_PER_MIN: ${RATE_LIMIT_PER_MIN:-120}
+    ports:
+      - "127.0.0.1:8000:80"
+    networks: [blog-net]
+    depends_on:
+      user-service:    { condition: service_healthy }
+      post-service:    { condition: service_healthy }
+      comment-service: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:80/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    restart: unless-stopped
+
+  web:
+    image: nginx:alpine
+    volumes:
+      - ./web:/usr/share/nginx/html:ro
+      - ./web/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "127.0.0.1:8080:80"
+    networks: [blog-net]
+    depends_on:
+      gateway: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:80/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+volumes:
+  mariadb_data:
+
+networks:
+  blog-net:
+    driver: bridge

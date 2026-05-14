@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SOA Blog — Trang chủ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script type="module" src="/assets/app.js"></script>
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+<nav x-data="navbar()" class="bg-white border-b">
+  <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+    <a href="/" class="font-bold text-lg">📝 SOA Blog</a>
+    <div class="flex items-center gap-3 text-sm">
+      <template x-if="isLoggedIn">
+        <span class="flex items-center gap-3">
+          <a href="/compose.html" class="bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-700">Viết bài</a>
+          <span class="subtle">Xin chào, <b x-text="user?.display_name || user?.username"></b></span>
+          <button @click="logout" class="text-red-600 hover:underline">Đăng xuất</button>
+        </span>
+      </template>
+      <template x-if="!isLoggedIn">
+        <span class="flex items-center gap-3">
+          <a href="/login.html" class="hover:underline">Đăng nhập</a>
+          <a href="/register.html" class="bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-700">Đăng ký</a>
+        </span>
+      </template>
+    </div>
+  </div>
+</nav>
+
+<main x-data="indexPage()" x-init="load" class="max-w-3xl mx-auto px-4 py-6">
+  <h1 class="text-2xl font-bold mb-4">Bài viết mới nhất</h1>
+
+  <template x-if="loading">
+    <p class="subtle">Đang tải…</p>
+  </template>
+
+  <template x-if="!loading && error">
+    <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded" x-text="error"></div>
+  </template>
+
+  <template x-if="!loading && !error && posts.length === 0">
+    <p class="subtle">Chưa có bài viết nào. Hãy là người đầu tiên!</p>
+  </template>
+
+  <ul class="space-y-4">
+    <template x-for="p in posts" :key="p.id">
+      <li class="bg-white border rounded-lg p-4 hover:shadow transition fade-in">
+        <a :href="`/post.html?id=${p.id}`" class="block">
+          <h2 class="text-lg font-semibold" x-text="p.title"></h2>
+          <p class="subtle text-sm mt-1">
+            Bởi <b x-text="p.author?.display_name || p.author?.username || 'Ẩn danh'"></b>
+            · <span x-text="formatDate(p.created_at)"></span>
+          </p>
+          <p class="mt-2 line-clamp-2 text-slate-700" x-text="(p.content || '').slice(0, 200) + ((p.content || '').length > 200 ? '…' : '')"></p>
+        </a>
+      </li>
+    </template>
+  </ul>
+</main>
+
+<script>
+function indexPage() {
+  return {
+    loading: true,
+    error: '',
+    posts: [],
+    async load() {
+      try {
+        const r = await api.get('/posts?per_page=20');
+        this.posts = r.data || [];
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+  };
+}
+</script>
+</body>
+</html>

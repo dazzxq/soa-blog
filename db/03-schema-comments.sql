@@ -1,0 +1,10 @@
+USE blog_comments;
+
+CREATE TABLE IF NOT EXISTS comments (
+  id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  post_id BIGINT UNSIGNED NOT NULL,
+  author_id BIGINT UNSIGNED NOT NULL,
+  body TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_post_created (post_id, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

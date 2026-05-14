@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Viết bài mới — SOA Blog</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script type="module" src="/assets/app.js"></script>
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+<nav x-data="navbar()" class="bg-white border-b">
+  <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+    <a href="/" class="font-bold text-lg">📝 SOA Blog</a>
+    <div class="flex items-center gap-3 text-sm">
+      <template x-if="isLoggedIn">
+        <span class="flex items-center gap-3">
+          <span class="subtle">Xin chào, <b x-text="user?.display_name || user?.username"></b></span>
+          <button @click="logout" class="text-red-600 hover:underline">Đăng xuất</button>
+        </span>
+      </template>
+    </div>
+  </div>
+</nav>
+
+<main x-data="composePage()" x-init="guard" class="max-w-3xl mx-auto px-4 py-6">
+  <h1 class="text-2xl font-bold mb-4">Viết bài mới</h1>
+
+  <form @submit.prevent="submit" class="bg-white border rounded-lg p-5 space-y-4">
+    <label class="block">
+      <span class="text-sm font-medium">Tiêu đề</span>
+      <input x-model="title" required maxlength="255" class="mt-1 w-full border rounded px-3 py-2" />
+    </label>
+    <label class="block">
+      <span class="text-sm font-medium">Nội dung</span>
+      <textarea x-model="content" required rows="10" class="mt-1 w-full border rounded px-3 py-2 font-mono text-sm"></textarea>
+    </label>
+
+    <template x-if="error">
+      <div class="bg-red-50 border border-red-200 text-red-700 p-2 rounded text-sm" x-text="error"></div>
+    </template>
+
+    <button type="submit" :disabled="submitting"
+            class="bg-slate-900 text-white px-4 py-2 rounded hover:bg-slate-700 disabled:opacity-50">
+      <span x-show="!submitting">Đăng bài</span>
+      <span x-show="submitting">Đang đăng…</span>
+    </button>
+  </form>
+</main>
+
+<script>
+function composePage() {
+  return {
+    title: '', content: '', error: '', submitting: false,
+    guard() {
+      if (!auth.isLoggedIn()) window.location.href = '/login.html';
+    },
+    async submit() {
+      this.error = ''; this.submitting = true;
+      try {
+        const r = await api.post('/posts', { title: this.title, content: this.content });
+        window.location.href = `/post.html?id=${r.data.id}`;
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.submitting = false;
+      }
+    },
+  };
+}
+</script>
+</body>
+</html>

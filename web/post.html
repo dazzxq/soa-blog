@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bài viết — SOA Blog</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script type="module" src="/assets/app.js"></script>
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+<nav x-data="navbar()" class="bg-white border-b">
+  <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+    <a href="/" class="font-bold text-lg">📝 SOA Blog</a>
+    <div class="flex items-center gap-3 text-sm">
+      <template x-if="isLoggedIn">
+        <span class="flex items-center gap-3">
+          <a href="/compose.html" class="bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-700">Viết bài</a>
+          <span class="subtle">Xin chào, <b x-text="user?.display_name || user?.username"></b></span>
+          <button @click="logout" class="text-red-600 hover:underline">Đăng xuất</button>
+        </span>
+      </template>
+      <template x-if="!isLoggedIn">
+        <span class="flex items-center gap-3">
+          <a href="/login.html" class="hover:underline">Đăng nhập</a>
+          <a href="/register.html" class="bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-700">Đăng ký</a>
+        </span>
+      </template>
+    </div>
+  </div>
+</nav>
+
+<main x-data="postPage()" x-init="load" class="max-w-3xl mx-auto px-4 py-6">
+  <template x-if="loading">
+    <p class="subtle">Đang tải…</p>
+  </template>
+
+  <template x-if="!loading && error">
+    <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded" x-text="error"></div>
+  </template>
+
+  <template x-if="!loading && post">
+    <article class="bg-white border rounded-lg p-6 fade-in">
+      <h1 class="text-2xl font-bold" x-text="post.title"></h1>
+      <p class="subtle text-sm mt-1">
+        Bởi <b x-text="post.author?.display_name || 'Ẩn danh'"></b>
+        · <span x-text="formatDate(post.created_at)"></span>
+      </p>
+
+      <template x-if="degraded">
+        <p class="mt-3 text-amber-700 bg-amber-50 border border-amber-200 p-2 rounded text-sm">
+          Một số dữ liệu phụ trợ không tải được. Bài viết vẫn hiển thị đầy đủ.
+        </p>
+      </template>
+
+      <div class="prose-vn mt-4">
+        <p x-text="post.content"></p>
+      </div>
+
+      <section class="mt-8 pt-6 border-t">
+        <h2 class="text-lg font-semibold mb-3">
+          Bình luận (<span x-text="post.comments?.length || 0"></span>)
+        </h2>
+
+        <template x-if="auth.isLoggedIn()">
+          <form @submit.prevent="submitComment" class="mb-5 flex gap-2">
+            <input x-model="newComment" type="text" required maxlength="5000"
+                   class="flex-1 border rounded px-3 py-2"
+                   placeholder="Viết bình luận của bạn…" />
+            <button type="submit"
+                    :disabled="submitting"
+                    class="bg-slate-900 text-white px-4 py-2 rounded hover:bg-slate-700 disabled:opacity-50">
+              Gửi
+            </button>
+          </form>
+        </template>
+        <template x-if="!auth.isLoggedIn()">
+          <p class="subtle text-sm mb-5">
+            <a href="/login.html" class="underline">Đăng nhập</a> để bình luận.
+          </p>
+        </template>
+
+        <template x-if="commentError">
+          <div class="bg-red-50 border border-red-200 text-red-700 p-2 rounded mb-3 text-sm" x-text="commentError"></div>
+        </template>
+
+        <ul class="space-y-3">
+          <template x-for="c in (post.comments || [])" :key="c.id">
+            <li class="bg-slate-50 border rounded p-3">
+              <p class="subtle text-xs">
+                <b x-text="c.author?.display_name || 'Ẩn danh'"></b>
+                · <span x-text="formatDate(c.created_at)"></span>
+              </p>
+              <p class="mt-1" x-text="c.body"></p>
+            </li>
+          </template>
+        </ul>
+      </section>
+    </article>
+  </template>
+</main>
+
+<script>
+function postPage() {
+  return {
+    loading: true,
+    error: '',
+    post: null,
+    degraded: false,
+    newComment: '',
+    submitting: false,
+    commentError: '',
+    auth: window.auth,
+
+    postId() {
+      const p = new URLSearchParams(location.search);
+      return parseInt(p.get('id') || '0', 10);
+    },
+
+    async load() {
+      const id = this.postId();
+      if (!id) { this.error = 'ID bài viết không hợp lệ.'; this.loading = false; return; }
+      try {
+        const r = await api.get(`/posts/${id}/full`);
+        this.post     = r.data;
+        this.degraded = !!(r.meta && r.meta.degraded);
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async submitComment() {
+      this.commentError = '';
+      this.submitting   = true;
+      try {
+        const r = await api.post(`/posts/${this.post.id}/comments`, { body: this.newComment });
+        // Optimistic: append using cached user (the API doesn't return author embedded)
+        const me = auth.user();
+        this.post.comments = [
+          ...(this.post.comments || []),
+          { ...r.data, author: me },
+        ];
+        this.newComment = '';
+      } catch (e) {
+        this.commentError = e.message;
+      } finally {
+        this.submitting = false;
+      }
+    },
+  };
+}
+</script>
+</body>
+</html>

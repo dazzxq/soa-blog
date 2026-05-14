@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Đăng nhập — SOA Blog</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script type="module" src="/assets/app.js"></script>
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+<nav class="bg-white border-b">
+  <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+    <a href="/" class="font-bold text-lg">📝 SOA Blog</a>
+    <a href="/register.html" class="text-sm hover:underline">Tạo tài khoản mới</a>
+  </div>
+</nav>
+
+<main x-data="loginPage()" class="max-w-md mx-auto px-4 py-10">
+  <h1 class="text-2xl font-bold mb-4">Đăng nhập</h1>
+
+  <form @submit.prevent="submit" class="bg-white border rounded-lg p-5 space-y-4">
+    <label class="block">
+      <span class="text-sm font-medium">Username hoặc email</span>
+      <input x-model="login" required class="mt-1 w-full border rounded px-3 py-2" />
+    </label>
+    <label class="block">
+      <span class="text-sm font-medium">Mật khẩu</span>
+      <input x-model="password" type="password" required class="mt-1 w-full border rounded px-3 py-2" />
+    </label>
+
+    <template x-if="error">
+      <div class="bg-red-50 border border-red-200 text-red-700 p-2 rounded text-sm" x-text="error"></div>
+    </template>
+
+    <button type="submit" :disabled="submitting"
+            class="w-full bg-slate-900 text-white py-2 rounded hover:bg-slate-700 disabled:opacity-50">
+      <span x-show="!submitting">Đăng nhập</span>
+      <span x-show="submitting">Đang xử lý…</span>
+    </button>
+
+    <p class="text-xs subtle">
+      Tài khoản demo: <code>alice</code> / <code>demo123</code>
+    </p>
+  </form>
+</main>
+
+<script>
+function loginPage() {
+  return {
+    login: '', password: '', error: '', submitting: false,
+    async submit() {
+      this.error = ''; this.submitting = true;
+      try {
+        const r = await api.post('/auth/login', { login: this.login, password: this.password });
+        auth.save(r.data.user, r.data.token);
+        window.location.href = '/';
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.submitting = false;
+      }
+    },
+  };
+}
+</script>
+</body>
+</html>

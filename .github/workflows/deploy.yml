@@ -1,0 +1,64 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false   # never interrupt an in-flight deploy
+
+jobs:
+  lint:
+    name: Lint PHP
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+      - name: PHP syntax check
+        run: |
+          set -e
+          find gateway/src gateway/public services/*/src services/*/public \
+               -name '*.php' -print0 \
+            | xargs -0 -n1 -P 4 php -l
+
+  deploy:
+    name: SSH deploy
+    needs: lint
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Add SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Pull + rebuild on VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_DIR:  ${{ secrets.VPS_DIR }}
+        run: |
+          ssh -i ~/.ssh/id_deploy -o StrictHostKeyChecking=yes \
+              "${VPS_USER}@${VPS_HOST}" \
+              "cd ${VPS_DIR} && PROJECT_DIR=${VPS_DIR} ./scripts/deploy.sh"
+
+      - name: Verify public health
+        run: |
+          set -e
+          for i in 1 2 3 4 5; do
+            if curl -sf https://soa.duyet.vn/api/health -o /tmp/health.json; then
+              cat /tmp/health.json
+              exit 0
+            fi
+            echo "attempt $i failed — sleeping 10s"
+            sleep 10
+          done
+          echo "FATAL: public health endpoint never returned 200"
+          exit 1

@@ -1,0 +1,6 @@
+/* Tiny custom styles to complement Tailwind CDN. */
+html, body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+.prose-vn p { white-space: pre-wrap; line-height: 1.65; }
+.subtle { color: rgb(107 114 128); }
+.fade-in { animation: fadeIn .25s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }

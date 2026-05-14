@@ -1,0 +1,23 @@
+.env
+.env.*
+!.env.example
+vendor/
+# composer.lock IS committed — apps lock deps for reproducible builds
+.DS_Store
+*.log
+.idea/
+.vscode/
+node_modules/
+
+# Local data
+data/
+mariadb_data/
+
+# SSL certs
+deploy/certs/*.pem
+deploy/certs/*.key
+!deploy/certs/.gitkeep
+
+# Local override
+docker-compose.override.yml
+.codex-review/

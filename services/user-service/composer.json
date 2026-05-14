@@ -1,0 +1,22 @@
+{
+  "name": "soa-blog/user-service",
+  "description": "User microservice for SOA Blog",
+  "type": "project",
+  "require": {
+    "php": ">=8.2",
+    "slim/slim": "^4.12",
+    "slim/psr7": "^1.6",
+    "monolog/monolog": "^3.0",
+    "ext-mbstring": "*",
+    "ext-pdo": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "src/"
+    }
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "sort-packages": true
+  }
+}
