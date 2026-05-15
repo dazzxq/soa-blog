@@ -12,13 +12,34 @@ if [[ ! -f .env ]]; then
 fi
 
 echo "[deploy] git pull --ff-only"
+# Detect which areas changed BEFORE pulling, so we can force-restart
+# containers whose only mounted file (nginx.conf, html, etc.) changed —
+# bind mounts in Docker survive git updates by inode, so the container
+# keeps reading the pre-pull file content otherwise.
+BEFORE_SHA=$(git rev-parse HEAD)
 git pull --ff-only
+AFTER_SHA=$(git rev-parse HEAD)
+
+WEB_TOUCHED=0
+if [[ "$BEFORE_SHA" != "$AFTER_SHA" ]]; then
+  if git diff --name-only "$BEFORE_SHA" "$AFTER_SHA" | grep -qE '^web/'; then
+    WEB_TOUCHED=1
+  fi
+fi
 
 echo "[deploy] docker compose build"
 docker compose build --pull
 
 echo "[deploy] docker compose up -d (with healthcheck wait)"
 docker compose up -d --remove-orphans
+
+# Web container uses bind-mounted static files. New file content from git
+# pull won't be visible until the container restarts (it tracks the old
+# inode). Restart only when web/ actually changed.
+if [[ $WEB_TOUCHED -eq 1 ]]; then
+  echo "[deploy] web/ changed — restarting web container so new mounts apply"
+  docker compose restart web
+fi
 
 echo "[deploy] waiting for gateway healthcheck (up to 90s)"
 for i in $(seq 1 18); do
