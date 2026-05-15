@@ -57,9 +57,15 @@ open http://localhost:8080        # frontend
 curl http://localhost:8000/api/health | jq
 ```
 
-Tài khoản seed sẵn:
-- `alice` / `demo123`
-- `bob`   / `demo123`
+Tài khoản seed sẵn (mật khẩu chung `demo@123**`):
+
+| Username | Tên hiển thị |
+|---|---|
+| `demo`  | Tài khoản demo công khai |
+| `duyet` | Nguyễn Thế Duyệt |
+| `long`  | Đinh Ngọc Long |
+| `diep`  | Vũ Duy Điệp |
+| `tai`   | Tạ Ngọc Tài |
 
 Để có thêm dữ liệu mẫu đẹp khi demo browser:
 ```bash

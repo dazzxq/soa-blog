@@ -1,52 +1,75 @@
 #!/usr/bin/env bash
 # Tier-2 rich demo seed via gateway API.
-# Use AFTER docker compose up; tier-1 seed already provides alice + bob.
+# Use AFTER docker compose up. Tier-1 seed (db/99-seed.sql) đã tạo sẵn:
+#   demo, duyet, long, diep, tai  — pass "demo@123**"
+# Script này tạo thêm ~20 post và ~50 comment do 4 thành viên nhóm + tài khoản demo
+# rải đều, để trang nhìn đầy đặn khi thuyết trình.
 set -euo pipefail
 
 BASE="${BASE:-http://localhost:8000}"
 JSON='Content-Type: application/json'
+PASS='demo@123**'
+AUTHORS=(demo duyet long diep tai)
 
-random_word() {
-  local words=("Microservices" "Gateway" "Slim" "Docker" "Cloudflare" "PHP" "MariaDB" "JWT" "REST" "SOA")
-  echo "${words[RANDOM % ${#words[@]}]}"
+random_topic() {
+  local topics=("Microservices" "API Gateway" "Database-per-service" "JWT" "Docker Compose"
+                "Cloudflare" "Slim Framework" "API Composition" "Circuit Breaker" "REST")
+  echo "${topics[RANDOM % ${#topics[@]}]}"
 }
 
-echo "[seed] creating extra users 3..11"
-for i in {3..11}; do
-  curl -s -X POST "$BASE/api/auth/register" -H "$JSON" \
-    -d "{\"username\":\"user$i\",\"email\":\"user$i@duyet.vn\",\"password\":\"demo123\",\"display_name\":\"User $i\"}" \
-    > /dev/null || true
+random_intro() {
+  local lines=(
+    "Hôm nay nhóm mình muốn chia sẻ một vài kinh nghiệm về"
+    "Trong quá trình làm đồ án, nhóm rút ra được một số điểm thú vị về"
+    "Bài viết này tổng hợp lại các kiến thức quan trọng về"
+    "Một trong những thử thách lớn nhất khi triển khai project là"
+  )
+  echo "${lines[RANDOM % ${#lines[@]}]}"
+}
+
+# ---------- Login all team members ----------
+declare -A TOKEN
+echo "[seed] đăng nhập 5 tài khoản: ${AUTHORS[*]}"
+for u in "${AUTHORS[@]}"; do
+  t=$(curl -s -X POST "$BASE/api/auth/login" -H "$JSON" \
+    -d "{\"login\":\"$u\",\"password\":\"$PASS\"}" | jq -r '.data.token')
+  if [[ -z "$t" || "$t" == "null" ]]; then
+    echo "[seed] FATAL: không đăng nhập được tài khoản '$u'" >&2
+    exit 1
+  fi
+  TOKEN[$u]="$t"
 done
 
-echo "[seed] login alice"
-TOKEN_ALICE=$(curl -s -X POST "$BASE/api/auth/login" -H "$JSON" \
-  -d '{"login":"alice","password":"demo123"}' | jq -r '.data.token')
-
-if [[ -z "$TOKEN_ALICE" || "$TOKEN_ALICE" == "null" ]]; then
-  echo "[seed] cannot login alice — aborting" >&2; exit 1
-fi
-
-echo "[seed] creating 19 extra posts"
+# ---------- Create posts ----------
 POSTS=()
-for i in {1..19}; do
-  w=$(random_word)
-  pid=$(curl -s -X POST "$BASE/api/posts" -H "$JSON" -H "Authorization: Bearer $TOKEN_ALICE" \
-    -d "{\"title\":\"Tìm hiểu về $w (#$i)\",\"content\":\"Đây là bài viết minh hoạ về $w. Nội dung mẫu dùng để hiển thị giao diện danh sách bài viết và demo trang chi tiết.\"}" \
-    | jq -r '.data.id')
-  POSTS+=("$pid")
+echo "[seed] tạo 20 bài viết, tác giả luân phiên các thành viên"
+for i in {1..20}; do
+  author=${AUTHORS[$((RANDOM % ${#AUTHORS[@]}))]}
+  topic=$(random_topic)
+  intro=$(random_intro)
+  pid=$(curl -s -X POST "$BASE/api/posts" -H "$JSON" -H "Authorization: Bearer ${TOKEN[$author]}" \
+    -d "{\"title\":\"Tìm hiểu về $topic (#$i)\",\"content\":\"$intro $topic. Đây là bài viết minh hoạ để hiển thị giao diện danh sách. Nhóm hi vọng các bạn sẽ thấy hữu ích!\"}" \
+    | jq -r '.data.id') || pid=
+  [[ -n "$pid" && "$pid" != "null" ]] && POSTS+=("$pid")
 done
+echo "  → đã tạo ${#POSTS[@]} bài"
 
-echo "[seed] adding ~50 comments distributed across posts"
-# Log in random users and have them comment
+# ---------- Comments ----------
+echo "[seed] thêm ~50 bình luận, tác giả random"
+SAMPLES=(
+  "Bài viết hay quá, cảm ơn nhóm đã chia sẻ!"
+  "Mình thấy phần này giải thích rất rõ ràng."
+  "Có ai có ví dụ thực tế cho phần này không?"
+  "Đọc xong mới thấy microservices không đơn giản như mình tưởng."
+  "Khi nào nên dùng pattern này thay cho monolith vậy nhóm?"
+  "Mình áp dụng vào project của mình thì work luôn."
+)
 for ((i=0; i<50; i++)); do
-  uid=$((RANDOM % 9 + 3))
-  tok=$(curl -s -X POST "$BASE/api/auth/login" -H "$JSON" \
-    -d "{\"login\":\"user$uid\",\"password\":\"demo123\"}" | jq -r '.data.token' 2>/dev/null || true)
-  [[ -z "$tok" || "$tok" == "null" ]] && continue
-
+  author=${AUTHORS[$((RANDOM % ${#AUTHORS[@]}))]}
   postId=${POSTS[$((RANDOM % ${#POSTS[@]}))]}
-  curl -s -X POST "$BASE/api/posts/$postId/comments" -H "$JSON" -H "Authorization: Bearer $tok" \
-    -d "{\"body\":\"Bình luận số $i từ user$uid.\"}" > /dev/null || true
+  body=${SAMPLES[$((RANDOM % ${#SAMPLES[@]}))]}
+  curl -s -X POST "$BASE/api/posts/$postId/comments" -H "$JSON" -H "Authorization: Bearer ${TOKEN[$author]}" \
+    -d "{\"body\":\"$body\"}" > /dev/null || true
 done
 
-echo "[seed] done. Open the frontend to see rich data."
+echo "[seed] xong. Mở frontend để xem dữ liệu phong phú."
