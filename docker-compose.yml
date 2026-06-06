@@ -130,7 +130,10 @@ services:
     depends_on:
       gateway: { condition: service_healthy }
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:80/"]
+      # Use 127.0.0.1 (not localhost): in nginx:alpine, localhost resolves to IPv6 ::1
+      # first but nginx listens only on IPv4 0.0.0.0:80 → "connection refused" → false
+      # "unhealthy". The site serves fine; this is a cosmetic healthcheck fix.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:80/"]
       interval: 10s
       timeout: 3s
       retries: 5
