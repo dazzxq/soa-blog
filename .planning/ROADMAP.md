@@ -85,7 +85,13 @@ Plans:
   2. Người dùng thả reaction (like + một số cảm xúc, mỗi người một reaction), bình luận được bài viết
   3. Người dùng chia sẻ lại (repost) một bài viết lên feed của mình, hiển thị rõ nguồn gốc bài gốc
   4. **(Gateway demonstrated)** Gateway có endpoint composition feed: mỗi bài kèm thông tin tác giả, số reaction, số comment, và reaction của người xem — gộp song song từ nhiều service, degrade an toàn khi một phần lỗi
-**Plans**: TBD
+**Plans**: 5 plans
+Plans:
+- [ ] 04-01-PLAN.md — Wave 0: db/04-migrate-phase4.sql (live additive posts/reactions/comments + demo seed) + smoke-phase4.sh, wired into deploy.sh
+- [ ] 04-02-PLAN.md — Wave 1: feed-service build-out (PostController CRUD+reactions+timeline query, CommentController, routes; X-User-Id scoped)
+- [ ] 04-03-PLAN.md — Wave 2: gateway /api/feed 3-service composition (connection+feed+profile, settle+degrade+email-allowlist+repost-batch) + FeedClient + routes/DI
+- [ ] 04-04-PLAN.md — Wave 3: UI feed.html (compose+timeline+react/comment/repost/delete) + index nav link (Vietnamese, minimal)
+- [ ] 04-05-PLAN.md — Wave 4: live cutover (codex-impl-review + CI/CD deploy + live-volume migration + full smoke verify) (autonomous: false)
 **UI hint**: yes
 
 ### Phase 5: Tìm kiếm & Thông báo
@@ -122,6 +128,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Nền tảng & Gateway | 6/6 | Complete    | 2026-06-06 |
 | 2. Hồ sơ nghề nghiệp | 5/5 | Complete    | 2026-06-06 |
 | 3. Kết nối / Social Graph | 4/5 | Complete    | 2026-06-06 |
-| 4. News Feed | 0/TBD | Not started | - |
+| 4. News Feed | 0/5 | Not started | - |
 | 5. Tìm kiếm & Thông báo | 0/TBD | Not started | - |
 | 6. Giao diện ProConnect | 0/TBD | Not started | - |
