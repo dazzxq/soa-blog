@@ -7,6 +7,7 @@ use App\DomainError;
 use App\Json;
 use App\Services\ConnectionClient;
 use App\Services\FeedClient;
+use App\Services\NotificationClient;
 use App\Services\ProfileClient;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Promise\Utils;
@@ -37,6 +38,7 @@ final class FeedController
         private FeedClient $feed,
         private ProfileClient $profiles,
         private ConnectionClient $connections,
+        private NotificationClient $notifications,
     ) {}
 
     /**
@@ -188,8 +190,13 @@ final class FeedController
         if ($type === '') {
             $type = 'like';
         }
-        $up = $this->feed->react($me, (int) $args['id'], $type);
-        return Json::raw($res, $this->decode($up), $up->getStatusCode());
+        $up   = $this->feed->react($me, (int) $args['id'], $type);
+        $code = $up->getStatusCode();
+        // Best-effort notify the POST author (D-05) — only on a 2xx write.
+        if ($code === 200 || $code === 201) {
+            $this->notifyPostAuthor((int) $args['id'], $me, 'reaction');
+        }
+        return Json::raw($res, $this->decode($up), $code);
     }
 
     public function unreact(Request $req, Response $res, array $args): Response
@@ -204,7 +211,38 @@ final class FeedController
         $me   = $this->me($req);
         $body = (string) (((array) ($req->getParsedBody() ?? []))['body'] ?? '');
         $up   = $this->feed->addComment($me, (int) $args['id'], $body);
-        return Json::raw($res, $this->decode($up), $up->getStatusCode());
+        $code = $up->getStatusCode();
+        // Best-effort notify the POST author (D-05) — only on a 2xx write.
+        if ($code === 200 || $code === 201) {
+            $this->notifyPostAuthor((int) $args['id'], $me, 'comment');
+        }
+        return Json::raw($res, $this->decode($up), $code);
+    }
+
+    /**
+     * Best-effort notify the POST author after a successful react/comment (D-05).
+     *
+     * The recipient is the post author resolved via getPost($id).author_id — NOT
+     * the upstream react/comment response (which carries the ACTOR's row, Pitfall 2
+     * / T-05-17). Self-notify is skipped. The getPost lookup + the create both live
+     * inside one swallowing try/catch: a notify/getPost failure NEVER changes the
+     * react/comment outcome (which already returned 2xx, T-05-16).
+     */
+    private function notifyPostAuthor(int $postId, int $actor, string $type): void
+    {
+        try {
+            $pr = $this->feed->getPost($postId, 0);
+            if ($pr->getStatusCode() !== 200) {
+                return;
+            }
+            $authorId = (int) ($this->decode($pr)['data']['author_id'] ?? 0);
+            if ($authorId <= 0 || $authorId === $actor) {
+                return;   // skip self / invalid (D-05, Pitfall 2)
+            }
+            $this->notifications->create($authorId, $actor, $type, $postId);   // ref_id = postId
+        } catch (GuzzleException $e) {
+            // swallow — best-effort (D-05); the react/comment already returned 2xx.
+        }
     }
 
     public function deleteComment(Request $req, Response $res, array $args): Response

@@ -6,6 +6,7 @@ namespace App\Controllers;
 use App\DomainError;
 use App\Json;
 use App\Services\ConnectionClient;
+use App\Services\NotificationClient;
 use App\Services\ProfileClient;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\ResponseInterface;
@@ -35,6 +36,7 @@ final class ConnectionsController
     public function __construct(
         private ProfileClient $profiles,
         private ConnectionClient $connections,
+        private NotificationClient $notifications,
     ) {}
 
     /**
@@ -100,8 +102,34 @@ final class ConnectionsController
 
         // (4) ONLY a clean 200 profile + 'none' status proceeds to the write.
         // (The 23000 -> 409 DB backstop surfaces through this passthrough too.)
-        $up = $this->connections->createRequest($me, $target);
-        return Json::raw($res, $this->decode($up), $up->getStatusCode());
+        $up          = $this->connections->createRequest($me, $target);
+        $createdCode = $up->getStatusCode();
+
+        // (5) BEST-EFFORT notify (D-05) — fires only AFTER a successful write and
+        // NEVER alters the main action's status/body (notifyBestEffort swallows).
+        if ($createdCode === 200 || $createdCode === 201) {
+            $refId = (int) ($this->decode($up)['data']['id'] ?? 0) ?: null;   // created request id
+            $this->notifyBestEffort($target, $me, 'invite', $refId);
+        }
+
+        return Json::raw($res, $this->decode($up), $createdCode);
+    }
+
+    /**
+     * Best-effort notification fire (D-05). A notification failure must NEVER break
+     * the main action, so the only network call here is wrapped in a swallowing
+     * try/catch. Self/invalid recipients are skipped before any call is made.
+     */
+    private function notifyBestEffort(int $recipient, int $actor, string $type, ?int $refId): void
+    {
+        if ($recipient <= 0 || $recipient === $actor) {
+            return;   // skip self / invalid (D-05)
+        }
+        try {
+            $this->notifications->create($recipient, $actor, $type, $refId);
+        } catch (GuzzleException $e) {
+            // swallow — a notification failure must NEVER break the main action (D-05).
+        }
     }
 
     /** POST /api/connections/requests/{id}/accept — CONN-02. */
