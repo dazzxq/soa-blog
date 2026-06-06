@@ -99,6 +99,14 @@
     return prof.data || me.data || null;
   };
 
+  // ---------- Profile composition loader (Phase 2) ----------
+  // Fetches the flagship aggregate GET /api/profiles/{id}/full and surfaces the
+  // degraded flag. Used by profile.html / profile-edit.html.
+  window.loadFull = async function (id) {
+    const r = await api.get('/profiles/' + id + '/full');
+    return { profile: r.data, degraded: !!(r.meta && r.meta.degraded) };
+  };
+
   // Top-bar binding — pages declare <nav x-data="navbar()">
   window.navbar = function () {
     return {

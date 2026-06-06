@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ProConnect — Trang chủ</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="/assets/app.js?v=558aeb6"></script>
+  <script defer src="/assets/app.js?v=ph2-04"></script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="/assets/styles.css?v1778837733" />
@@ -65,20 +65,26 @@
     </template>
 
     <template x-if="!loading && !error && isLoggedIn && profile">
-      <dl class="space-y-2">
-        <div class="flex gap-2">
-          <dt class="w-32 subtle">ID</dt>
-          <dd x-text="profile.id"></dd>
+      <div>
+        <dl class="space-y-2">
+          <div class="flex gap-2">
+            <dt class="w-32 subtle">ID</dt>
+            <dd x-text="profile.id"></dd>
+          </div>
+          <div class="flex gap-2">
+            <dt class="w-32 subtle">Username</dt>
+            <dd x-text="profile.username"></dd>
+          </div>
+          <div class="flex gap-2">
+            <dt class="w-32 subtle">Tên hiển thị</dt>
+            <dd x-text="profile.display_name"></dd>
+          </div>
+        </dl>
+        <div class="flex gap-3 mt-4">
+          <a :href="'/profile.html?id=' + profile.id" class="bg-slate-900 text-white px-4 py-2 rounded hover:bg-slate-700">Hồ sơ của tôi</a>
+          <a href="/profile-edit.html" class="border px-4 py-2 rounded hover:bg-slate-50">Chỉnh sửa hồ sơ</a>
         </div>
-        <div class="flex gap-2">
-          <dt class="w-32 subtle">Username</dt>
-          <dd x-text="profile.username"></dd>
-        </div>
-        <div class="flex gap-2">
-          <dt class="w-32 subtle">Tên hiển thị</dt>
-          <dd x-text="profile.display_name"></dd>
-        </div>
-      </dl>
+      </div>
     </template>
   </section>
 </main>

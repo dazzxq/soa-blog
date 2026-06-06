@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProConnect — Chỉnh sửa hồ sơ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="/assets/app.js?v=ph2-04"></script>
+
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="/assets/styles.css?v1778837733" />
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+<nav x-data="navbar()" class="bg-white border-b">
+  <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+    <a href="/" class="font-bold text-lg">ProConnect</a>
+    <div class="flex items-center gap-3 text-sm">
+      <template x-if="isLoggedIn">
+        <span class="flex items-center gap-3">
+          <span class="subtle">Xin chào, <b x-text="user?.display_name || user?.username"></b></span>
+          <button @click="logout" class="text-red-600 hover:underline">Đăng xuất</button>
+        </span>
+      </template>
+      <template x-if="!isLoggedIn">
+        <span class="flex items-center gap-3">
+          <a href="/login.html" class="hover:underline">Đăng nhập</a>
+          <a href="/register.html" class="bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-700">Đăng ký</a>
+        </span>
+      </template>
+    </div>
+  </div>
+</nav>
+
+<main x-data="profileEditPage()" x-init="init()" class="max-w-3xl mx-auto px-4 py-6 space-y-6">
+
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Chỉnh sửa hồ sơ</h1>
+    <a :href="myId ? ('/profile.html?id=' + myId) : '/profile.html'" class="text-sm border px-3 py-1.5 rounded hover:bg-slate-50">Xem hồ sơ</a>
+  </div>
+
+  <!-- Toast thông báo -->
+  <template x-if="msg.text">
+    <div :class="msg.ok ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'" class="border p-3 rounded text-sm" x-text="msg.text"></div>
+  </template>
+
+  <template x-if="loading">
+    <p class="subtle">Đang tải…</p>
+  </template>
+
+  <template x-if="!loading">
+    <div class="space-y-6">
+
+      <!-- Thông tin cơ bản (PROF-02) -->
+      <section class="bg-white border rounded-lg p-6">
+        <h2 class="text-lg font-semibold mb-4">Thông tin cơ bản</h2>
+        <div class="space-y-3">
+          <label class="block">
+            <span class="text-sm subtle">Tên hiển thị</span>
+            <input x-model="basic.display_name" type="text" class="mt-1 w-full border rounded px-3 py-2" />
+          </label>
+          <label class="block">
+            <span class="text-sm subtle">Chức danh (headline)</span>
+            <input x-model="basic.headline" type="text" maxlength="160" class="mt-1 w-full border rounded px-3 py-2" />
+          </label>
+          <label class="block">
+            <span class="text-sm subtle">Địa điểm</span>
+            <input x-model="basic.location" type="text" maxlength="128" class="mt-1 w-full border rounded px-3 py-2" />
+          </label>
+          <label class="block">
+            <span class="text-sm subtle">URL ảnh đại diện</span>
+            <input x-model="basic.avatar_url" type="url" class="mt-1 w-full border rounded px-3 py-2" />
+          </label>
+          <label class="block">
+            <span class="text-sm subtle">URL ảnh bìa</span>
+            <input x-model="basic.cover_url" type="url" class="mt-1 w-full border rounded px-3 py-2" />
+          </label>
+          <label class="block">
+            <span class="text-sm subtle">Giới thiệu</span>
+            <textarea x-model="basic.about" rows="4" class="mt-1 w-full border rounded px-3 py-2"></textarea>
+          </label>
+          <button @click="saveBasic()" class="bg-slate-900 text-white px-4 py-2 rounded hover:bg-slate-700">Lưu</button>
+        </div>
+      </section>
+
+      <!-- Kinh nghiệm (PROF-03) -->
+      <section class="bg-white border rounded-lg p-6">
+        <h2 class="text-lg font-semibold mb-4">Kinh nghiệm</h2>
+        <ul class="space-y-3 mb-4">
+          <template x-for="ex in experience" :key="ex.id">
+            <li class="border rounded p-3">
+              <template x-if="editExpId !== ex.id">
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <p class="font-medium" x-text="ex.title"></p>
+                    <p class="text-sm subtle" x-text="ex.company"></p>
+                    <p class="text-xs subtle" x-text="(ex.start_date||'') + ' – ' + (ex.end_date || 'Hiện tại')"></p>
+                  </div>
+                  <div class="flex gap-2 text-sm shrink-0">
+                    <button @click="startEditExp(ex)" class="text-blue-600 hover:underline">Sửa</button>
+                    <button @click="deleteExp(ex.id)" class="text-red-600 hover:underline">Xoá</button>
+                  </div>
+                </div>
+              </template>
+              <template x-if="editExpId === ex.id">
+                <div class="space-y-2">
+                  <input x-model="expForm.company" placeholder="Công ty" class="w-full border rounded px-3 py-2" />
+                  <input x-model="expForm.title" placeholder="Chức danh" class="w-full border rounded px-3 py-2" />
+                  <div class="flex gap-2">
+                    <input x-model="expForm.start_date" type="date" class="border rounded px-3 py-2" />
+                    <input x-model="expForm.end_date" type="date" class="border rounded px-3 py-2" />
+                  </div>
+                  <textarea x-model="expForm.description" rows="2" placeholder="Mô tả" class="w-full border rounded px-3 py-2"></textarea>
+                  <div class="flex gap-2">
+                    <button @click="saveExp(ex.id)" class="bg-slate-900 text-white px-3 py-1.5 rounded text-sm">Lưu</button>
+                    <button @click="cancelEditExp()" class="border px-3 py-1.5 rounded text-sm">Huỷ</button>
+                  </div>
+                </div>
+              </template>
+            </li>
+          </template>
+        </ul>
+        <div class="border-t pt-4 space-y-2">
+          <p class="text-sm font-medium">Thêm kinh nghiệm</p>
+          <input x-model="newExp.company" placeholder="Công ty" class="w-full border rounded px-3 py-2" />
+          <input x-model="newExp.title" placeholder="Chức danh" class="w-full border rounded px-3 py-2" />
+          <div class="flex gap-2">
+            <input x-model="newExp.start_date" type="date" class="border rounded px-3 py-2" />
+            <input x-model="newExp.end_date" type="date" class="border rounded px-3 py-2" />
+          </div>
+          <textarea x-model="newExp.description" rows="2" placeholder="Mô tả" class="w-full border rounded px-3 py-2"></textarea>
+          <button @click="addExp()" class="border px-4 py-2 rounded hover:bg-slate-50">Thêm</button>
+        </div>
+      </section>
+
+      <!-- Học vấn (PROF-04) -->
+      <section class="bg-white border rounded-lg p-6">
+        <h2 class="text-lg font-semibold mb-4">Học vấn</h2>
+        <ul class="space-y-3 mb-4">
+          <template x-for="ed in education" :key="ed.id">
+            <li class="border rounded p-3">
+              <template x-if="editEduId !== ed.id">
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <p class="font-medium" x-text="ed.school"></p>
+                    <p class="text-sm subtle" x-text="[ed.degree, ed.field].filter(Boolean).join(' · ')"></p>
+                    <p class="text-xs subtle" x-text="(ed.start_year||'') + ' – ' + (ed.end_year || 'Hiện tại')"></p>
+                  </div>
+                  <div class="flex gap-2 text-sm shrink-0">
+                    <button @click="startEditEdu(ed)" class="text-blue-600 hover:underline">Sửa</button>
+                    <button @click="deleteEdu(ed.id)" class="text-red-600 hover:underline">Xoá</button>
+                  </div>
+                </div>
+              </template>
+              <template x-if="editEduId === ed.id">
+                <div class="space-y-2">
+                  <input x-model="eduForm.school" placeholder="Trường" class="w-full border rounded px-3 py-2" />
+                  <input x-model="eduForm.degree" placeholder="Bằng cấp" class="w-full border rounded px-3 py-2" />
+                  <input x-model="eduForm.field" placeholder="Chuyên ngành" class="w-full border rounded px-3 py-2" />
+                  <div class="flex gap-2">
+                    <input x-model="eduForm.start_year" type="number" placeholder="Năm bắt đầu" class="border rounded px-3 py-2 w-40" />
+                    <input x-model="eduForm.end_year" type="number" placeholder="Năm kết thúc" class="border rounded px-3 py-2 w-40" />
+                  </div>
+                  <div class="flex gap-2">
+                    <button @click="saveEdu(ed.id)" class="bg-slate-900 text-white px-3 py-1.5 rounded text-sm">Lưu</button>
+                    <button @click="cancelEditEdu()" class="border px-3 py-1.5 rounded text-sm">Huỷ</button>
+                  </div>
+                </div>
+              </template>
+            </li>
+          </template>
+        </ul>
+        <div class="border-t pt-4 space-y-2">
+          <p class="text-sm font-medium">Thêm học vấn</p>
+          <input x-model="newEdu.school" placeholder="Trường" class="w-full border rounded px-3 py-2" />
+          <input x-model="newEdu.degree" placeholder="Bằng cấp" class="w-full border rounded px-3 py-2" />
+          <input x-model="newEdu.field" placeholder="Chuyên ngành" class="w-full border rounded px-3 py-2" />
+          <div class="flex gap-2">
+            <input x-model="newEdu.start_year" type="number" placeholder="Năm bắt đầu" class="border rounded px-3 py-2 w-40" />
+            <input x-model="newEdu.end_year" type="number" placeholder="Năm kết thúc" class="border rounded px-3 py-2 w-40" />
+          </div>
+          <button @click="addEdu()" class="border px-4 py-2 rounded hover:bg-slate-50">Thêm</button>
+        </div>
+      </section>
+
+      <!-- Kỹ năng (PROF-05) -->
+      <section class="bg-white border rounded-lg p-6">
+        <h2 class="text-lg font-semibold mb-4">Kỹ năng</h2>
+        <div class="flex flex-wrap gap-2 mb-4">
+          <template x-for="sk in skills" :key="sk.id">
+            <span class="inline-flex items-center gap-1 text-sm bg-slate-100 text-slate-700 px-3 py-1 rounded-full">
+              <span x-text="sk.name"></span>
+              <button @click="deleteSkill(sk.id)" class="text-slate-400 hover:text-red-600" title="Xoá">✕</button>
+            </span>
+          </template>
+          <template x-if="!skills.length">
+            <span class="text-sm subtle">Chưa có kỹ năng nào.</span>
+          </template>
+        </div>
+        <div class="flex gap-2">
+          <input x-model="newSkill" @keydown.enter.prevent="addSkill()" placeholder="Tên kỹ năng" maxlength="80" class="flex-1 border rounded px-3 py-2" />
+          <button @click="addSkill()" class="border px-4 py-2 rounded hover:bg-slate-50">Thêm</button>
+        </div>
+      </section>
+
+    </div>
+  </template>
+</main>
+
+<script>
+function profileEditPage() {
+  return {
+    loading: true,
+    myId: null,
+    msg: { text: '', ok: true },
+
+    basic: { display_name: '', avatar_url: '', cover_url: '', headline: '', location: '', about: '' },
+    experience: [],
+    education: [],
+    skills: [],
+
+    newExp: { company: '', title: '', start_date: '', end_date: '', description: '' },
+    newEdu: { school: '', degree: '', field: '', start_year: '', end_year: '' },
+    newSkill: '',
+
+    editExpId: null, expForm: {},
+    editEduId: null, eduForm: {},
+
+    async init() {
+      // Bắt buộc đăng nhập.
+      if (!auth.isLoggedIn()) { window.location.href = '/login.html'; return; }
+      try {
+        this.myId = (await api.get('/me')).data.id;
+        await this.reload();
+      } catch (e) {
+        if (e.status === 401) { auth.logout(); window.location.href = '/login.html'; return; }
+        this.toast('Không tải được hồ sơ: ' + e.message, false);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async reload() {
+      const r = await api.get('/profiles/' + this.myId + '/full');
+      const p = r.data;
+      this.basic = {
+        display_name: p.display_name || '',
+        avatar_url: p.avatar_url || '',
+        cover_url: p.cover_url || '',
+        headline: p.headline || '',
+        location: p.location || '',
+        about: p.about || '',
+      };
+      this.experience = p.experience || [];
+      this.education = p.education || [];
+      this.skills = p.skills || [];
+    },
+
+    toast(text, ok) {
+      this.msg = { text: text, ok: ok };
+      setTimeout(() => { this.msg = { text: '', ok: true }; }, 4000);
+    },
+
+    // ----- Cơ bản (PROF-02) -----
+    async saveBasic() {
+      try {
+        await api.patch('/profiles/me', {
+          display_name: this.basic.display_name,
+          avatar_url: this.basic.avatar_url || null,
+          cover_url: this.basic.cover_url || null,
+          headline: this.basic.headline || null,
+          location: this.basic.location || null,
+          about: this.basic.about || null,
+        });
+        this.toast('Đã lưu thông tin cơ bản.', true);
+      } catch (e) { this.toast('Lưu thất bại: ' + e.message, false); }
+    },
+
+    // ----- Kinh nghiệm (PROF-03) -----
+    expBody(f) {
+      return {
+        company: f.company, title: f.title,
+        start_date: f.start_date || null,
+        end_date: f.end_date || null,
+        description: f.description || null,
+      };
+    },
+    async addExp() {
+      try {
+        await api.post('/profiles/me/experience', this.expBody(this.newExp));
+        this.newExp = { company: '', title: '', start_date: '', end_date: '', description: '' };
+        await this.reload();
+        this.toast('Đã thêm kinh nghiệm.', true);
+      } catch (e) { this.toast('Thêm thất bại: ' + e.message, false); }
+    },
+    startEditExp(ex) {
+      this.editExpId = ex.id;
+      this.expForm = { company: ex.company, title: ex.title, start_date: ex.start_date || '', end_date: ex.end_date || '', description: ex.description || '' };
+    },
+    cancelEditExp() { this.editExpId = null; this.expForm = {}; },
+    async saveExp(id) {
+      try {
+        await api.patch('/profiles/me/experience/' + id, this.expBody(this.expForm));
+        this.cancelEditExp();
+        await this.reload();
+        this.toast('Đã cập nhật kinh nghiệm.', true);
+      } catch (e) { this.toast('Cập nhật thất bại: ' + e.message, false); }
+    },
+    async deleteExp(id) {
+      try { await api.delete('/profiles/me/experience/' + id); await this.reload(); this.toast('Đã xoá kinh nghiệm.', true); }
+      catch (e) { this.toast('Xoá thất bại: ' + e.message, false); }
+    },
+
+    // ----- Học vấn (PROF-04) -----
+    eduBody(f) {
+      return {
+        school: f.school,
+        degree: f.degree || null,
+        field: f.field || null,
+        start_year: f.start_year ? Number(f.start_year) : null,
+        end_year: f.end_year ? Number(f.end_year) : null,
+      };
+    },
+    async addEdu() {
+      try {
+        await api.post('/profiles/me/education', this.eduBody(this.newEdu));
+        this.newEdu = { school: '', degree: '', field: '', start_year: '', end_year: '' };
+        await this.reload();
+        this.toast('Đã thêm học vấn.', true);
+      } catch (e) { this.toast('Thêm thất bại: ' + e.message, false); }
+    },
+    startEditEdu(ed) {
+      this.editEduId = ed.id;
+      this.eduForm = { school: ed.school, degree: ed.degree || '', field: ed.field || '', start_year: ed.start_year || '', end_year: ed.end_year || '' };
+    },
+    cancelEditEdu() { this.editEduId = null; this.eduForm = {}; },
+    async saveEdu(id) {
+      try {
+        await api.patch('/profiles/me/education/' + id, this.eduBody(this.eduForm));
+        this.cancelEditEdu();
+        await this.reload();
+        this.toast('Đã cập nhật học vấn.', true);
+      } catch (e) { this.toast('Cập nhật thất bại: ' + e.message, false); }
+    },
+    async deleteEdu(id) {
+      try { await api.delete('/profiles/me/education/' + id); await this.reload(); this.toast('Đã xoá học vấn.', true); }
+      catch (e) { this.toast('Xoá thất bại: ' + e.message, false); }
+    },
+
+    // ----- Kỹ năng (PROF-05) -----
+    async addSkill() {
+      const name = (this.newSkill || '').trim();
+      if (!name) return;
+      try {
+        await api.post('/profiles/me/skills', { name: name });
+        this.newSkill = '';
+        await this.reload();
+        this.toast('Đã thêm kỹ năng.', true);
+      } catch (e) {
+        if (e.status === 409) { this.toast('Kỹ năng đã tồn tại.', false); }
+        else { this.toast('Thêm thất bại: ' + e.message, false); }
+      }
+    },
+    async deleteSkill(id) {
+      try { await api.delete('/profiles/me/skills/' + id); await this.reload(); this.toast('Đã xoá kỹ năng.', true); }
+      catch (e) { this.toast('Xoá thất bại: ' + e.message, false); }
+    },
+  };
+}
+</script>
+</body>
+</html>
