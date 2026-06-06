@@ -19,12 +19,12 @@ Requirements cho bản phát hành đầu của milestone ProConnect. Mỗi REQ 
 ### Tài khoản & Hồ sơ (PROF)
 
 - [x] **PROF-01**: Người dùng đăng ký tài khoản và đăng nhập (tái dùng/ mở rộng auth hiện có)
-- [ ] **PROF-02**: Người dùng có hồ sơ nghề nghiệp gồm ảnh đại diện, ảnh bìa, chức danh, vị trí, tóm tắt (about) — chỉnh sửa được
-- [ ] **PROF-03**: Người dùng thêm/sửa/xoá các mục Kinh nghiệm làm việc (công ty, vị trí, mốc thời gian, mô tả)
-- [ ] **PROF-04**: Người dùng thêm/sửa/xoá các mục Học vấn (trường, ngành, mốc thời gian)
-- [ ] **PROF-05**: Người dùng thêm/xoá danh sách Kỹ năng
+- [x] **PROF-02**: Người dùng có hồ sơ nghề nghiệp gồm ảnh đại diện, ảnh bìa, chức danh, vị trí, tóm tắt (about) — chỉnh sửa được
+- [x] **PROF-03**: Người dùng thêm/sửa/xoá các mục Kinh nghiệm làm việc (công ty, vị trí, mốc thời gian, mô tả)
+- [x] **PROF-04**: Người dùng thêm/sửa/xoá các mục Học vấn (trường, ngành, mốc thời gian)
+- [x] **PROF-05**: Người dùng thêm/xoá danh sách Kỹ năng
 - [ ] **PROF-06**: Người dùng xem hồ sơ công khai của người khác qua trang profile riêng
-- [ ] **PROF-07**: Gateway có endpoint composition trả về hồ sơ đầy đủ (thông tin cơ bản + experience + education + skills + trạng thái kết nối với người xem) trong một request
+- [x] **PROF-07**: Gateway có endpoint composition trả về hồ sơ đầy đủ (thông tin cơ bản + experience + education + skills + trạng thái kết nối với người xem) trong một request
 
 ### Kết nối / Social Graph (CONN)
 
@@ -104,12 +104,12 @@ Cập nhật bởi roadmapper sau khi tạo ROADMAP.md (2026-06-06).
 | PLAT-05 | Phase 1 | Complete |
 | PLAT-06 | Phase 1 | Pending |
 | PROF-01 | Phase 1 | Complete |
-| PROF-02 | Phase 2 | Pending |
-| PROF-03 | Phase 2 | Pending |
-| PROF-04 | Phase 2 | Pending |
-| PROF-05 | Phase 2 | Pending |
+| PROF-02 | Phase 2 | Complete |
+| PROF-03 | Phase 2 | Complete |
+| PROF-04 | Phase 2 | Complete |
+| PROF-05 | Phase 2 | Complete |
 | PROF-06 | Phase 2 | Pending |
-| PROF-07 | Phase 2 | Pending |
+| PROF-07 | Phase 2 | Complete |
 | UI-03 | Phase 2 | Pending |
 | CONN-01 | Phase 3 | Pending |
 | CONN-02 | Phase 3 | Pending |

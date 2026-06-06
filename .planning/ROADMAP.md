@@ -51,7 +51,7 @@ Plans:
   4. **(Gateway demonstrated)** Gateway có endpoint composition trả về hồ sơ đầy đủ (cơ bản + experience + education + skills + trạng thái kết nối với người xem) trong MỘT request, ghép từ nhiều nguồn, degrade an toàn khi một phần lỗi
 **Plans**: 5 plans
 Plans:
-- [ ] 02-01-PLAN.md — Wave 0: db/02-migrate-phase2.sql (live additive migration) + smoke-phase2.sh, wired into deploy.sh
+- [x] 02-01-PLAN.md — Wave 0: db/02-migrate-phase2.sql (live additive migration) + smoke-phase2.sh, wired into deploy.sh
 - [ ] 02-02-PLAN.md — Wave 1: profile-service data layer (basic+exp+edu+skills CRUD, X-User-Id scoped) + /users/{id}/full assembly
 - [ ] 02-03-PLAN.md — Wave 2: gateway flagship /api/profiles/{id}/full composition (parallel settle+degrade) + OptionalJwtMiddleware + /me/* CRUD
 - [ ] 02-04-PLAN.md — Wave 3: UI profile.html (view via /full) + profile-edit.html (edit via /me/*) + index link (Vietnamese, minimal)

@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 2 context gathered (user-delegated defaults)
-last_updated: "2026-06-06T18:09:33.179Z"
-last_activity: 2026-06-06 -- Phase 2 planning complete
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-06-06T18:16:07.240Z"
+last_activity: 2026-06-06
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 11
-  completed_plans: 6
-  percent: 55
+  completed_plans: 7
+  percent: 64
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-06)
 
 **Core value:** API Gateway điều phối một hệ microservices đủ phong phú (profile, connection/graph, feed, search) thể hiện rõ và thuyết phục các trách nhiệm cốt lõi của Gateway pattern.
-**Current focus:** Phase 01 — Nền tảng & Gateway
+**Current focus:** Phase 2 — Hồ sơ nghề nghiệp
 
 ## Current Position
 
-Phase: 2
-Plan: Not started
+Phase: 2 (Hồ sơ nghề nghiệp) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-06-06 -- Phase 2 planning complete
+Last activity: 2026-06-06
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -58,6 +58,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P03 | 5min | 2 tasks | 52 files |
 | Phase 01 P04 | 3m | 3 tasks | 39 files |
 | Phase 01 P06 | 3min | 2 tasks | 4 files |
+| Phase 02 P01 | 4min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,8 @@ Recent decisions affecting current work:
 - [Phase 01]: Public /api/profiles/{id} trimmed to D-07 allowlist {id,username,display_name} via array_intersect_key; email never exposed
 - [Phase 01]: post/comment fully retired: gateway code + compose blocks + service dirs git rm'd; services/=5
 - [Phase 01]: 01-06: deploy.sh no longer self-pulls (workflow does git pull --ff-only first so the new cutover logic runs on the first deploy); order = mariadb-only up+healthy -> BLOCKING pre-wipe mysqldump (abort on fail/empty) -> envsubst migrate -> full up --remove-orphans; public health gate now asserts status:ok for all 5 services.
+- [Phase 02]: 02-01: phase-2 live migration is a PLAIN .sql (no envsubst/secrets) applied BLOCKING in deploy.sh after the phase-1 cutover; idempotent ADD/CREATE IF NOT EXISTS + guarded demo seed inside it for the live volume, mirrored to 01-schema/99-seed for fresh volumes.
+- [Phase 02]: 02-01: smoke-phase2.sh mutates ONLY headline (seed-guaranteed non-null) with trap restore EXIT registered before capture + RESTORE_READY gate + jesc; non-destructive under set -euo pipefail. It is the Phase-2 gate; runtime run deferred to VPS (Docker absent locally).
 
 ### Pending Todos
 
@@ -97,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-06T13:53:05.028Z
-Stopped at: Phase 2 context gathered (user-delegated defaults)
-Resume file: .planning/phases/02-h-s-ngh-nghi-p/02-CONTEXT.md
+Last session: 2026-06-06T18:15:59.412Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None
