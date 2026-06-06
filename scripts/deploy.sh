@@ -133,6 +133,16 @@ echo "[deploy] applying db/02-migrate-phase2.sql (additive)"
 docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" proconnect_profile < db/02-migrate-phase2.sql
 echo "[deploy] phase-2 additive migration applied"
 
+# 7c) PHASE-3 ADDITIVE MIGRATION (idempotent; RESEARCH Pitfall 1) -------------
+# Adds the connections table + demo graph seed to the live proconnect_connection
+# volume. Non-destructive (CREATE IF NOT EXISTS + guarded seed), safe to re-run.
+# Plain .sql (no secret placeholders). No `|| true`: a migration failure must
+# surface and block deploy BEFORE full-topology up, so connection-service never
+# boots against a missing `connections` table.
+echo "[deploy] applying db/03-migrate-phase3.sql (additive)"
+docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" proconnect_connection < db/03-migrate-phase3.sql
+echo "[deploy] phase-3 additive migration applied"
+
 # 8) FULL-TOPOLOGY UP (ISSUE-3 step 4) -----------------------------------------
 # NOW bring up the rest of the 8-container stack — the proconnect_* DBs/users
 # exist, so the 5 PHP services can boot healthy. --remove-orphans drops the
