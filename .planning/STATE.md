@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-06-06T21:09:53.783Z"
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-06-06T21:14:40.551Z"
 last_activity: 2026-06-06
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 21
-  completed_plans: 17
-  percent: 81
+  completed_plans: 18
+  percent: 86
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-06-06)
 ## Current Position
 
 Phase: 4 (News Feed) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-06-06
 
@@ -69,6 +69,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03 P03 | 6min | 3 tasks | 5 files |
 | Phase 03-k-t-n-i-social-graph P04 | 2min | 2 tasks | 3 files |
 | Phase 04 P01 | 3 min | 3 tasks | 4 files |
+| Phase 04-news-feed P02 | 3min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,7 @@ Recent decisions affecting current work:
 - [Phase 04]: 04-01: phase-4 feed migration is a PLAIN .sql (no envsubst/secrets) applied BLOCKING (no || true) in deploy.sh step 7d after the phase-3 step; idempotent CREATE IF NOT EXISTS + guarded seed for posts/reactions/comments on the live proconnect_feed volume, mirrored to db/01-schema-feed.sql for fresh volumes.
 - [Phase 04]: 04-01: demo seed post 1 carries an ASYMMETRIC 2 reactions + 1 comment (the fan-trap canary) so smoke-phase4.sh's EXACT-count assert (reaction_count==2 AND comment_count==1) catches a double-JOIN cross-product bug a symmetric 1/1 post would mask; repost = content='' + repost_of set (D-04).
 - [Phase 04]: 04-01: smoke-phase4.sh is non-destructive (trap restore EXIT before any write, cleans only script-created posts/comments, never the demo-seed fixtures); runtime run deferred to VPS/CI Plan 05 (Docker absent locally).
+- [Phase 04-news-feed]: 04-02: timeline/batch/find share one selectColumns helper; counts are correlated scalar subqueries (no double-JOIN fan-trap), positional ? for IN-list+viewer+limit, native prepared; reactions upsert via ON DUPLICATE KEY UPDATE; delete cascades reactions->comments->posts; comment post id from route path + LOCAL SELECT 1 FROM posts invariant; all identity from X-User-Id, no JWT in feed-service.
 
 ### Pending Todos
 
@@ -126,6 +128,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-06T21:09:44.178Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-06-06T21:14:34.241Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None
