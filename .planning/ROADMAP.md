@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Hồ sơ nghề nghiệp** - Profile đầy đủ (experience/education/skills) + endpoint composition profile tại gateway (completed 2026-06-06)
 - [x] **Phase 3: Kết nối / Social Graph** - Connection-service (lời mời, danh sách, gợi ý) + invariant graph cross-service tại gateway (completed 2026-06-06)
 - [x] **Phase 4: News Feed** - Feed-service (bài, reaction, comment, repost) + composition feed ghép nhiều service (completed 2026-06-06)
-- [ ] **Phase 5: Tìm kiếm & Thông báo** - Tìm người dùng (composition) + notification near-real-time qua polling
+- [x] **Phase 5: Tìm kiếm & Thông báo** - Tìm người dùng (composition) + notification near-real-time qua polling (completed 2026-06-06)
 - [ ] **Phase 6: Giao diện ProConnect** - Nhận diện thương hiệu navy #1e3a8a, layout 3 cột, navbar với badge, tiếng Việt có dấu
 
 ## Phase Details
@@ -111,7 +111,7 @@ Plans:
 - [x] 05-04-PLAN.md — Wave 2: gateway search compose (connection_status via settle + email allowlist + degrade) + reindex pull + SearchClient + routes/DI
 - [x] 05-05-PLAN.md — Wave 3: gateway notifications (list + actor enrich + unread_count, mark-read) + D-05 best-effort notify hooks in ConnectionsController/FeedController + NotificationClient + routes/DI
 - [x] 05-06-PLAN.md — Wave 4: UI search.html (quick-connect cards) + notification bell (poll ~15s, mark-read) on feed/connections/index (autonomous: false)
-- [ ] 05-07-PLAN.md — Wave 5: live cutover (codex-impl-review + CI/CD deploy + live-volume migration + full smoke verify) (autonomous: false)
+- [x] 05-07-PLAN.md — Wave 5: live cutover (codex-impl-review + CI/CD deploy + live-volume migration + full smoke verify) (autonomous: false)
 **UI hint**: yes
 
 ### Phase 6: Giao diện ProConnect
@@ -137,5 +137,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Hồ sơ nghề nghiệp | 5/5 | Complete    | 2026-06-06 |
 | 3. Kết nối / Social Graph | 4/5 | Complete    | 2026-06-06 |
 | 4. News Feed | 5/5 | Complete    | 2026-06-06 |
-| 5. Tìm kiếm & Thông báo | 6/7 | In Progress|  |
+| 5. Tìm kiếm & Thông báo | 7/7 | Complete    | 2026-06-06 |
 | 6. Giao diện ProConnect | 0/TBD | Not started | - |
