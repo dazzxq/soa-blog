@@ -1,4 +1,4 @@
-USE blog_users;
+USE proconnect_profile;
 
 CREATE TABLE IF NOT EXISTS users (
   id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
