@@ -103,7 +103,15 @@ Plans:
   2. Người dùng nhận thông báo khi có lời mời kết nối mới, reaction mới, hoặc comment mới trên bài của mình
   3. Giao diện cập nhật thông báo gần-thời-gian-thực bằng polling (badge số chưa đọc), không dùng WebSocket; người dùng đánh dấu thông báo đã đọc được
   4. **(Gateway demonstrated)** Kết quả tìm kiếm được gateway compose (gộp dữ liệu tìm kiếm với trạng thái quan hệ của người xem); thông báo được gateway điều phối/định tuyến tập trung
-**Plans**: TBD
+**Plans**: 7 plans
+Plans:
+- [ ] 05-01-PLAN.md — Wave 0: db/05-migrate-phase5.sql (search_index + notifications, idempotent, demo seed) + smoke-phase5.sh, wired into deploy.sh
+- [ ] 05-02-PLAN.md — Wave 1: search-service build-out (SearchController LIKE search + upsert, routes)
+- [ ] 05-03-PLAN.md — Wave 1: notification-service build-out (NotificationController recipient-scoped CRUD + unread_count + mark-read, routes)
+- [ ] 05-04-PLAN.md — Wave 2: gateway search compose (connection_status via settle + email allowlist + degrade) + reindex pull + SearchClient + routes/DI
+- [ ] 05-05-PLAN.md — Wave 3: gateway notifications (list + actor enrich + unread_count, mark-read) + D-05 best-effort notify hooks in ConnectionsController/FeedController + NotificationClient + routes/DI
+- [ ] 05-06-PLAN.md — Wave 4: UI search.html (quick-connect cards) + notification bell (poll ~15s, mark-read) on feed/connections/index (autonomous: false)
+- [ ] 05-07-PLAN.md — Wave 5: live cutover (codex-impl-review + CI/CD deploy + live-volume migration + full smoke verify) (autonomous: false)
 **UI hint**: yes
 
 ### Phase 6: Giao diện ProConnect
