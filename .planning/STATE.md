@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-05-PLAN.md
-last_updated: "2026-06-06T22:30:53.846Z"
+stopped_at: Completed 05-06-PLAN.md
+last_updated: "2026-06-06T22:35:40.547Z"
 last_activity: 2026-06-06
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 28
-  completed_plans: 26
-  percent: 93
+  completed_plans: 27
+  percent: 96
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-06-06)
 ## Current Position
 
 Phase: 5 (Tìm kiếm & Thông báo) — EXECUTING
-Plan: 6 of 7
+Plan: 7 of 7
 Status: Ready to execute
 Last activity: 2026-06-06
 
@@ -78,6 +78,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05-t-m-ki-m-th-ng-b-o P03 | 1 min | 2 tasks | 2 files |
 | Phase 05-t-m-ki-m-th-ng-b-o P04 | 6min | 3 tasks | 4 files |
 | Phase 05-t-m-ki-m-th-ng-b-o P05 | 4min | 3 tasks | 6 files |
+| Phase 05-t-m-ki-m-th-ng-b-o P06 | 6min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -127,6 +128,7 @@ Recent decisions affecting current work:
 - [Phase 05-t-m-ki-m-th-ng-b-o]: 05-03: notification-service NotificationController clones connection-service doctrine — recipient-scoped (WHERE user_id), X-User-Id<=0->401 guard BEFORE any query on index/markRead/markAllRead (no masked 404), markRead existence via scoped SELECT not rowCount (already-read->200), create trusts gateway body (D-07, no host port). No JWT. routes: /read-all registered before {id}/read. Verified statically (php -l + grep, no test framework); runtime deferred to VPS smoke Plan 07.
 - [Phase 05-t-m-ki-m-th-ng-b-o]: 05-04: gateway SearchController search() composes connection_status per hit via PARALLEL Utils::settle(statusForAsync) keyed by uid (SEARCH-02 showcase, ≤20); a rejected/non-200 promise degrades that card to 'unknown'+meta.degraded.parts=['status'], never 500. Cards = explicit 6-key allowlist {id,username,display_name,headline,avatar_url,connection_status}, no 'email' (T-05-12, search_index has no email). reindex() pulls allUsers universe + per-user getFull (headline/location/skills_text flatten, Pitfall 6), per-user getFull/upsert failure isolated (partial index beats none) -> {indexed,failed,total}. Both routes JWT; viewer from me() never query/body (T-05-15). Verified statically (php -l + grep); runtime deferred to VPS/CI Plan 07.
 - [Phase 05-t-m-ki-m-th-ng-b-o]: 05-05: gateway is the central notification coordinator (D-05) — sendRequest fires invite notify, react/addComment notify the POST author resolved via getPost.author_id (authoritative, NOT the actor-carrying upstream response, Pitfall 2). EVERY notify runs AFTER the 2xx write inside try/catch GuzzleException swallow; a notify/getPost failure NEVER alters the main action status/body. Skip-self. NotificationsController.index passes service unread_count through + actor enrich email-allowlisted {id,username,display_name,avatar_url} + degrade; mark-read/all me()-scoped passthroughs. Routes JWT, read-all before {id}/read. Verified php -l + grep; runtime deferred to VPS/CI Plan 07.
+- [Phase 05-t-m-ki-m-th-ng-b-o]: 05-06: search.html (searchPage) renders relationship-aware quick-connect cards over GET /api/search composing connection_status (5 branches: none/pending_outgoing/pending_incoming/connected/unknown), optimistic connect via POST /api/connections/requests, degrade notice, x-text only, auth-guarded. window.notificationBell added ONCE to app.js (15s setInterval poll of /api/notifications, mark-one /{id}/read + mark-all /read-all, VN per-type messages, silent degrade); bell + navbar search box partial inlined into feed/connections/index/search navbars. Cache-bust bumped to ph5-06 on ALL 8 pages loading app.js (4 beyond plan files_modified — stale-cache would break notificationBell). Checkpoint human-verify resolved via static grep; live browser UX deferred to VPS Plan 07.
 
 ### Pending Todos
 
@@ -145,6 +147,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-06T22:30:45.346Z
-Stopped at: Completed 05-05-PLAN.md
+Last session: 2026-06-06T22:35:32.718Z
+Stopped at: Completed 05-06-PLAN.md
 Resume file: None
