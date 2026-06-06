@@ -67,13 +67,19 @@ final class AggregateController
         ]));
 
         $degraded = [];
-        // connection_status: viewer-relative when logged in (D-04). Stub 404 -> degrade (D-03).
-        $connectionStatus = $viewerId > 0 ? 'none' : null;
-        $c = $settled['connection'];
-        if ($c['state'] === 'fulfilled' && $c['value']->getStatusCode() === 200) {
-            $connectionStatus = (string) ($this->decode($c['value'])['data']['status'] ?? 'none');
-        } else {
-            $degraded[] = 'connection';   // Phase 2: ALWAYS degrades (stub). That is the point.
+        // connection_status: viewer-relative ONLY when logged in (D-04). Anonymous → null.
+        // We deliberately do NOT consume the connection result for an anonymous viewer
+        // even though connection-service now answers (Phase 3) — the Phase 2 contract is
+        // anon connection_status === null, NOT "none". (codex-impl-review fix.)
+        $connectionStatus = null;
+        if ($viewerId > 0) {
+            $connectionStatus = 'none';
+            $c = $settled['connection'];
+            if ($c['state'] === 'fulfilled' && $c['value']->getStatusCode() === 200) {
+                $connectionStatus = (string) ($this->decode($c['value'])['data']['status'] ?? 'none');
+            } else {
+                $degraded[] = 'connection';   // logged-in but connection-service unavailable → degrade
+            }
         }
         $profile['connection_status'] = $connectionStatus;
 

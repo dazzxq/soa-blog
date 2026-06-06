@@ -139,12 +139,18 @@ final class ProfileClient
      */
     public function allUsers(int $limit = 100): array
     {
-        $res = $this->http->request('GET', '/users', ['query' => ['limit' => $limit]]);
-        if ($res->getStatusCode() !== 200) {
+        // Never throws: a network failure / timeout to profile-service must degrade the
+        // suggestions universe to an empty list, NOT bubble up a 500 (codex-impl-review fix).
+        try {
+            $res = $this->http->request('GET', '/users', ['query' => ['limit' => $limit]]);
+            if ($res->getStatusCode() !== 200) {
+                return [];
+            }
+            $body = json_decode((string) $res->getBody(), true);
+            return is_array($body['data'] ?? null) ? $body['data'] : [];
+        } catch (GuzzleException $e) {
             return [];
         }
-        $body = json_decode((string) $res->getBody(), true);
-        return is_array($body['data'] ?? null) ? $body['data'] : [];
     }
 
     public function create(array $body): ResponseInterface
