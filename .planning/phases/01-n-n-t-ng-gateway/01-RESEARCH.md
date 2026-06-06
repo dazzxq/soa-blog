@@ -349,11 +349,11 @@ $settled = \GuzzleHttp\Promise\Utils::settle($promises)->wait();
 | A3 | All 5 services should remain `service_healthy` gates in the gateway's `depends_on` (vs `service_started`) | Pattern 2 | LOW — `service_healthy` is slower to boot but directly enforces PLAT-05 "all healthy". Reversible. |
 | A4 | Recommended D-06 mechanism = idempotent in-container migration script (option B), not volume deletion (option A) | Pitfall 1 | MEDIUM — if the team prefers a clean one-time volume wipe with brief downtime, option A is simpler. Both safe because volume is ProConnect-private. Confirm preference. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **X-Request-Id forwarding approach (A2)** — explicit per-call param vs. Guzzle default header vs. handler-stack middleware. *Recommendation:* explicit param mirroring `X-User-Id` for class clarity. *Resolve in:* plan-check / discuss.
-2. **D-06 cutover mechanism (A4)** — in-container migration script (recommended) vs. one-time volume drop. *What's unclear:* team's tolerance for ~30s downtime during the Phase-1 cutover. *Recommendation:* migration script + pre-wipe `mysqldump`. *Resolve in:* plan, with user confirmation given it's the highest-risk item.
-3. **Live VPS `.env` edit timing** — who adds the 5 new `*_SVC_DB_PASS` to the VPS `.env`, and when relative to the GitHub Actions deploy? *Recommendation:* document as an explicit manual pre-deploy step in the plan; consider a deploy-script preflight that fails loudly if any required env var is missing.
+1. **X-Request-Id forwarding approach (A2)** — RESOLVED: request-scoped rid stashed on `HttpClient::setRequestId()` by `RequestIdMiddleware`, read into the default `X-Request-Id` header at lazy per-request client construction (Plan 04 Task 1A). Safe because clients are constructed inside route handlers AFTER the middleware runs (the earlier "one request per fpm process" rationale was wrong and is corrected in the plan).
+2. **D-06 cutover mechanism (A4)** — RESOLVED: idempotent in-container migration `db/migrate-phase1.sql` (Plan 05 Task 2) applied to the running mariadb during deploy, with a mandatory pre-wipe `mysqldump` backup (Plan 06). No volume deletion; init scripts updated for fresh environments too.
+3. **Live VPS `.env` edit timing** — RESOLVED: Plan 06 adds a deploy-script preflight that fails loudly if any required `*_SVC_DB_PASS` is missing, and documents the manual VPS `.env` edit as an explicit pre-deploy step before the GitHub Actions deploy runs.
 
 ## Environment Availability
 
