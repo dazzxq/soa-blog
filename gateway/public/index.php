@@ -3,20 +3,20 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
-use App\Controllers\AggregateController;
 use App\Controllers\AuthController;
 use App\Controllers\HealthController;
-use App\Controllers\PostsController;
-use App\Controllers\UsersController;
+use App\Controllers\ProfilesController;
 use App\JsonErrorHandler;
 use App\Middleware\CorsMiddleware;
 use App\Middleware\JwtAuthMiddleware;
 use App\Middleware\LoggingMiddleware;
 use App\Middleware\RateLimitMiddleware;
 use App\Middleware\RequestIdMiddleware;
-use App\Services\CommentClient;
-use App\Services\PostClient;
-use App\Services\UserClient;
+use App\Services\ConnectionClient;
+use App\Services\FeedClient;
+use App\Services\NotificationClient;
+use App\Services\ProfileClient;
+use App\Services\SearchClient;
 use DI\Container;
 use Slim\Factory\AppFactory;
 
@@ -34,30 +34,24 @@ if (strlen($jwtSecret) < 16) {
 // --- Container & singletons ---
 $container = new Container();
 
-$container->set(UserClient::class,    fn() => new UserClient());
-$container->set(PostClient::class,    fn() => new PostClient());
-$container->set(CommentClient::class, fn() => new CommentClient());
+$container->set(ProfileClient::class,      fn() => new ProfileClient());
+$container->set(ConnectionClient::class,   fn() => new ConnectionClient());
+$container->set(FeedClient::class,         fn() => new FeedClient());
+$container->set(SearchClient::class,       fn() => new SearchClient());
+$container->set(NotificationClient::class, fn() => new NotificationClient());
 
 $container->set(AuthController::class, fn(Container $c) => new AuthController(
-    $c->get(UserClient::class),
+    $c->get(ProfileClient::class),
     $jwtSecret,
 ));
 $container->set(HealthController::class, fn(Container $c) => new HealthController(
-    $c->get(UserClient::class),
-    $c->get(PostClient::class),
-    $c->get(CommentClient::class),
+    $c->get(ProfileClient::class),
+    $c->get(ConnectionClient::class),
+    $c->get(FeedClient::class),
+    $c->get(SearchClient::class),
+    $c->get(NotificationClient::class),
 ));
-$container->set(UsersController::class, fn(Container $c) => new UsersController($c->get(UserClient::class)));
-$container->set(PostsController::class, fn(Container $c) => new PostsController(
-    $c->get(PostClient::class),
-    $c->get(UserClient::class),
-    $c->get(CommentClient::class),
-));
-$container->set(AggregateController::class, fn(Container $c) => new AggregateController(
-    $c->get(PostClient::class),
-    $c->get(UserClient::class),
-    $c->get(CommentClient::class),
-));
+$container->set(ProfilesController::class, fn(Container $c) => new ProfilesController($c->get(ProfileClient::class)));
 $container->set(JwtAuthMiddleware::class, fn() => new JwtAuthMiddleware($jwtSecret));
 
 AppFactory::setContainer($container);

@@ -1,11 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use App\Controllers\AggregateController;
 use App\Controllers\AuthController;
 use App\Controllers\HealthController;
-use App\Controllers\PostsController;
-use App\Controllers\UsersController;
+use App\Controllers\ProfilesController;
 use App\Middleware\JwtAuthMiddleware;
 use Slim\App;
 
@@ -22,20 +20,7 @@ return static function (App $app): void {
         $g->post('/auth/login',    [AuthController::class, 'login']);
         $g->get ('/me',            [AuthController::class, 'me'])->add($jwtMw);
 
-        // Users
-        $g->get ('/users/{id:[0-9]+}', [UsersController::class, 'show']);
-
-        // Posts
-        $g->get   ('/posts',                          [PostsController::class, 'index']);
-        $g->get   ('/posts/{id:[0-9]+}',              [PostsController::class, 'show']);
-        $g->get   ('/posts/{id:[0-9]+}/full',         [AggregateController::class, 'postFull']);
-        $g->post  ('/posts',                          [PostsController::class, 'create']) ->add($jwtMw);
-        $g->patch ('/posts/{id:[0-9]+}',              [PostsController::class, 'update']) ->add($jwtMw);
-        $g->delete('/posts/{id:[0-9]+}',              [PostsController::class, 'delete']) ->add($jwtMw);
-
-        // Comments
-        $g->get   ('/posts/{id:[0-9]+}/comments',     [PostsController::class, 'comments']);
-        $g->post  ('/posts/{id:[0-9]+}/comments',     [PostsController::class, 'createComment'])->add($jwtMw);
-        $g->delete('/comments/{id:[0-9]+}',           [PostsController::class, 'deleteComment'])->add($jwtMw);
+        // Profiles (D-07: public, whitelisted to {id,username,display_name})
+        $g->get ('/profiles/{id:[0-9]+}', [ProfilesController::class, 'show']);
     });
 };
