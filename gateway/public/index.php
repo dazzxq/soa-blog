@@ -9,6 +9,7 @@ use App\Controllers\ConnectionsController;
 use App\Controllers\FeedController;
 use App\Controllers\HealthController;
 use App\Controllers\ProfilesController;
+use App\Controllers\SearchController;
 use App\JsonErrorHandler;
 use App\Middleware\CorsMiddleware;
 use App\Middleware\JwtAuthMiddleware;
@@ -66,6 +67,11 @@ $container->set(ConnectionsController::class, fn(Container $c) => new Connection
 ));
 $container->set(FeedController::class, fn(Container $c) => new FeedController(
     $c->get(FeedClient::class),
+    $c->get(ProfileClient::class),
+    $c->get(ConnectionClient::class),
+));
+$container->set(SearchController::class, fn(Container $c) => new SearchController(
+    $c->get(SearchClient::class),
     $c->get(ProfileClient::class),
     $c->get(ConnectionClient::class),
 ));
