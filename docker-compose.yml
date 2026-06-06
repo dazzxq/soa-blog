@@ -10,9 +10,11 @@ services:
     image: mariadb:10.11
     environment:
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      USER_SVC_DB_PASS: ${USER_SVC_DB_PASS}
-      POST_SVC_DB_PASS: ${POST_SVC_DB_PASS}
-      COMMENT_SVC_DB_PASS: ${COMMENT_SVC_DB_PASS}
+      PROFILE_SVC_DB_PASS: ${PROFILE_SVC_DB_PASS}
+      CONNECTION_SVC_DB_PASS: ${CONNECTION_SVC_DB_PASS}
+      FEED_SVC_DB_PASS: ${FEED_SVC_DB_PASS}
+      SEARCH_SVC_DB_PASS: ${SEARCH_SVC_DB_PASS}
+      NOTIFICATION_SVC_DB_PASS: ${NOTIFICATION_SVC_DB_PASS}
     volumes:
       - mariadb_data:/var/lib/mysql
       - ./db:/docker-entrypoint-initdb.d:ro
@@ -25,39 +27,65 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-  user-service:
-    build: ./services/user-service
+  profile-service:
+    build: ./services/profile-service
     environment:
       DB_HOST: mariadb
-      DB_NAME: blog_users
-      DB_USER: user_svc
-      DB_PASS: ${USER_SVC_DB_PASS}
+      DB_NAME: proconnect_profile
+      DB_USER: profile_svc
+      DB_PASS: ${PROFILE_SVC_DB_PASS}
     networks: [blog-net]
     depends_on:
       mariadb: { condition: service_healthy }
     healthcheck: *svc-healthcheck
     restart: unless-stopped
 
-  post-service:
-    build: ./services/post-service
+  connection-service:
+    build: ./services/connection-service
     environment:
       DB_HOST: mariadb
-      DB_NAME: blog_posts
-      DB_USER: post_svc
-      DB_PASS: ${POST_SVC_DB_PASS}
+      DB_NAME: proconnect_connection
+      DB_USER: connection_svc
+      DB_PASS: ${CONNECTION_SVC_DB_PASS}
     networks: [blog-net]
     depends_on:
       mariadb: { condition: service_healthy }
     healthcheck: *svc-healthcheck
     restart: unless-stopped
 
-  comment-service:
-    build: ./services/comment-service
+  feed-service:
+    build: ./services/feed-service
     environment:
       DB_HOST: mariadb
-      DB_NAME: blog_comments
-      DB_USER: comment_svc
-      DB_PASS: ${COMMENT_SVC_DB_PASS}
+      DB_NAME: proconnect_feed
+      DB_USER: feed_svc
+      DB_PASS: ${FEED_SVC_DB_PASS}
+    networks: [blog-net]
+    depends_on:
+      mariadb: { condition: service_healthy }
+    healthcheck: *svc-healthcheck
+    restart: unless-stopped
+
+  search-service:
+    build: ./services/search-service
+    environment:
+      DB_HOST: mariadb
+      DB_NAME: proconnect_search
+      DB_USER: search_svc
+      DB_PASS: ${SEARCH_SVC_DB_PASS}
+    networks: [blog-net]
+    depends_on:
+      mariadb: { condition: service_healthy }
+    healthcheck: *svc-healthcheck
+    restart: unless-stopped
+
+  notification-service:
+    build: ./services/notification-service
+    environment:
+      DB_HOST: mariadb
+      DB_NAME: proconnect_notification
+      DB_USER: notification_svc
+      DB_PASS: ${NOTIFICATION_SVC_DB_PASS}
     networks: [blog-net]
     depends_on:
       mariadb: { condition: service_healthy }
@@ -68,17 +96,21 @@ services:
     build: ./gateway
     environment:
       JWT_SECRET: ${JWT_SECRET}
-      USER_SERVICE_URL: http://user-service:80
-      POST_SERVICE_URL: http://post-service:80
-      COMMENT_SERVICE_URL: http://comment-service:80
+      PROFILE_SERVICE_URL: http://profile-service:80
+      CONNECTION_SERVICE_URL: http://connection-service:80
+      FEED_SERVICE_URL: http://feed-service:80
+      SEARCH_SERVICE_URL: http://search-service:80
+      NOTIFICATION_SERVICE_URL: http://notification-service:80
       RATE_LIMIT_PER_MIN: ${RATE_LIMIT_PER_MIN:-120}
     ports:
       - "127.0.0.1:8000:80"
     networks: [blog-net]
     depends_on:
-      user-service:    { condition: service_healthy }
-      post-service:    { condition: service_healthy }
-      comment-service: { condition: service_healthy }
+      profile-service:      { condition: service_healthy }
+      connection-service:   { condition: service_healthy }
+      feed-service:         { condition: service_healthy }
+      search-service:       { condition: service_healthy }
+      notification-service: { condition: service_healthy }
     healthcheck:
       test: ["CMD", "wget", "-q", "-O-", "http://localhost:80/api/health"]
       interval: 10s
