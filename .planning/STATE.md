@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-06-06T22:20:07.774Z"
+stopped_at: Completed 05-03-PLAN.md
+last_updated: "2026-06-06T22:23:22.394Z"
 last_activity: 2026-06-06
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 28
-  completed_plans: 23
-  percent: 82
+  completed_plans: 24
+  percent: 86
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-06-06)
 ## Current Position
 
 Phase: 5 (Tìm kiếm & Thông báo) — EXECUTING
-Plan: 3 of 7
+Plan: 4 of 7
 Status: Ready to execute
 Last activity: 2026-06-06
 
@@ -75,6 +75,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-news-feed P04 | 4min | 3 tasks | 2 files |
 | Phase 05-t-m-ki-m-th-ng-b-o P01 | 6 min | 3 tasks | 5 files |
 | Phase 05-t-m-ki-m-th-ng-b-o P02 | 1 min | 2 tasks | 2 files |
+| Phase 05-t-m-ki-m-th-ng-b-o P03 | 1 min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -121,6 +122,7 @@ Recent decisions affecting current work:
 - [Phase 05-t-m-ki-m-th-ng-b-o]: 05-01: phase-5 migration is a single multi-USE plain .sql spanning proconnect_search (search_index incl avatar_url) + proconnect_notification (notifications), applied in deploy.sh with NO DB arg (file switches DBs via USE, mirroring migrate-phase1.sql.tmpl); idempotent CREATE IF NOT EXISTS + guarded seed (5 search rows, duyet findable by name + PHP skill; 2 unread duyet notifications), zero DROP/ALTER.
 - [Phase 05-t-m-ki-m-th-ng-b-o]: 05-01: smoke-phase5.sh non-destructive (trap restore EXIT + pre-clean leftover demo->tai request) covers SEARCH-01/02 + NOTIF-01/02/03 + PII guard; never deletes demo seed; runtime run deferred to VPS/CI Plan 07 (Docker absent locally). Fresh-volume schema files keep USE (deviation: plan said no-USE, would mis-target DB on fresh init).
 - [Phase 05-t-m-ki-m-th-ng-b-o]: 05-02: search-service SearchController is X-User-Id/JWT-free (D-07); search() binds the same LIKE term under 4 distinct names (:t1..:t4, native prepared) over display_name/username/headline/skills_text with user %/_ neutralized escape-char-first + ESCAPE '\\' on ALL FOUR predicates (defense-in-depth over binding), LIMIT bound PARAM_INT, empty-q short-circuit + 100-char cap; upsert() = ON DUPLICATE KEY UPDATE on user_id PK (idempotent reindex sink). TDD task verified statically (php -l + grep, no test framework); runtime deferred to VPS smoke Plan 07.
+- [Phase 05-t-m-ki-m-th-ng-b-o]: 05-03: notification-service NotificationController clones connection-service doctrine — recipient-scoped (WHERE user_id), X-User-Id<=0->401 guard BEFORE any query on index/markRead/markAllRead (no masked 404), markRead existence via scoped SELECT not rowCount (already-read->200), create trusts gateway body (D-07, no host port). No JWT. routes: /read-all registered before {id}/read. Verified statically (php -l + grep, no test framework); runtime deferred to VPS smoke Plan 07.
 
 ### Pending Todos
 
@@ -139,6 +141,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-06T22:20:01.219Z
-Stopped at: Completed 05-02-PLAN.md
+Last session: 2026-06-06T22:23:14.360Z
+Stopped at: Completed 05-03-PLAN.md
 Resume file: None

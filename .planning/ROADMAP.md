@@ -107,7 +107,7 @@ Plans:
 Plans:
 - [x] 05-01-PLAN.md — Wave 0: db/05-migrate-phase5.sql (search_index + notifications, idempotent, demo seed) + smoke-phase5.sh, wired into deploy.sh
 - [x] 05-02-PLAN.md — Wave 1: search-service build-out (SearchController LIKE search + upsert, routes)
-- [ ] 05-03-PLAN.md — Wave 1: notification-service build-out (NotificationController recipient-scoped CRUD + unread_count + mark-read, routes)
+- [x] 05-03-PLAN.md — Wave 1: notification-service build-out (NotificationController recipient-scoped CRUD + unread_count + mark-read, routes)
 - [ ] 05-04-PLAN.md — Wave 2: gateway search compose (connection_status via settle + email allowlist + degrade) + reindex pull + SearchClient + routes/DI
 - [ ] 05-05-PLAN.md — Wave 3: gateway notifications (list + actor enrich + unread_count, mark-read) + D-05 best-effort notify hooks in ConnectionsController/FeedController + NotificationClient + routes/DI
 - [ ] 05-06-PLAN.md — Wave 4: UI search.html (quick-connect cards) + notification bell (poll ~15s, mark-read) on feed/connections/index (autonomous: false)
