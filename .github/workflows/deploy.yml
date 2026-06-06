@@ -47,7 +47,7 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_deploy -o StrictHostKeyChecking=yes \
               "${VPS_USER}@${VPS_HOST}" \
-              "cd ${VPS_DIR} && PROJECT_DIR=${VPS_DIR} ./scripts/deploy.sh"
+              "cd ${VPS_DIR} && git pull --ff-only && PROJECT_DIR=${VPS_DIR} ./scripts/deploy.sh"
 
       - name: Verify public health
         run: |
@@ -55,10 +55,16 @@ jobs:
           for i in 1 2 3 4 5; do
             if curl -sf https://soa.duyet.vn/api/health -o /tmp/health.json; then
               cat /tmp/health.json
-              exit 0
+              # Require the gateway fan-out to report all 5 services ok, not just
+              # any 200 — a degraded gateway (a service down) must fail CI (D-04/D-10).
+              if grep -q '"status":"ok"' /tmp/health.json; then
+                exit 0
+              fi
+              echo "attempt $i: health 200 but status not ok (degraded) — sleeping 10s"
+            else
+              echo "attempt $i failed — sleeping 10s"
             fi
-            echo "attempt $i failed — sleeping 10s"
             sleep 10
           done
-          echo "FATAL: public health endpoint never returned 200"
+          echo "FATAL: public health endpoint never returned 200 with status ok"
           exit 1
