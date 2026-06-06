@@ -4,9 +4,11 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Json;
-use App\Services\CommentClient;
-use App\Services\PostClient;
-use App\Services\UserClient;
+use App\Services\ConnectionClient;
+use App\Services\FeedClient;
+use App\Services\NotificationClient;
+use App\Services\ProfileClient;
+use App\Services\SearchClient;
 use GuzzleHttp\Promise\Utils;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -14,20 +16,28 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 final class HealthController
 {
     public function __construct(
-        private UserClient $users,
-        private PostClient $posts,
-        private CommentClient $comments,
+        private ProfileClient $profile,
+        private ConnectionClient $connection,
+        private FeedClient $feed,
+        private SearchClient $search,
+        private NotificationClient $notification,
     ) {}
 
     /**
-     * Composition: ping all 3 backends in parallel.
+     * Composition (D-10): ping all 5 backends in parallel. 200 iff all ok.
+     *
+     * Each `services.<svc>` value carries the downstream /health BODY verbatim
+     * (status, db, rid, ts) — NOT a reduced summary — so the stub-echoed `rid`
+     * (D-12 receipt proof) is surfaced for the smoke test (ISSUE-5).
      */
     public function check(Request $req, Response $res): Response
     {
         $promises = [
-            'user'    => $this->users->healthAsync(),
-            'post'    => $this->posts->healthAsync(),
-            'comment' => $this->comments->healthAsync(),
+            'profile'      => $this->profile->healthAsync(),
+            'connection'   => $this->connection->healthAsync(),
+            'feed'         => $this->feed->healthAsync(),
+            'search'       => $this->search->healthAsync(),
+            'notification' => $this->notification->healthAsync(),
         ];
         $settled = Utils::settle($promises)->wait();
 
@@ -35,8 +45,8 @@ final class HealthController
         $allOk = true;
         foreach ($settled as $name => $r) {
             if ($r['state'] === 'fulfilled' && $r['value']->getStatusCode() === 200) {
-                $body = json_decode((string) $r['value']->getBody(), true) ?: [];
-                $services[$name] = ['status' => 'ok', 'db' => $body['db'] ?? 'unknown'];
+                $body = json_decode((string) $r['value']->getBody(), true);
+                $services[$name] = is_array($body) ? $body : ['status' => 'ok'];
             } else {
                 $allOk = false;
                 $reason = $r['state'] === 'rejected'

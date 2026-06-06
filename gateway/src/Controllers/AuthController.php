@@ -5,7 +5,7 @@ namespace App\Controllers;
 
 use App\DomainError;
 use App\Json;
-use App\Services\UserClient;
+use App\Services\ProfileClient;
 use Firebase\JWT\JWT;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -13,7 +13,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 final class AuthController
 {
     public function __construct(
-        private UserClient $users,
+        private ProfileClient $users,
         private string $secret,
         private int $ttlSeconds = 86400,
     ) {}
