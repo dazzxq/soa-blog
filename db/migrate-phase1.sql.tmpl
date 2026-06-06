@@ -1,0 +1,98 @@
+-- =============================================================================
+-- Phase 1 live-volume cutover: blog_* -> proconnect_*  (D-01, D-06, D-09, D-13)
+-- =============================================================================
+-- WHY THIS FILE EXISTS (RESEARCH Pitfall 1):
+--   db/00-init.sh + db/*.sql run ONLY on a FRESH MariaDB volume. The live VPS
+--   volume already exists, so the init scripts silently no-op there. This
+--   template performs the equivalent cutover against the ALREADY-RUNNING
+--   mariadb container, in place, WITHOUT deleting the volume.
+--
+-- HOW TO APPLY (wired into deploy by Plan 06):
+--   set -a; source .env; \
+--   envsubst < db/migrate-phase1.sql.tmpl \
+--     | docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD"
+--   The live .env must already carry the 5 *_SVC_DB_PASS values (Plan 06 flags
+--   this manual prerequisite). ALWAYS take a `mysqldump` backup first — Plan 06
+--   does this before applying (T-1-08 mitigation).
+--
+-- WHY THE NAME ENDS IN .sql.tmpl (ISSUE-7, CRITICAL):
+--   This file contains envsubst placeholders (${PROFILE_SVC_DB_PASS}, ...). If
+--   it were named *.sql it would be matched by MariaDB's initdb glob
+--   (*.sql / *.sql.gz / *.sh) and AUTO-RUN on a fresh volume WITHOUT envsubst,
+--   setting service DB-user passwords to the LITERAL string "${PROFILE_SVC_DB_PASS}"
+--   and breaking auth on every fresh environment. The initdb glob does NOT match
+--   *.sql.tmpl, so this template is never auto-run on fresh init. It is applied
+--   ONLY by Plan 06's deploy step, through envsubst, against the running container.
+--
+-- SAFETY:
+--   - Idempotent: safe to run repeatedly (IF EXISTS / IF NOT EXISTS / INSERT IGNORE).
+--   - Destructive ops are scoped to blog_* ONLY — never touches mysql,
+--     information_schema, performance_schema, sys, or any other VPS schema
+--     (T-1-08 / T-1-11 mitigation).
+--   - Grants are scoped to each service's own proconnect_<svc>.* schema, never
+--     *.* (D-13, T-1-09 mitigation).
+--   - DB-user passwords are ${VAR} placeholders, never literals (T-1-10).
+-- =============================================================================
+
+-- 1) Wipe retired blog_* schemas (D-06). Scoped to blog_* only — NEVER system schemas.
+DROP DATABASE IF EXISTS blog_users;
+DROP DATABASE IF EXISTS blog_posts;
+DROP DATABASE IF EXISTS blog_comments;
+
+-- 2) Create the 5 proconnect_* schemas (same as db/00-init.sh).
+CREATE DATABASE IF NOT EXISTS proconnect_profile      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS proconnect_connection   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS proconnect_feed         CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS proconnect_search       CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS proconnect_notification CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- 3) Create the 5 scoped service users. CREATE handles fresh users; the paired
+--    ALTER makes the password update idempotent if the user already existed.
+--    Passwords are envsubst placeholders — substituted at apply time, never committed.
+CREATE USER IF NOT EXISTS 'profile_svc'@'%'      IDENTIFIED BY '${PROFILE_SVC_DB_PASS}';
+ALTER  USER           'profile_svc'@'%'          IDENTIFIED BY '${PROFILE_SVC_DB_PASS}';
+CREATE USER IF NOT EXISTS 'connection_svc'@'%'   IDENTIFIED BY '${CONNECTION_SVC_DB_PASS}';
+ALTER  USER           'connection_svc'@'%'       IDENTIFIED BY '${CONNECTION_SVC_DB_PASS}';
+CREATE USER IF NOT EXISTS 'feed_svc'@'%'         IDENTIFIED BY '${FEED_SVC_DB_PASS}';
+ALTER  USER           'feed_svc'@'%'             IDENTIFIED BY '${FEED_SVC_DB_PASS}';
+CREATE USER IF NOT EXISTS 'search_svc'@'%'       IDENTIFIED BY '${SEARCH_SVC_DB_PASS}';
+ALTER  USER           'search_svc'@'%'           IDENTIFIED BY '${SEARCH_SVC_DB_PASS}';
+CREATE USER IF NOT EXISTS 'notification_svc'@'%' IDENTIFIED BY '${NOTIFICATION_SVC_DB_PASS}';
+ALTER  USER           'notification_svc'@'%'     IDENTIFIED BY '${NOTIFICATION_SVC_DB_PASS}';
+
+-- 4) Scoped grants — own schema only (D-13). Never *.*.
+GRANT ALL PRIVILEGES ON proconnect_profile.*      TO 'profile_svc'@'%';
+GRANT ALL PRIVILEGES ON proconnect_connection.*   TO 'connection_svc'@'%';
+GRANT ALL PRIVILEGES ON proconnect_feed.*         TO 'feed_svc'@'%';
+GRANT ALL PRIVILEGES ON proconnect_search.*       TO 'search_svc'@'%';
+GRANT ALL PRIVILEGES ON proconnect_notification.* TO 'notification_svc'@'%';
+
+FLUSH PRIVILEGES;
+
+-- 5) Profile users table (same definition as db/01-schema-profile.sql).
+--    The 4 stub schemas stay EMPTY — no business tables (D-09).
+USE proconnect_profile;
+
+CREATE TABLE IF NOT EXISTS users (
+  id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(64) NOT NULL UNIQUE,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  display_name VARCHAR(128) NOT NULL,
+  avatar_url VARCHAR(512) DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_username (username),
+  INDEX idx_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 6) Reseed the 5 demo accounts (idempotent via INSERT IGNORE).
+--    Shared password "demo@123**" (bcrypt cost 12). The bcrypt hash below is the
+--    demo-LOGIN password hash (already committed in db/99-seed.sql, NOT a DB
+--    credential / not a secret) — kept byte-for-byte identical to 99-seed.sql.
+INSERT IGNORE INTO users (id, username, email, password_hash, display_name, avatar_url) VALUES
+  (1, 'demo',  'demo@duyet.vn',  '$2y$12$ALzJ3z471uDwTiudwJSMje8khpX0NQHKPTpoXRI9AhdIzFH6B5RaS', 'Tài khoản demo',     NULL),
+  (2, 'duyet', 'duyet@duyet.vn', '$2y$12$ALzJ3z471uDwTiudwJSMje8khpX0NQHKPTpoXRI9AhdIzFH6B5RaS', 'Nguyễn Thế Duyệt',   NULL),
+  (3, 'long',  'long@duyet.vn',  '$2y$12$ALzJ3z471uDwTiudwJSMje8khpX0NQHKPTpoXRI9AhdIzFH6B5RaS', 'Đinh Ngọc Long',     NULL),
+  (4, 'diep',  'diep@duyet.vn',  '$2y$12$ALzJ3z471uDwTiudwJSMje8khpX0NQHKPTpoXRI9AhdIzFH6B5RaS', 'Vũ Duy Điệp',        NULL),
+  (5, 'tai',   'tai@duyet.vn',   '$2y$12$ALzJ3z471uDwTiudwJSMje8khpX0NQHKPTpoXRI9AhdIzFH6B5RaS', 'Tạ Ngọc Tài',        NULL);
