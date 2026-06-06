@@ -195,4 +195,139 @@ final class ConnectionController
 
         return Json::ok($res, ['deleted' => true]);
     }
+
+    /**
+     * GET /connections?user= (CONN-03) — accepted edges touching the user.
+     *
+     * Returns the OTHER party's id (+ status + when-since) for every accepted
+     * edge. The gateway enriches user_id → profile basics; connection-service
+     * returns NO profile data (T-03-09).
+     */
+    public function listAccepted(Request $req, Response $res): Response
+    {
+        $user = (int) ($req->getQueryParams()['user'] ?? 0);
+
+        $stmt = Db::pdo()->prepare(
+            'SELECT IF(requester_id = :u1, addressee_id, requester_id) AS user_id,
+                    status, updated_at
+               FROM connections
+              WHERE status = :st AND (requester_id = :u2 OR addressee_id = :u3)
+              ORDER BY updated_at DESC'
+        );
+        $stmt->execute([':u1' => $user, ':st' => 'accepted', ':u2' => $user, ':u3' => $user]);
+
+        $rows = [];
+        foreach ($stmt->fetchAll() as $r) {
+            $rows[] = [
+                'user_id' => (int) $r['user_id'],
+                'status'  => $r['status'],
+            ];
+        }
+
+        return Json::list($res, $rows, []);
+    }
+
+    /**
+     * GET /connections/pending?user=&direction=incoming|outgoing (CONN-04).
+     *
+     * incoming → pending rows where the user is the addressee (returns the
+     * requester). outgoing → pending rows where the user is the requester
+     * (returns the addressee). Includes request_id (the gateway needs it for
+     * accept/reject/cancel) and a direction tag. Default direction: incoming.
+     */
+    public function listPending(Request $req, Response $res): Response
+    {
+        $q         = $req->getQueryParams();
+        $user      = (int) ($q['user'] ?? 0);
+        $direction = ($q['direction'] ?? 'incoming') === 'outgoing' ? 'outgoing' : 'incoming';
+
+        if ($direction === 'incoming') {
+            // user is the addressee; the OTHER party is the requester.
+            $stmt = Db::pdo()->prepare(
+                "SELECT id AS request_id, requester_id AS user_id, status
+                   FROM connections
+                  WHERE status='pending' AND addressee_id=:u
+                  ORDER BY created_at DESC"
+            );
+        } else {
+            // user is the requester; the OTHER party is the addressee.
+            $stmt = Db::pdo()->prepare(
+                "SELECT id AS request_id, addressee_id AS user_id, status
+                   FROM connections
+                  WHERE status='pending' AND requester_id=:u
+                  ORDER BY created_at DESC"
+            );
+        }
+        $stmt->execute([':u' => $user]);
+
+        $rows = [];
+        foreach ($stmt->fetchAll() as $r) {
+            $rows[] = [
+                'request_id' => (int) $r['request_id'],
+                'user_id'    => (int) $r['user_id'],
+                'direction'  => $direction,
+                'status'     => $r['status'],
+            ];
+        }
+
+        return Json::list($res, $rows, ['direction' => $direction]);
+    }
+
+    /**
+     * GET /connections/suggestions?user=&candidates=&limit= (CONN-06).
+     *
+     * connection-service can ONLY compute the exclusion set (self + all edged
+     * users) — it cannot enumerate all users (Pitfall 6 / Open Q1). The GATEWAY
+     * supplies the candidate universe (comma-separated ids from profile-service
+     * GET /users). Suggestion set = candidates MINUS edged users MINUS self,
+     * capped to limit (default 10). With no candidates → empty list. Returns
+     * ids only; the gateway enriches.
+     */
+    public function suggestions(Request $req, Response $res): Response
+    {
+        $q     = $req->getQueryParams();
+        $user  = (int) ($q['user'] ?? 0);
+        $limit = (int) ($q['limit'] ?? 10);
+        if ($limit <= 0 || $limit > 50) {
+            $limit = 10;
+        }
+
+        // Parse the gateway-supplied candidate ids.
+        $candidates = [];
+        foreach (explode(',', (string) ($q['candidates'] ?? '')) as $c) {
+            $cid = (int) trim($c);
+            if ($cid > 0) {
+                $candidates[$cid] = true;
+            }
+        }
+        if ($candidates === []) {
+            // The gateway always supplies candidates; nothing to suggest otherwise.
+            return Json::list($res, [], []);
+        }
+
+        // The viewer's edge set (any direction, any status) — the exclusion set.
+        $stmt = Db::pdo()->prepare(
+            'SELECT IF(requester_id = :u1, addressee_id, requester_id) AS uid
+               FROM connections
+              WHERE requester_id = :u2 OR addressee_id = :u3'
+        );
+        $stmt->execute([':u1' => $user, ':u2' => $user, ':u3' => $user]);
+        $edged = [];
+        foreach ($stmt->fetchAll() as $r) {
+            $edged[(int) $r['uid']] = true;
+        }
+
+        $rows = [];
+        foreach (array_keys($candidates) as $cid) {
+            if ($cid === $user || isset($edged[$cid])) {
+                continue;
+            }
+            $rows[] = ['user_id' => $cid];
+            if (count($rows) >= $limit) {
+                break;
+            }
+        }
+
+        return Json::list($res, $rows, []);
+    }
 }
