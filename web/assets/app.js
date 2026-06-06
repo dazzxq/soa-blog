@@ -118,4 +118,45 @@
       },
     };
   };
+
+  // ---------- Notification bell (Phase 5, D-06/D-10) ----------
+  // Navbar dropdown declared as <div x-data="notificationBell()" x-init="start()">.
+  // Polls GET /api/notifications every ~15s for the unread badge; mark-one /
+  // mark-all-read via POST. Defined ONCE here so all pages reuse it (no inline
+  // duplication). Renders ONLY via x-text (XSS-safe, T-05-21).
+  window.notificationBell = function () {
+    return {
+      open: false,
+      items: [],
+      unread: 0,
+      timer: null,
+      async load() {
+        if (!auth.isLoggedIn()) return;
+        try {
+          const r = await api.get('/notifications');
+          this.items = r.data || [];
+          this.unread = (r.meta && r.meta.unread_count) || 0;
+        } catch (e) { /* degrade silently — keep last badge */ }
+      },
+      start() {
+        this.load();
+        this.timer = setInterval(() => this.load(), 15000); // ~15s (D-06)
+      },
+      async markOne(id) {
+        try { await api.post('/notifications/' + id + '/read'); } catch (e) { /* swallow */ }
+        this.load();
+      },
+      async markAll() {
+        try { await api.post('/notifications/read-all'); } catch (e) { /* swallow */ }
+        this.load();
+      },
+      message(n) {
+        const who = (n.actor && n.actor.display_name) || 'Ai đó';
+        if (n.type === 'invite')   return who + ' đã gửi cho bạn lời mời kết nối';
+        if (n.type === 'reaction') return who + ' đã bày tỏ cảm xúc về bài viết của bạn';
+        if (n.type === 'comment')  return who + ' đã bình luận về bài viết của bạn';
+        return who + ' có hoạt động mới';
+      },
+    };
+  };
 })();
