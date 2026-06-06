@@ -37,7 +37,7 @@ Plans:
 - [x] 01-02-PLAN.md — Wave 1: git mv user-service→profile-service + ProfileClient
 - [ ] 01-03-PLAN.md — Wave 1: 4 stub services (connection/feed/search/notification) + 4 gateway clients
 - [ ] 01-04-PLAN.md — Wave 2: gateway re-wire (DI/routes/5-way health/X-Request-Id) + 8-container compose
-- [ ] 01-05-PLAN.md — Wave 1: DB provisioning (5 proconnect_* schemas + scoped users + reseed + idempotent migration)
+- [x] 01-05-PLAN.md — Wave 1: DB provisioning (5 proconnect_* schemas + scoped users + reseed + idempotent migration)
 - [ ] 01-06-PLAN.md — Wave 3: CI/deploy + live-VPS cutover (autonomous: false)
 
 ### Phase 2: Hồ sơ nghề nghiệp
