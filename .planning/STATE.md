@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-06-06T21:14:40.551Z"
+stopped_at: Completed 04-03-PLAN.md
+last_updated: "2026-06-06T21:19:38.096Z"
 last_activity: 2026-06-06
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 21
-  completed_plans: 18
-  percent: 86
+  completed_plans: 19
+  percent: 90
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-06-06)
 ## Current Position
 
 Phase: 4 (News Feed) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-06-06
 
@@ -70,6 +70,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03-k-t-n-i-social-graph P04 | 2min | 2 tasks | 3 files |
 | Phase 04 P01 | 3 min | 3 tasks | 4 files |
 | Phase 04-news-feed P02 | 3min | 2 tasks | 3 files |
+| Phase 04 P03 | 3min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -110,6 +111,8 @@ Recent decisions affecting current work:
 - [Phase 04]: 04-01: demo seed post 1 carries an ASYMMETRIC 2 reactions + 1 comment (the fan-trap canary) so smoke-phase4.sh's EXACT-count assert (reaction_count==2 AND comment_count==1) catches a double-JOIN cross-product bug a symmetric 1/1 post would mask; repost = content='' + repost_of set (D-04).
 - [Phase 04]: 04-01: smoke-phase4.sh is non-destructive (trap restore EXIT before any write, cleans only script-created posts/comments, never the demo-seed fixtures); runtime run deferred to VPS/CI Plan 05 (Docker absent locally).
 - [Phase 04-news-feed]: 04-02: timeline/batch/find share one selectColumns helper; counts are correlated scalar subqueries (no double-JOIN fan-trap), positional ? for IN-list+viewer+limit, native prepared; reactions upsert via ON DUPLICATE KEY UPDATE; delete cascades reactions->comments->posts; comment post id from route path + LOCAL SELECT 1 FROM posts invariant; all identity from X-User-Id, no JWT in feed-service.
+- [Phase 04]: 04-03: /api/feed UNION-BATCH composition: resolve repost originals (Utils::settle, no N+1) THEN ONE ProfileClient::batch over {post-authors ∪ original-authors} (FEED-UNION-BATCH marker, exactly-one ->batch in feed()); fan-out is sequential by construction, ≤2 round trips after the timeline spine.
+- [Phase 04]: 04-03: every author card (post/original/comment) email-allowlisted via array_intersect_key to {id,username,display_name,avatar_url}; no 'email' literal in FeedController. feed-service is the only hard dep — connections/reposts/profiles failures degrade to meta.degraded + null, never 500. Mutations are thin Json::raw passthrough mapping JWT me() -> X-User-Id (invariants live in feed-service).
 
 ### Pending Todos
 
@@ -128,6 +131,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-06T21:14:34.241Z
-Stopped at: Completed 04-02-PLAN.md
+Last session: 2026-06-06T21:19:30.479Z
+Stopped at: Completed 04-03-PLAN.md
 Resume file: None
