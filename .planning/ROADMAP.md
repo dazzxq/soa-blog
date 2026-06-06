@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Nền tảng & Gateway** - Refactor brownfield: `user-service`→`profile-service`, scaffold service/DB/route mới, giữ stack ≤ 9 container và site production sống (completed 2026-06-06)
 - [x] **Phase 2: Hồ sơ nghề nghiệp** - Profile đầy đủ (experience/education/skills) + endpoint composition profile tại gateway (completed 2026-06-06)
-- [ ] **Phase 3: Kết nối / Social Graph** - Connection-service (lời mời, danh sách, gợi ý) + invariant graph cross-service tại gateway
+- [x] **Phase 3: Kết nối / Social Graph** - Connection-service (lời mời, danh sách, gợi ý) + invariant graph cross-service tại gateway (completed 2026-06-06)
 - [ ] **Phase 4: News Feed** - Feed-service (bài, reaction, comment, repost) + composition feed ghép nhiều service
 - [ ] **Phase 5: Tìm kiếm & Thông báo** - Tìm người dùng (composition) + notification near-real-time qua polling
 - [ ] **Phase 6: Giao diện ProConnect** - Nhận diện thương hiệu navy #1e3a8a, layout 3 cột, navbar với badge, tiếng Việt có dấu
@@ -121,7 +121,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Nền tảng & Gateway | 6/6 | Complete    | 2026-06-06 |
 | 2. Hồ sơ nghề nghiệp | 5/5 | Complete    | 2026-06-06 |
-| 3. Kết nối / Social Graph | 0/5 | Not started | - |
+| 3. Kết nối / Social Graph | 4/5 | Complete    | 2026-06-06 |
 | 4. News Feed | 0/TBD | Not started | - |
 | 5. Tìm kiếm & Thông báo | 0/TBD | Not started | - |
 | 6. Giao diện ProConnect | 0/TBD | Not started | - |
