@@ -143,6 +143,16 @@ echo "[deploy] applying db/03-migrate-phase3.sql (additive)"
 docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" proconnect_connection < db/03-migrate-phase3.sql
 echo "[deploy] phase-3 additive migration applied"
 
+# 7d) PHASE-4 ADDITIVE MIGRATION (idempotent; RESEARCH Pitfall 1) -------------
+# Adds posts/reactions/comments + demo feed seed to the live proconnect_feed
+# volume. Non-destructive (CREATE IF NOT EXISTS + guarded seed), safe to re-run.
+# Plain .sql (no secret placeholders). No `|| true`: a migration failure must
+# surface and block deploy BEFORE full-topology up, so feed-service never boots
+# against missing posts/reactions/comments tables.
+echo "[deploy] applying db/04-migrate-phase4.sql (additive)"
+docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" proconnect_feed < db/04-migrate-phase4.sql
+echo "[deploy] phase-4 additive migration applied"
+
 # 8) FULL-TOPOLOGY UP (ISSUE-3 step 4) -----------------------------------------
 # NOW bring up the rest of the 8-container stack — the proconnect_* DBs/users
 # exist, so the 5 PHP services can boot healthy. --remove-orphans drops the
