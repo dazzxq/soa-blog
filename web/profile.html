@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProConnect — Hồ sơ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="/assets/app.js?v=558aeb6"></script>
+
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="/assets/styles.css?v1778837733" />
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+<nav x-data="navbar()" class="bg-white border-b">
+  <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+    <a href="/" class="font-bold text-lg">ProConnect</a>
+    <div class="flex items-center gap-3 text-sm">
+      <template x-if="isLoggedIn">
+        <span class="flex items-center gap-3">
+          <span class="subtle">Xin chào, <b x-text="user?.display_name || user?.username"></b></span>
+          <button @click="logout" class="text-red-600 hover:underline">Đăng xuất</button>
+        </span>
+      </template>
+      <template x-if="!isLoggedIn">
+        <span class="flex items-center gap-3">
+          <a href="/login.html" class="hover:underline">Đăng nhập</a>
+          <a href="/register.html" class="bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-700">Đăng ký</a>
+        </span>
+      </template>
+    </div>
+  </div>
+</nav>
+
+<main x-data="profilePage()" x-init="load()" class="max-w-3xl mx-auto px-4 py-6">
+
+  <template x-if="loading">
+    <p class="subtle">Đang tải hồ sơ…</p>
+  </template>
+
+  <template x-if="!loading && error">
+    <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded" x-text="error"></div>
+  </template>
+
+  <template x-if="!loading && !error && profile">
+    <div>
+
+      <!-- Thông báo suy giảm (degraded) — Phase 2: connection-service còn là stub -->
+      <template x-if="degraded">
+        <div class="bg-amber-50 border border-amber-200 text-amber-800 p-2 rounded text-sm mb-4">
+          Một số thông tin tạm thời không khả dụng.
+        </div>
+      </template>
+
+      <section class="bg-white border rounded-lg overflow-hidden mb-6">
+        <!-- Ảnh bìa -->
+        <div class="h-32 bg-slate-200">
+          <template x-if="profile.cover_url">
+            <img :src="profile.cover_url" alt="Ảnh bìa" class="w-full h-32 object-cover" />
+          </template>
+        </div>
+
+        <div class="px-6 pb-6">
+          <!-- Ảnh đại diện chồng lên ảnh bìa -->
+          <div class="flex items-end justify-between -mt-10">
+            <div class="w-20 h-20 rounded-full border-4 border-white bg-slate-300 overflow-hidden flex items-center justify-center text-xl font-bold text-slate-600">
+              <template x-if="profile.avatar_url">
+                <img :src="profile.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
+              </template>
+              <template x-if="!profile.avatar_url">
+                <span x-text="initials()"></span>
+              </template>
+            </div>
+            <template x-if="isOwner">
+              <a href="/profile-edit.html" class="text-sm border px-3 py-1.5 rounded hover:bg-slate-50">Chỉnh sửa hồ sơ</a>
+            </template>
+          </div>
+
+          <h1 class="text-2xl font-bold mt-3" x-text="profile.display_name || profile.username"></h1>
+
+          <template x-if="profile.headline">
+            <p class="text-slate-700" x-text="profile.headline"></p>
+          </template>
+          <template x-if="profile.location">
+            <p class="subtle text-sm" x-text="profile.location"></p>
+          </template>
+
+          <!-- Trạng thái kết nối -->
+          <div class="mt-2">
+            <template x-if="profile.connection_status === null">
+              <span class="text-xs text-slate-400">Đăng nhập để xem trạng thái kết nối</span>
+            </template>
+            <template x-if="profile.connection_status === 'none'">
+              <span class="inline-block text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">Chưa kết nối</span>
+            </template>
+            <template x-if="profile.connection_status && profile.connection_status !== 'none'">
+              <span class="inline-block text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded" x-text="profile.connection_status"></span>
+            </template>
+          </div>
+
+          <template x-if="profile.about">
+            <p class="mt-4 whitespace-pre-line text-slate-800" x-text="profile.about"></p>
+          </template>
+        </div>
+      </section>
+
+      <!-- Kinh nghiệm -->
+      <template x-if="profile.experience && profile.experience.length">
+        <section class="bg-white border rounded-lg p-6 mb-6">
+          <h2 class="text-lg font-semibold mb-3">Kinh nghiệm</h2>
+          <ul class="space-y-4">
+            <template x-for="ex in profile.experience" :key="ex.id">
+              <li class="border-l-2 border-slate-200 pl-3">
+                <p class="font-medium" x-text="ex.title"></p>
+                <p class="text-sm text-slate-700" x-text="ex.company"></p>
+                <p class="text-xs subtle" x-text="dateRange(ex.start_date, ex.end_date)"></p>
+                <template x-if="ex.description">
+                  <p class="text-sm mt-1 whitespace-pre-line" x-text="ex.description"></p>
+                </template>
+              </li>
+            </template>
+          </ul>
+        </section>
+      </template>
+
+      <!-- Học vấn -->
+      <template x-if="profile.education && profile.education.length">
+        <section class="bg-white border rounded-lg p-6 mb-6">
+          <h2 class="text-lg font-semibold mb-3">Học vấn</h2>
+          <ul class="space-y-4">
+            <template x-for="ed in profile.education" :key="ed.id">
+              <li class="border-l-2 border-slate-200 pl-3">
+                <p class="font-medium" x-text="ed.school"></p>
+                <p class="text-sm text-slate-700" x-text="[ed.degree, ed.field].filter(Boolean).join(' · ')"></p>
+                <p class="text-xs subtle" x-text="yearRange(ed.start_year, ed.end_year)"></p>
+              </li>
+            </template>
+          </ul>
+        </section>
+      </template>
+
+      <!-- Kỹ năng -->
+      <template x-if="profile.skills && profile.skills.length">
+        <section class="bg-white border rounded-lg p-6">
+          <h2 class="text-lg font-semibold mb-3">Kỹ năng</h2>
+          <div class="flex flex-wrap gap-2">
+            <template x-for="sk in profile.skills" :key="sk.id">
+              <span class="text-sm bg-slate-100 text-slate-700 px-3 py-1 rounded-full" x-text="sk.name"></span>
+            </template>
+          </div>
+        </section>
+      </template>
+
+    </div>
+  </template>
+</main>
+
+<script>
+function profilePage() {
+  return {
+    loading: true,
+    error: '',
+    profile: null,
+    degraded: false,
+    isOwner: false,
+
+    async load() {
+      try {
+        // Lấy id từ query string ?id=, nếu trống & đã đăng nhập thì dùng hồ sơ của chính mình.
+        let id = new URLSearchParams(location.search).get('id');
+        let myId = null;
+        if (auth.isLoggedIn()) {
+          try { myId = (await api.get('/me')).data.id; } catch (e) { if (e.status === 401) auth.logout(); }
+        }
+        if (!id) {
+          if (myId) { id = myId; }
+          else { this.error = 'Không có hồ sơ để hiển thị. Vui lòng đăng nhập hoặc cung cấp ?id='; this.loading = false; return; }
+        }
+        const r = await api.get('/profiles/' + id + '/full');
+        this.profile = r.data;
+        this.degraded = !!(r.meta && r.meta.degraded);
+        this.isOwner = !!(myId && this.profile && String(myId) === String(this.profile.id));
+      } catch (e) {
+        this.error = e.status === 404 ? 'Không tìm thấy hồ sơ.' : ('Không tải được hồ sơ: ' + e.message);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    initials() {
+      const n = (this.profile && (this.profile.display_name || this.profile.username)) || '?';
+      return n.trim().charAt(0).toUpperCase();
+    },
+
+    dateRange(start, end) {
+      const fmt = (d) => { if (!d) return ''; try { return new Date(d).toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit' }); } catch (_) { return d; } };
+      const s = fmt(start);
+      const e = end ? fmt(end) : 'Hiện tại';
+      return s ? (s + ' – ' + e) : '';
+    },
+
+    yearRange(start, end) {
+      if (!start && !end) return '';
+      return (start || '?') + ' – ' + (end || 'Hiện tại');
+    },
+  };
+}
+</script>
+</body>
+</html>
