@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-06-06T19:51:58.572Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-06-06T19:57:16.236Z"
 last_activity: 2026-06-06
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 16
-  completed_plans: 12
-  percent: 75
+  completed_plans: 13
+  percent: 81
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-06-06)
 ## Current Position
 
 Phase: 3 (Kết nối / Social Graph) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-06-06
 
@@ -64,6 +64,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02 P03 | 3min | 3 tasks | 7 files |
 | Phase 02-h-s-ngh-nghi-p P04 | 3min | 2 tasks | 6 files |
 | Phase 03 P01 | 3 min | 3 tasks | 4 files |
+| Phase 03 P02 | 2 min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,8 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-03: /api/profiles/me/* owner CRUD maps JWT user_id -> path id + X-User-Id (body user_id never trusted, no IDOR surface); updateBasic re-applies email/password_hash allowlist to success body since profile-service update() returns find() (SELECTs email)
 - [Phase 02-h-s-ngh-nghi-p]: 02-04: UI = two files (profile.html view via /full + profile-edit.html owner CRUD via /me/*), Alpine+Tailwind CDN, x-text only (no x-html, T-02-10), app.js cache-bust v=ph2-04 bumped on all 5 HTML; browser verify deferred to VPS Plan 05
 - [Phase 03]: connections uses STORED pair_lo/pair_hi + uq_pair to make opposite-direction invite race impossible (deterministic statusBetween)
+- [Phase 03]: reject(addressee)+cancel(requester) collapse to one pending-scoped DELETE (either party) — Codex-approved
+- [Phase 03]: single 23000 catch backstops both uq_conn_pair (same-dir dup) and uq_pair (opposite-dir race) → 409
 
 ### Pending Todos
 
@@ -112,6 +115,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-06T19:51:53.227Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-06-06T19:57:11.225Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None

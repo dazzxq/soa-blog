@@ -28,13 +28,13 @@ Requirements cho bản phát hành đầu của milestone ProConnect. Mỗi REQ 
 
 ### Kết nối / Social Graph (CONN)
 
-- [ ] **CONN-01**: Người dùng gửi lời mời kết nối tới người dùng khác
-- [ ] **CONN-02**: Người dùng chấp nhận hoặc từ chối lời mời kết nối đến
-- [ ] **CONN-03**: Người dùng xem danh sách kết nối của mình
-- [ ] **CONN-04**: Người dùng xem danh sách lời mời đang chờ (đã nhận / đã gửi)
-- [ ] **CONN-05**: Trên hồ sơ người khác hiển thị đúng trạng thái quan hệ (chưa kết nối / đã gửi lời mời / chờ phản hồi / đã kết nối)
-- [ ] **CONN-06**: Hệ thống gợi ý "Người bạn có thể biết" (gợi ý kết nối) cho người dùng
-- [ ] **CONN-07**: Gateway chặn invariant cross-service hợp lý cho graph (vd không gửi lời mời tới user không tồn tại → 404; không gửi trùng/khi đã kết nối → 409)
+- [x] **CONN-01**: Người dùng gửi lời mời kết nối tới người dùng khác
+- [x] **CONN-02**: Người dùng chấp nhận hoặc từ chối lời mời kết nối đến
+- [x] **CONN-03**: Người dùng xem danh sách kết nối của mình
+- [x] **CONN-04**: Người dùng xem danh sách lời mời đang chờ (đã nhận / đã gửi)
+- [x] **CONN-05**: Trên hồ sơ người khác hiển thị đúng trạng thái quan hệ (chưa kết nối / đã gửi lời mời / chờ phản hồi / đã kết nối)
+- [x] **CONN-06**: Hệ thống gợi ý "Người bạn có thể biết" (gợi ý kết nối) cho người dùng
+- [x] **CONN-07**: Gateway chặn invariant cross-service hợp lý cho graph (vd không gửi lời mời tới user không tồn tại → 404; không gửi trùng/khi đã kết nối → 409)
 
 ### News Feed (FEED)
 
@@ -111,13 +111,13 @@ Cập nhật bởi roadmapper sau khi tạo ROADMAP.md (2026-06-06).
 | PROF-06 | Phase 2 | Complete |
 | PROF-07 | Phase 2 | Complete |
 | UI-03 | Phase 2 | Complete |
-| CONN-01 | Phase 3 | Pending |
-| CONN-02 | Phase 3 | Pending |
-| CONN-03 | Phase 3 | Pending |
-| CONN-04 | Phase 3 | Pending |
-| CONN-05 | Phase 3 | Pending |
-| CONN-06 | Phase 3 | Pending |
-| CONN-07 | Phase 3 | Pending |
+| CONN-01 | Phase 3 | Complete |
+| CONN-02 | Phase 3 | Complete |
+| CONN-03 | Phase 3 | Complete |
+| CONN-04 | Phase 3 | Complete |
+| CONN-05 | Phase 3 | Complete |
+| CONN-06 | Phase 3 | Complete |
+| CONN-07 | Phase 3 | Complete |
 | FEED-01 | Phase 4 | Pending |
 | FEED-02 | Phase 4 | Pending |
 | FEED-03 | Phase 4 | Pending |

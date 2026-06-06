@@ -70,7 +70,7 @@ Plans:
 **Plans**: 5 plans
 Plans:
 - [x] 03-01-PLAN.md — Wave 0: db/03-migrate-phase3.sql (live additive connections table + demo seed) + smoke-phase3.sh, wired into deploy.sh
-- [ ] 03-02-PLAN.md — Wave 1: connection-service build-out (ConnectionController raw-PDO graph CRUD + viewer-relative status D-05, X-User-Id scoped) + routes
+- [x] 03-02-PLAN.md — Wave 1: connection-service build-out (ConnectionController raw-PDO graph CRUD + viewer-relative status D-05, X-User-Id scoped) + routes
 - [ ] 03-03-PLAN.md — Wave 2: gateway D-01 invariant (self/404/409/503-then-write) + enriched lists/suggestions (email allowlist) + ConnectionClient + routes/DI; lights up /full
 - [ ] 03-04-PLAN.md — Wave 3: UI connections.html + profile.html relationship badge/actions (Vietnamese, minimal)
 - [ ] 03-05-PLAN.md — Wave 4: live cutover (codex-impl-review + CI/CD deploy + live-volume migration + full smoke verify) (autonomous: false)
