@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 use App\Controllers\AggregateController;
 use App\Controllers\AuthController;
+use App\Controllers\ConnectionsController;
 use App\Controllers\HealthController;
 use App\Controllers\ProfilesController;
 use App\Middleware\JwtAuthMiddleware;
@@ -40,5 +41,19 @@ return static function (App $app): void {
 
         // Profiles (D-07: public, whitelisted to {id,username,display_name})
         $g->get ('/profiles/{id:[0-9]+}', [ProfilesController::class, 'show']);
+
+        // Connections / social graph (D-04, all me-relative, JWT REQUIRED).
+        // Literal segments (`requests`/`suggestions`/`status`) + numeric {id}/{userId}
+        // constraints keep FastRoute unambiguous (Pattern 6): DELETE /connections/{userId}
+        // can never match the literal `requests`, so DELETE /connections/requests/{id} is safe.
+        $g->post  ('/connections/requests',                    [ConnectionsController::class, 'sendRequest'])->add($jwtMw);
+        $g->post  ('/connections/requests/{id:[0-9]+}/accept', [ConnectionsController::class, 'accept'])->add($jwtMw);
+        $g->post  ('/connections/requests/{id:[0-9]+}/reject', [ConnectionsController::class, 'reject'])->add($jwtMw);
+        $g->delete('/connections/requests/{id:[0-9]+}',        [ConnectionsController::class, 'cancel'])->add($jwtMw);
+        $g->get   ('/connections/requests',                    [ConnectionsController::class, 'listPending'])->add($jwtMw);
+        $g->get   ('/connections/suggestions',                 [ConnectionsController::class, 'suggestions'])->add($jwtMw);
+        $g->get   ('/connections/status/{userId:[0-9]+}',      [ConnectionsController::class, 'statusVsMe'])->add($jwtMw);
+        $g->delete('/connections/{userId:[0-9]+}',             [ConnectionsController::class, 'remove'])->add($jwtMw);
+        $g->get   ('/connections',                             [ConnectionsController::class, 'listConnections'])->add($jwtMw);
     });
 };
