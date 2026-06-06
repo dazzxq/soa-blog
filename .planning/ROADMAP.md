@@ -49,7 +49,13 @@ Plans:
   2. Người dùng thêm/sửa/xoá được mục Kinh nghiệm, Học vấn, và thêm/xoá được Kỹ năng; thay đổi hiển thị ngay trên trang hồ sơ
   3. Người dùng mở trang profile công khai của người khác và thấy ảnh bìa + ảnh đại diện + các section experience/education/skills
   4. **(Gateway demonstrated)** Gateway có endpoint composition trả về hồ sơ đầy đủ (cơ bản + experience + education + skills + trạng thái kết nối với người xem) trong MỘT request, ghép từ nhiều nguồn, degrade an toàn khi một phần lỗi
-**Plans**: TBD
+**Plans**: 5 plans
+Plans:
+- [ ] 02-01-PLAN.md — Wave 0: db/02-migrate-phase2.sql (live additive migration) + smoke-phase2.sh, wired into deploy.sh
+- [ ] 02-02-PLAN.md — Wave 1: profile-service data layer (basic+exp+edu+skills CRUD, X-User-Id scoped) + /users/{id}/full assembly
+- [ ] 02-03-PLAN.md — Wave 2: gateway flagship /api/profiles/{id}/full composition (parallel settle+degrade) + OptionalJwtMiddleware + /me/* CRUD
+- [ ] 02-04-PLAN.md — Wave 3: UI profile.html (view via /full) + profile-edit.html (edit via /me/*) + index link (Vietnamese, minimal)
+- [ ] 02-05-PLAN.md — Wave 4: live cutover (CI/CD deploy + live-volume migration) + full smoke verify (autonomous: false)
 **UI hint**: yes
 
 ### Phase 3: Kết nối / Social Graph
@@ -108,7 +114,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Nền tảng & Gateway | 6/6 | Complete    | 2026-06-06 |
-| 2. Hồ sơ nghề nghiệp | 0/TBD | Not started | - |
+| 2. Hồ sơ nghề nghiệp | 0/5 | Not started | - |
 | 3. Kết nối / Social Graph | 0/TBD | Not started | - |
 | 4. News Feed | 0/TBD | Not started | - |
 | 5. Tìm kiếm & Thông báo | 0/TBD | Not started | - |
