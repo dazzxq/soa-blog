@@ -93,17 +93,54 @@ Hoãn sang phiên bản sau — theo dõi nhưng chưa vào roadmap.
 
 ## Traceability
 
-Cập nhật bởi roadmapper. (Trống cho tới khi tạo roadmap.)
+Cập nhật bởi roadmapper sau khi tạo ROADMAP.md (2026-06-06).
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| _(điền khi tạo roadmap)_ | — | Pending |
+| PLAT-01 | Phase 1 | Pending |
+| PLAT-02 | Phase 1 | Pending |
+| PLAT-03 | Phase 1 | Pending |
+| PLAT-04 | Phase 1 | Pending |
+| PLAT-05 | Phase 1 | Pending |
+| PLAT-06 | Phase 1 | Pending |
+| PROF-01 | Phase 1 | Pending |
+| PROF-02 | Phase 2 | Pending |
+| PROF-03 | Phase 2 | Pending |
+| PROF-04 | Phase 2 | Pending |
+| PROF-05 | Phase 2 | Pending |
+| PROF-06 | Phase 2 | Pending |
+| PROF-07 | Phase 2 | Pending |
+| UI-03 | Phase 2 | Pending |
+| CONN-01 | Phase 3 | Pending |
+| CONN-02 | Phase 3 | Pending |
+| CONN-03 | Phase 3 | Pending |
+| CONN-04 | Phase 3 | Pending |
+| CONN-05 | Phase 3 | Pending |
+| CONN-06 | Phase 3 | Pending |
+| CONN-07 | Phase 3 | Pending |
+| FEED-01 | Phase 4 | Pending |
+| FEED-02 | Phase 4 | Pending |
+| FEED-03 | Phase 4 | Pending |
+| FEED-04 | Phase 4 | Pending |
+| FEED-05 | Phase 4 | Pending |
+| FEED-06 | Phase 4 | Pending |
+| SEARCH-01 | Phase 5 | Pending |
+| SEARCH-02 | Phase 5 | Pending |
+| NOTIF-01 | Phase 5 | Pending |
+| NOTIF-02 | Phase 5 | Pending |
+| NOTIF-03 | Phase 5 | Pending |
+| UI-01 | Phase 6 | Pending |
+| UI-02 | Phase 6 | Pending |
+| UI-04 | Phase 6 | Pending |
+| UI-05 | Phase 6 | Pending |
 
 **Coverage:**
 - v1 requirements: 36 total
-- Mapped to phases: 0 (chưa tạo roadmap)
-- Unmapped: 36 ⚠️
+- Mapped to phases: 36 ✓
+- Unmapped: 0 ✓
+
+**Phân bổ theo phase:** Phase 1 = 7 (PLAT-01..06, PROF-01) · Phase 2 = 7 (PROF-02..07, UI-03) · Phase 3 = 7 (CONN-01..07) · Phase 4 = 6 (FEED-01..06) · Phase 5 = 5 (SEARCH-01..02, NOTIF-01..03) · Phase 6 = 4 (UI-01, UI-02, UI-04, UI-05)
 
 ---
 *Requirements defined: 2026-06-06*
-*Last updated: 2026-06-06 after initialization*
+*Last updated: 2026-06-06 after roadmap creation (traceability mapped, 36/36 covered)*
