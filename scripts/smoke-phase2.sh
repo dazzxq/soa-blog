@@ -96,27 +96,27 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 4. PROF-07 + degrade: connection-service là stub → meta.degraded:true + parts.
+# 4. PROF-07 composition: connection-service is LIVE post-Phase-3 → /full composes
+#    cleanly WITHOUT a forced degrade. (Phase 2 originally asserted degrade BECAUSE
+#    connection was a /health-only stub that 404'd; Phase 3 implemented /connections/status,
+#    so the connection part now succeeds and /full no longer degrades. Updated cross-phase.)
 # ---------------------------------------------------------------------------
 if echo "$body" | grep -q '"degraded":true'; then
-  pass "/full meta.degraded:true (D-02/D-03 — connection stub)"
+  fail "/full (anon) vẫn báo degraded:true dù connection-service đã live (Phase 3)"
 else
-  fail "/full thiếu meta.degraded:true (degrade không hoạt động)"
-fi
-if echo "$body" | grep -qE '"parts"|connection'; then
-  pass "/full degrade liệt kê phần lỗi (parts/connection)"
-else
-  fail "/full degrade không liệt kê phần lỗi"
+  pass "/full compose sạch, không degrade (connection-service live post-Phase-3)"
 fi
 
 # ---------------------------------------------------------------------------
-# 5. PROF-04/D-04 auth-aware: /full KÈM token → connection_status:"none" (không null).
+# 5. PROF-04/D-04 auth-aware: /full KÈM token → connection_status ≠ null. Viewing OWN
+#    profile now returns "self" (Phase 3 implemented real viewer-relative status; this was
+#    "none" under the Phase-2 stub). Proves the endpoint is auth-aware (not anonymous null).
 # ---------------------------------------------------------------------------
 authBody=$(curl -s -H "Authorization: Bearer $TOK" "$GW/api/profiles/2/full" || true)
-if echo "$authBody" | grep -q '"connection_status":"none"'; then
-  pass "/full (auth) connection_status:\"none\" (D-04 auth-aware)"
+if echo "$authBody" | grep -q '"connection_status":"self"'; then
+  pass "/full (auth, own profile) connection_status:\"self\" (D-04 auth-aware, Phase 3 real status)"
 else
-  fail "/full (auth) connection_status không phải \"none\" (D-04)"
+  fail "/full (auth) connection_status không phải \"self\" (D-04)"
 fi
 
 # ---------------------------------------------------------------------------
