@@ -6,6 +6,7 @@ require __DIR__ . '/../vendor/autoload.php';
 use App\Controllers\AggregateController;
 use App\Controllers\AuthController;
 use App\Controllers\ConnectionsController;
+use App\Controllers\FeedController;
 use App\Controllers\HealthController;
 use App\Controllers\ProfilesController;
 use App\JsonErrorHandler;
@@ -60,6 +61,11 @@ $container->set(AggregateController::class, fn(Container $c) => new AggregateCon
     $c->get(ConnectionClient::class),
 ));
 $container->set(ConnectionsController::class, fn(Container $c) => new ConnectionsController(
+    $c->get(ProfileClient::class),
+    $c->get(ConnectionClient::class),
+));
+$container->set(FeedController::class, fn(Container $c) => new FeedController(
+    $c->get(FeedClient::class),
     $c->get(ProfileClient::class),
     $c->get(ConnectionClient::class),
 ));

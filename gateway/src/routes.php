@@ -4,6 +4,7 @@ declare(strict_types=1);
 use App\Controllers\AggregateController;
 use App\Controllers\AuthController;
 use App\Controllers\ConnectionsController;
+use App\Controllers\FeedController;
 use App\Controllers\HealthController;
 use App\Controllers\ProfilesController;
 use App\Middleware\JwtAuthMiddleware;
@@ -55,5 +56,21 @@ return static function (App $app): void {
         $g->get   ('/connections/status/{userId:[0-9]+}',      [ConnectionsController::class, 'statusVsMe'])->add($jwtMw);
         $g->delete('/connections/{userId:[0-9]+}',             [ConnectionsController::class, 'remove'])->add($jwtMw);
         $g->get   ('/connections',                             [ConnectionsController::class, 'listConnections'])->add($jwtMw);
+
+        // News feed + posts/reactions/comments/repost (FEED-06 / D-06).
+        // /feed + all mutations require JWT (no anonymous feed; my_reaction is
+        // viewer-relative). The SUFFIXED /posts/{id}/repost|reactions|comments are
+        // registered BEFORE the bare /posts/{id} so FastRoute matches the literal
+        // suffixes first (mirrors the connection/feed-service route ordering).
+        $g->get   ('/feed',                        [FeedController::class, 'feed'])->add($jwtMw);
+        $g->post  ('/posts',                       [FeedController::class, 'createPost'])->add($jwtMw);
+        $g->post  ('/posts/{id:[0-9]+}/repost',    [FeedController::class, 'repost'])->add($jwtMw);
+        $g->post  ('/posts/{id:[0-9]+}/reactions', [FeedController::class, 'react'])->add($jwtMw);
+        $g->delete('/posts/{id:[0-9]+}/reactions', [FeedController::class, 'unreact'])->add($jwtMw);
+        $g->get   ('/posts/{id:[0-9]+}/comments',  [FeedController::class, 'listComments']);
+        $g->post  ('/posts/{id:[0-9]+}/comments',  [FeedController::class, 'addComment'])->add($jwtMw);
+        $g->delete('/posts/{id:[0-9]+}',           [FeedController::class, 'deletePost'])->add($jwtMw);
+        $g->get   ('/posts/{id:[0-9]+}',           [FeedController::class, 'showPost'])->add($optMw);
+        $g->delete('/comments/{id:[0-9]+}',        [FeedController::class, 'deleteComment'])->add($jwtMw);
     });
 };
