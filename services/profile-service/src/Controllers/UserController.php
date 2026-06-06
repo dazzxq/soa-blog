@@ -195,6 +195,38 @@ final class UserController
             $sets[] = 'avatar_url = :av';
             $params[':av'] = $url;
         }
+        if (array_key_exists('cover_url', $b)) {
+            $url = $b['cover_url'] === null ? null : trim((string) $b['cover_url']);
+            if ($url !== null && ($url === '' || strlen($url) > 512 || !filter_var($url, FILTER_VALIDATE_URL))) {
+                throw new DomainError(400, 'VALIDATION_FAILED', 'Cover URL không hợp lệ.');
+            }
+            $sets[] = 'cover_url = :cv';
+            $params[':cv'] = $url;
+        }
+        if (array_key_exists('headline', $b)) {
+            $headline = $b['headline'] === null ? null : trim((string) $b['headline']);
+            if ($headline !== null && mb_strlen($headline) > 160) {
+                throw new DomainError(400, 'VALIDATION_FAILED', 'Chức danh tối đa 160 ký tự.');
+            }
+            $sets[] = 'headline = :hl';
+            $params[':hl'] = $headline;
+        }
+        if (array_key_exists('location', $b)) {
+            $location = $b['location'] === null ? null : trim((string) $b['location']);
+            if ($location !== null && mb_strlen($location) > 128) {
+                throw new DomainError(400, 'VALIDATION_FAILED', 'Vị trí tối đa 128 ký tự.');
+            }
+            $sets[] = 'location = :loc';
+            $params[':loc'] = $location;
+        }
+        if (array_key_exists('about', $b)) {
+            $about = $b['about'] === null ? null : (string) $b['about'];
+            if ($about !== null && mb_strlen($about) > 5000) {
+                throw new DomainError(400, 'VALIDATION_FAILED', 'Giới thiệu quá dài.');
+            }
+            $sets[] = 'about = :ab';
+            $params[':ab'] = $about;
+        }
 
         if ($sets === []) {
             return Json::ok($res, $existing);
@@ -204,6 +236,48 @@ final class UserController
         Db::pdo()->prepare($sql)->execute($params);
 
         return Json::ok($res, $this->find($id));
+    }
+
+    /**
+     * GET /users/{id}/full — intra-service public-safe assembly (basic + experience + education + skills).
+     * The gateway composes ACROSS services on top of this; this body NEVER includes email/password_hash.
+     */
+    public function full(Request $req, Response $res, array $args): Response
+    {
+        $id = (int) $args['id'];
+
+        // PUBLIC projection — no email, no password_hash (T-02-02).
+        $stmt = Db::pdo()->prepare(
+            'SELECT id, username, display_name, avatar_url, cover_url, headline, location, about, created_at
+             FROM users WHERE id = :id LIMIT 1'
+        );
+        $stmt->execute([':id' => $id]);
+        $user = $stmt->fetch();
+        if ($user === false) {
+            throw new DomainError(404, 'USER_NOT_FOUND', 'Không tìm thấy người dùng.');
+        }
+
+        $stmt = Db::pdo()->prepare(
+            'SELECT id, company, title, start_date, end_date, description
+             FROM experience WHERE user_id = :u ORDER BY start_date DESC'
+        );
+        $stmt->execute([':u' => $id]);
+        $user['experience'] = $stmt->fetchAll();
+
+        $stmt = Db::pdo()->prepare(
+            'SELECT id, school, degree, field, start_year, end_year
+             FROM education WHERE user_id = :u ORDER BY start_year DESC'
+        );
+        $stmt->execute([':u' => $id]);
+        $user['education'] = $stmt->fetchAll();
+
+        $stmt = Db::pdo()->prepare(
+            'SELECT id, name FROM skills WHERE user_id = :u ORDER BY name'
+        );
+        $stmt->execute([':u' => $id]);
+        $user['skills'] = $stmt->fetchAll();
+
+        return Json::ok($res, $user);
     }
 
     private function find(int $id): ?array
