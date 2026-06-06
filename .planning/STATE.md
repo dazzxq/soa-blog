@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-04-PLAN.md
-last_updated: "2026-06-06T19:47:03.826Z"
-last_activity: 2026-06-06 -- Phase 3 execution started
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-06-06T19:51:58.572Z"
+last_activity: 2026-06-06
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 16
-  completed_plans: 11
-  percent: 69
+  completed_plans: 12
+  percent: 75
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-06-06)
 ## Current Position
 
 Phase: 3 (Kết nối / Social Graph) — EXECUTING
-Plan: 1 of 5
-Status: Executing Phase 3
-Last activity: 2026-06-06 -- Phase 3 execution started
+Plan: 2 of 5
+Status: Ready to execute
+Last activity: 2026-06-06
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -63,6 +63,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02 P02 | 6min | 3 tasks | 3 files |
 | Phase 02 P03 | 3min | 3 tasks | 7 files |
 | Phase 02-h-s-ngh-nghi-p P04 | 3min | 2 tasks | 6 files |
+| Phase 03 P01 | 3 min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,7 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-03: flagship GET /api/profiles/{id}/full = 2-way parallel Utils::settle fan-out (profile-full hard dep + connection degradable); meta.degraded on stub 404 (D-03); public+auth-aware via new OptionalJwtMiddleware (invalid token -> anonymous, never 401); allowlist excludes email
 - [Phase 02]: 02-03: /api/profiles/me/* owner CRUD maps JWT user_id -> path id + X-User-Id (body user_id never trusted, no IDOR surface); updateBasic re-applies email/password_hash allowlist to success body since profile-service update() returns find() (SELECTs email)
 - [Phase 02-h-s-ngh-nghi-p]: 02-04: UI = two files (profile.html view via /full + profile-edit.html owner CRUD via /me/*), Alpine+Tailwind CDN, x-text only (no x-html, T-02-10), app.js cache-bust v=ph2-04 bumped on all 5 HTML; browser verify deferred to VPS Plan 05
+- [Phase 03]: connections uses STORED pair_lo/pair_hi + uq_pair to make opposite-direction invite race impossible (deterministic statusBetween)
 
 ### Pending Todos
 
@@ -110,6 +112,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-06T18:59:48.443Z
-Stopped at: Completed 02-04-PLAN.md
+Last session: 2026-06-06T19:51:53.227Z
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None
