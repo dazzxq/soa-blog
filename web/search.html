@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProConnect — Tìm kiếm</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="/assets/app.js?v=ph5-06"></script>
+
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="/assets/styles.css?v1778837733" />
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+<nav x-data="navbar()" class="bg-white border-b">
+  <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+    <a href="/" class="font-bold text-lg">ProConnect</a>
+    <div class="flex items-center gap-3 text-sm">
+      <template x-if="isLoggedIn">
+        <span class="flex items-center gap-3">
+          <form @submit.prevent="location.href='/search.html?q='+encodeURIComponent($refs.nq.value)" class="hidden sm:block">
+            <input x-ref="nq" type="search" placeholder="Tìm kiếm"
+                   class="border rounded px-2 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-slate-300" />
+          </form>
+          <div x-data="notificationBell()" x-init="start()" class="relative">
+            <button @click="open = !open" class="relative hover:text-slate-600" title="Thông báo">
+              <span aria-hidden="true">🔔</span>
+              <span x-show="unread > 0"
+                    class="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center"
+                    x-text="unread"></span>
+            </button>
+            <div x-show="open" @click.outside="open = false" x-cloak
+                 class="absolute right-0 mt-2 w-80 bg-white border rounded-lg shadow-lg z-10 text-left">
+              <div class="flex items-center justify-between px-3 py-2 border-b">
+                <span class="font-semibold text-sm">Thông báo</span>
+                <button @click="markAll()" class="text-xs text-blue-600 hover:underline">Đánh dấu tất cả đã đọc</button>
+              </div>
+              <template x-if="!items.length">
+                <p class="subtle text-sm px-3 py-4">Chưa có thông báo nào.</p>
+              </template>
+              <ul class="max-h-80 overflow-y-auto divide-y">
+                <template x-for="n in items" :key="n.id">
+                  <li @click="markOne(n.id)"
+                      :class="n.read_at ? 'hover:bg-slate-50' : 'bg-slate-50 hover:bg-slate-100 font-semibold'"
+                      class="px-3 py-2 cursor-pointer">
+                    <p class="text-sm" x-text="message(n)"></p>
+                    <p class="subtle text-xs mt-0.5" x-text="formatDate(n.created_at)"></p>
+                  </li>
+                </template>
+              </ul>
+            </div>
+          </div>
+          <a href="/feed.html" class="hover:underline">Bảng tin</a>
+          <a href="/connections.html" class="hover:underline">Kết nối</a>
+          <span class="subtle">Xin chào, <b x-text="user?.display_name || user?.username"></b></span>
+          <button @click="logout" class="text-red-600 hover:underline">Đăng xuất</button>
+        </span>
+      </template>
+      <template x-if="!isLoggedIn">
+        <span class="flex items-center gap-3">
+          <a href="/login.html" class="hover:underline">Đăng nhập</a>
+          <a href="/register.html" class="bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-700">Đăng ký</a>
+        </span>
+      </template>
+    </div>
+  </div>
+</nav>
+
+<main x-data="searchPage()" x-init="init()" class="max-w-3xl mx-auto px-4 py-6">
+
+  <h1 class="text-2xl font-bold mb-4">Tìm kiếm người dùng</h1>
+
+  <!-- Ô tìm kiếm -->
+  <form @submit.prevent="run()" class="mb-6 flex items-center gap-2">
+    <input x-model="q" type="search" placeholder="Tìm người theo tên, chức danh, kỹ năng…"
+           class="flex-1 border rounded p-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300" />
+    <button type="submit" :disabled="loading"
+            class="bg-slate-900 text-white px-4 py-3 rounded hover:bg-slate-700 disabled:opacity-50">Tìm</button>
+  </form>
+
+  <!-- Thông báo lỗi -->
+  <template x-if="error">
+    <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded mb-4 text-sm" x-text="error"></div>
+  </template>
+
+  <!-- Banner suy giảm -->
+  <template x-if="degraded">
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded mb-4 text-sm">
+      Một số trạng thái quan hệ tạm thời không tải được.
+    </div>
+  </template>
+
+  <template x-if="loading">
+    <p class="subtle">Đang tìm…</p>
+  </template>
+
+  <!-- Trạng thái rỗng sau khi đã tìm -->
+  <template x-if="!loading && searched && !results.length && !error">
+    <p class="subtle text-sm">Không tìm thấy người dùng nào.</p>
+  </template>
+
+  <!-- Kết quả -->
+  <template x-if="!loading && results.length">
+    <ul class="space-y-3">
+      <template x-for="u in results" :key="u.id">
+        <li class="bg-white border rounded-lg p-4 flex items-center justify-between gap-3">
+          <a :href="'/profile.html?id=' + u.id" class="flex items-center gap-3 min-w-0 hover:underline">
+            <span class="w-12 h-12 rounded-full bg-slate-300 overflow-hidden flex items-center justify-center text-sm font-bold text-slate-600 shrink-0">
+              <template x-if="u.avatar_url">
+                <img :src="u.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
+              </template>
+              <template x-if="!u.avatar_url">
+                <span x-text="initial(u)"></span>
+              </template>
+            </span>
+            <span class="min-w-0">
+              <span class="block font-semibold truncate" x-text="u.display_name || u.username || 'Người dùng'"></span>
+              <span class="block subtle text-xs truncate" x-text="u.headline"></span>
+            </span>
+          </a>
+
+          <!-- Nút kết nối nhanh theo trạng thái quan hệ -->
+          <span class="shrink-0">
+            <template x-if="u.connection_status === 'none'">
+              <button @click="connect(u)" :disabled="busy"
+                      class="text-sm bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-700 disabled:opacity-50">Kết nối</button>
+            </template>
+            <template x-if="u.connection_status === 'pending_outgoing'">
+              <button disabled class="text-sm border px-3 py-1.5 rounded opacity-60 cursor-default">Đã gửi lời mời</button>
+            </template>
+            <template x-if="u.connection_status === 'pending_incoming'">
+              <a href="/connections.html"
+                 class="text-sm border px-3 py-1.5 rounded hover:bg-slate-50">Chờ bạn phản hồi</a>
+            </template>
+            <template x-if="u.connection_status === 'connected'">
+              <span class="text-sm text-green-700 px-3 py-1.5">✓ Đã kết nối</span>
+            </template>
+            <template x-if="u.connection_status === 'unknown'">
+              <span class="inline-flex flex-col items-end">
+                <button @click="connect(u)" :disabled="busy"
+                        class="text-sm bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-700 disabled:opacity-50">Kết nối</button>
+                <span class="subtle text-[10px] mt-0.5">Trạng thái chưa rõ</span>
+              </span>
+            </template>
+          </span>
+        </li>
+      </template>
+    </ul>
+  </template>
+</main>
+
+<script>
+function searchPage() {
+  return {
+    q: '',
+    results: [],
+    loading: false,
+    busy: false,
+    error: '',
+    degraded: false,
+    searched: false,
+
+    init() {
+      if (!auth.isLoggedIn()) { window.location.href = '/login.html'; return; }
+      const q0 = new URLSearchParams(location.search).get('q');
+      if (q0) { this.q = q0; this.run(); }
+    },
+
+    async run() {
+      this.error = '';
+      this.degraded = false;
+      if (this.q.trim() === '') { this.results = []; this.searched = false; return; }
+      this.loading = true;
+      this.searched = true;
+      try {
+        const r = await api.get('/search?q=' + encodeURIComponent(this.q));
+        this.results = r.data || [];
+        this.degraded = !!(r.meta && r.meta.degraded);
+      } catch (e) {
+        if (e.status === 401) { auth.logout(); window.location.href = '/login.html'; return; }
+        this.results = [];
+        this.error = 'Tìm kiếm không thành công: ' + e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async connect(u) {
+      if (this.busy) return;
+      this.busy = true;
+      this.error = '';
+      try {
+        await api.post('/connections/requests', { target_id: u.id });
+        u.connection_status = 'pending_outgoing';
+      } catch (e) {
+        this.error = 'Gửi lời mời không thành công: ' + e.message;
+      } finally {
+        this.busy = false;
+      }
+    },
+
+    initial(u) {
+      const n = (u && (u.display_name || u.username)) || '?';
+      return n.trim().charAt(0).toUpperCase();
+    },
+  };
+}
+</script>
+</body>
+</html>
