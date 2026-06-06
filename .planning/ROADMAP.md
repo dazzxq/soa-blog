@@ -90,7 +90,7 @@ Plans:
 - [x] 04-01-PLAN.md — Wave 0: db/04-migrate-phase4.sql (live additive posts/reactions/comments + demo seed) + smoke-phase4.sh, wired into deploy.sh
 - [x] 04-02-PLAN.md — Wave 1: feed-service build-out (PostController CRUD+reactions+timeline query, CommentController, routes; X-User-Id scoped)
 - [x] 04-03-PLAN.md — Wave 2: gateway /api/feed 3-service composition (connection+feed+profile, settle+degrade+email-allowlist+repost-batch) + FeedClient + routes/DI
-- [ ] 04-04-PLAN.md — Wave 3: UI feed.html (compose+timeline+react/comment/repost/delete) + index nav link (Vietnamese, minimal)
+- [x] 04-04-PLAN.md — Wave 3: UI feed.html (compose+timeline+react/comment/repost/delete) + index nav link (Vietnamese, minimal)
 - [ ] 04-05-PLAN.md — Wave 4: live cutover (codex-impl-review + CI/CD deploy + live-volume migration + full smoke verify) (autonomous: false)
 **UI hint**: yes
 

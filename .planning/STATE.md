@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-06-06T21:19:38.096Z"
+stopped_at: Completed 04-04-PLAN.md
+last_updated: "2026-06-06T21:22:59.894Z"
 last_activity: 2026-06-06
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 21
-  completed_plans: 19
-  percent: 90
+  completed_plans: 20
+  percent: 95
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-06-06)
 ## Current Position
 
 Phase: 4 (News Feed) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-06-06
 
@@ -71,6 +71,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04 P01 | 3 min | 3 tasks | 4 files |
 | Phase 04-news-feed P02 | 3min | 2 tasks | 3 files |
 | Phase 04 P03 | 3min | 3 tasks | 4 files |
+| Phase 04-news-feed P04 | 4min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -113,6 +114,7 @@ Recent decisions affecting current work:
 - [Phase 04-news-feed]: 04-02: timeline/batch/find share one selectColumns helper; counts are correlated scalar subqueries (no double-JOIN fan-trap), positional ? for IN-list+viewer+limit, native prepared; reactions upsert via ON DUPLICATE KEY UPDATE; delete cascades reactions->comments->posts; comment post id from route path + LOCAL SELECT 1 FROM posts invariant; all identity from X-User-Id, no JWT in feed-service.
 - [Phase 04]: 04-03: /api/feed UNION-BATCH composition: resolve repost originals (Utils::settle, no N+1) THEN ONE ProfileClient::batch over {post-authors ∪ original-authors} (FEED-UNION-BATCH marker, exactly-one ->batch in feed()); fan-out is sequential by construction, ≤2 round trips after the timeline spine.
 - [Phase 04]: 04-03: every author card (post/original/comment) email-allowlisted via array_intersect_key to {id,username,display_name,avatar_url}; no 'email' literal in FeedController. feed-service is the only hard dep — connections/reposts/profiles failures degrade to meta.degraded + null, never 500. Mutations are thin Json::raw passthrough mapping JWT me() -> X-User-Id (invariants live in feed-service).
+- [Phase 04-news-feed]: 04-04: web/feed.html = feedPage() Alpine page (compose + newest-first timeline) cloning connections.html shell + _act(busy); x-text for ALL user content (XSS-safe, D-10, no x-html); delete buttons gated on author_id===auth.user.id; repost source via p.original or 'Bài viết gốc đã bị xoá'; degraded banner; 6-emotion picker w/ VN labels; app.js?v=ph4-01 (app.js unchanged). index.html gets 'Bảng tin' nav link. Runtime browser verify deferred to VPS Plan 05 (Docker absent locally).
 
 ### Pending Todos
 
@@ -131,6 +133,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-06T21:19:30.479Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-06-06T21:22:51.777Z
+Stopped at: Completed 04-04-PLAN.md
 Resume file: None
