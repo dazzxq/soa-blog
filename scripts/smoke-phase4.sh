@@ -151,13 +151,25 @@ if echo "$feedDuyet" | grep -q "\"id\":$POST_ID"; then pass "feed (duyet) chứa
 else fail "feed (duyet) không chứa post vừa tạo $POST_ID (FEED-02 self)"; fi
 if echo "$feedDuyet" | grep -q 'Vừa hoàn thành'; then pass "feed (duyet) chứa post của long (FEED-02 connections)"
 else fail "feed (duyet) không chứa post của long (FEED-02 connections)"; fi
-# newest-first: byte offset of the new post id must be earlier than seed post 2.
-posNew=$(echo "$feedDuyet" | grep -bo "\"id\":$POST_ID" | head -1 | cut -d: -f1 || true)
-posOld=$(echo "$feedDuyet" | grep -bo '"id":2,' | head -1 | cut -d: -f1 || true)
-if [ -n "$posNew" ] && [ -n "$posOld" ] && [ "$posNew" -lt "$posOld" ]; then
-  pass "feed (duyet) newest-first (post mới trước seed post 2) (FEED-02)"
+# newest-first: parse the TOP-LEVEL data[] ids and compare their order. A byte-offset
+# grep for '"id":N' falsely matches NESTED ids (reactions/comments/repost original),
+# so we extract only the top-level post id sequence via python3 and assert the
+# just-created POST_ID precedes seed post 2 in that list.
+order=$(echo "$feedDuyet" | python3 -c 'import sys,json
+try:
+    print(" ".join(str(p.get("id")) for p in json.load(sys.stdin).get("data",[])))
+except Exception:
+    print("")' 2>/dev/null || true)
+iNew=-1; iOld=-1; idx=0
+for pid in $order; do
+  [ "$pid" = "$POST_ID" ] && iNew=$idx
+  [ "$pid" = "2" ] && iOld=$idx
+  idx=$((idx+1))
+done
+if [ "$iNew" -ge 0 ] && [ "$iOld" -ge 0 ] && [ "$iNew" -lt "$iOld" ]; then
+  pass "feed (duyet) newest-first (post mới trước seed post 2 trong data[]) (FEED-02)"
 else
-  fail "feed (duyet) không newest-first (posNew=$posNew posOld=$posOld) (FEED-02)"
+  fail "feed (duyet) không newest-first (iNew=$iNew iOld=$iOld order=[$order]) (FEED-02)"
 fi
 
 # ---------------------------------------------------------------------------
