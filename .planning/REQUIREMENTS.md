@@ -10,9 +10,9 @@ Requirements cho bản phát hành đầu của milestone ProConnect. Mỗi REQ 
 ### Nền tảng & Gateway (PLAT)
 
 - [x] **PLAT-01**: Hệ thống chạy thêm các microservice mới (profile, connection, feed, search) sau cùng một API Gateway, mỗi service có database riêng
-- [ ] **PLAT-02**: Gateway định tuyến `/api/*` tới đúng service và rewrite path nội bộ (giữ pattern hiện có)
-- [ ] **PLAT-03**: Xác thực JWT tập trung tại gateway; service nội bộ chỉ tin header `X-User-Id`, không tự verify JWT
-- [ ] **PLAT-04**: Gateway giữ rate limit, request-id, logging tập trung cho toàn bộ traffic mới
+- [x] **PLAT-02**: Gateway định tuyến `/api/*` tới đúng service và rewrite path nội bộ (giữ pattern hiện có)
+- [x] **PLAT-03**: Xác thực JWT tập trung tại gateway; service nội bộ chỉ tin header `X-User-Id`, không tự verify JWT
+- [x] **PLAT-04**: Gateway giữ rate limit, request-id, logging tập trung cho toàn bộ traffic mới
 - [x] **PLAT-05**: Toàn bộ stack mới khởi động sạch bằng `docker compose up`, mọi container healthy, tổng số container ≤ 9 (giới hạn 2GB RAM)
 - [ ] **PLAT-06**: Deploy lên `soa.duyet.vn` qua CI/CD hiện có (push main → GitHub Actions → VPS), truy cập HTTPS hợp lệ
 
@@ -98,9 +98,9 @@ Cập nhật bởi roadmapper sau khi tạo ROADMAP.md (2026-06-06).
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | PLAT-01 | Phase 1 | Complete |
-| PLAT-02 | Phase 1 | Pending |
-| PLAT-03 | Phase 1 | Pending |
-| PLAT-04 | Phase 1 | Pending |
+| PLAT-02 | Phase 1 | Complete |
+| PLAT-03 | Phase 1 | Complete |
+| PLAT-04 | Phase 1 | Complete |
 | PLAT-05 | Phase 1 | Complete |
 | PLAT-06 | Phase 1 | Pending |
 | PROF-01 | Phase 1 | Complete |
