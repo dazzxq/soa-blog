@@ -75,14 +75,22 @@ for i in $(seq 1 18); do
 done
 
 # 6) PRE-WIPE BACKUP — BLOCKING (ISSUE-4, ISSUE-3 step 2) ----------------------
-# Only when the legacy blog DBs still exist. NO `|| true`: a dump failure aborts
-# the deploy, and the destructive migration runs ONLY after the backup file is
-# confirmed present AND non-empty (`test -s`).
-if docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" -e 'USE blog_users' >/dev/null 2>&1; then
+# The migration DROPs all three legacy schemas (blog_users, blog_posts,
+# blog_comments), so the backup must cover ALL of them — not just blog_users
+# (ISSUE-3). Discover which legacy schemas actually exist via information_schema
+# and dump exactly those. NO `|| true`: a dump failure aborts the deploy, and the
+# destructive migration runs ONLY after the backup file is confirmed present AND
+# non-empty (`test -s`). Backup is skipped ONLY when NO legacy schema exists.
+LEGACY=$(docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" -N -e \
+  "SELECT schema_name FROM information_schema.schemata WHERE schema_name IN ('blog_users','blog_posts','blog_comments');" 2>/dev/null \
+  | tr -d '\r' | tr '\n' ' ')
+LEGACY=$(echo "$LEGACY" | xargs)   # trim surrounding whitespace
+if [ -n "$LEGACY" ]; then
   mkdir -p backups
   BACKUP_FILE="backups/pre-phase1-$(date +%Y%m%d-%H%M%S).sql"
-  echo "[deploy] backing up blog_* to $BACKUP_FILE (blocking)"
-  if ! docker compose exec -T mariadb mysqldump -uroot -p"$DB_ROOT_PASSWORD" --databases blog_users blog_posts blog_comments > "$BACKUP_FILE"; then
+  echo "[deploy] backing up legacy schemas ($LEGACY) to $BACKUP_FILE (blocking)"
+  # shellcheck disable=SC2086 # $LEGACY is a deliberate space-separated arg list
+  if ! docker compose exec -T mariadb mysqldump -uroot -p"$DB_ROOT_PASSWORD" --databases $LEGACY > "$BACKUP_FILE"; then
     echo "[deploy] FATAL: pre-wipe backup failed — aborting before destructive migration" >&2
     rm -f "$BACKUP_FILE"
     exit 5
