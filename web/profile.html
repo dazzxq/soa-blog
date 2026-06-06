@@ -85,16 +85,55 @@
             <p class="subtle text-sm" x-text="profile.location"></p>
           </template>
 
-          <!-- Trạng thái kết nối -->
-          <div class="mt-2">
+          <!-- Trạng thái kết nối + hành động ngữ cảnh -->
+          <div class="mt-2 flex flex-wrap items-center gap-2">
+            <!-- Ẩn lỗi hành động (nếu có) -->
+            <template x-if="connError">
+              <span class="text-xs text-red-600 w-full" x-text="connError"></span>
+            </template>
+
+            <!-- Chưa đăng nhập -->
             <template x-if="profile.connection_status === null">
               <span class="text-xs text-slate-400">Đăng nhập để xem trạng thái kết nối</span>
             </template>
+
+            <!-- none -->
             <template x-if="profile.connection_status === 'none'">
               <span class="inline-block text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">Chưa kết nối</span>
             </template>
-            <template x-if="profile.connection_status && profile.connection_status !== 'none'">
-              <span class="inline-block text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded" x-text="profile.connection_status"></span>
+            <!-- pending_outgoing -->
+            <template x-if="profile.connection_status === 'pending_outgoing'">
+              <span class="inline-block text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">Đã gửi lời mời</span>
+            </template>
+            <!-- pending_incoming -->
+            <template x-if="profile.connection_status === 'pending_incoming'">
+              <span class="inline-block text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">Chờ bạn phản hồi</span>
+            </template>
+            <!-- connected -->
+            <template x-if="profile.connection_status === 'connected'">
+              <span class="inline-block text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Đã kết nối</span>
+            </template>
+
+            <!-- Nút hành động ngữ cảnh: ẩn khi là chủ hồ sơ hoặc self -->
+            <template x-if="!isOwner && profile.connection_status === 'none'">
+              <button @click="connect()" :disabled="connBusy"
+                      class="text-xs bg-slate-900 text-white px-3 py-1 rounded hover:bg-slate-700 disabled:opacity-50">Kết nối</button>
+            </template>
+            <template x-if="!isOwner && profile.connection_status === 'pending_outgoing'">
+              <button @click="cancelInvite()" :disabled="connBusy"
+                      class="text-xs border px-3 py-1 rounded hover:bg-slate-50 disabled:opacity-50">Huỷ lời mời</button>
+            </template>
+            <template x-if="!isOwner && profile.connection_status === 'pending_incoming'">
+              <span class="flex items-center gap-2">
+                <button @click="acceptInvite()" :disabled="connBusy"
+                        class="text-xs bg-slate-900 text-white px-3 py-1 rounded hover:bg-slate-700 disabled:opacity-50">Chấp nhận</button>
+                <button @click="rejectInvite()" :disabled="connBusy"
+                        class="text-xs border px-3 py-1 rounded hover:bg-slate-50 disabled:opacity-50">Từ chối</button>
+              </span>
+            </template>
+            <template x-if="!isOwner && profile.connection_status === 'connected'">
+              <button @click="removeConn()" :disabled="connBusy"
+                      class="text-xs border px-3 py-1 rounded hover:bg-slate-50 disabled:opacity-50">Xoá kết nối</button>
             </template>
           </div>
 
@@ -163,6 +202,8 @@ function profilePage() {
     profile: null,
     degraded: false,
     isOwner: false,
+    connBusy: false,
+    connError: '',
 
     async load() {
       try {
@@ -185,6 +226,57 @@ function profilePage() {
       } finally {
         this.loading = false;
       }
+    },
+
+    // --- Hành động kết nối (ngữ cảnh trên hồ sơ người khác) ---
+    async _connAct(fn) {
+      if (this.connBusy) return;
+      this.connBusy = true;
+      this.connError = '';
+      try {
+        await fn();
+        await this.load();   // /full trả về trạng thái mới → badge "sáng" lại
+      } catch (e) {
+        this.connError = 'Thao tác không thành công: ' + e.message;
+      } finally {
+        this.connBusy = false;
+      }
+    },
+
+    // Tìm request_id của lời mời giữa tôi và hồ sơ đang xem theo hướng cho trước.
+    async _findRequestId(direction) {
+      const r = await api.get('/connections/requests?direction=' + direction);
+      const rows = r.data || [];
+      const match = rows.find((x) => String(x.user_id) === String(this.profile.id));
+      return match ? match.request_id : null;
+    },
+
+    connect() {
+      return this._connAct(() => api.post('/connections/requests', { target_id: this.profile.id }));
+    },
+    removeConn() {
+      return this._connAct(() => api.delete('/connections/' + this.profile.id));
+    },
+    cancelInvite() {
+      return this._connAct(async () => {
+        const id = await this._findRequestId('outgoing');
+        if (!id) throw new Error('Không tìm thấy lời mời.');
+        await api.delete('/connections/requests/' + id);
+      });
+    },
+    acceptInvite() {
+      return this._connAct(async () => {
+        const id = await this._findRequestId('incoming');
+        if (!id) throw new Error('Không tìm thấy lời mời.');
+        await api.post('/connections/requests/' + id + '/accept');
+      });
+    },
+    rejectInvite() {
+      return this._connAct(async () => {
+        const id = await this._findRequestId('incoming');
+        if (!id) throw new Error('Không tìm thấy lời mời.');
+        await api.post('/connections/requests/' + id + '/reject');
+      });
     },
 
     initials() {
