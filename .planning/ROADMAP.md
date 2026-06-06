@@ -31,7 +31,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Người dùng đăng ký và đăng nhập được như cũ; auth tái dùng/mở rộng từ `user-service` đã đổi tên thành `profile-service` mà không vỡ luồng JWT
   4. Gateway giữ rate limit, request-id, logging tập trung cho toàn bộ traffic mới
   5. Push `main` → CI/CD deploy lên `soa.duyet.vn` thành công, `/api/health` HTTPS xanh, site production không gãy (deploy additive)
-**Plans**: TBD
+**Plans**: 6 plans
+Plans:
+- [ ] 01-01-PLAN.md — Wave 0: scripts/smoke-phase1.sh validation infra
+- [ ] 01-02-PLAN.md — Wave 1: git mv user-service→profile-service + ProfileClient
+- [ ] 01-03-PLAN.md — Wave 1: 4 stub services (connection/feed/search/notification) + 4 gateway clients
+- [ ] 01-04-PLAN.md — Wave 2: gateway re-wire (DI/routes/5-way health/X-Request-Id) + 8-container compose
+- [ ] 01-05-PLAN.md — Wave 1: DB provisioning (5 proconnect_* schemas + scoped users + reseed + idempotent migration)
+- [ ] 01-06-PLAN.md — Wave 3: CI/deploy + live-VPS cutover (autonomous: false)
 
 ### Phase 2: Hồ sơ nghề nghiệp
 **Goal**: Người dùng có hồ sơ nghề nghiệp đầy đủ (ảnh đại diện/bìa, chức danh, vị trí, about, kinh nghiệm, học vấn, kỹ năng) chỉnh sửa được và xem công khai được hồ sơ người khác; gateway phục vụ hồ sơ đầy đủ qua MỘT endpoint composition.
@@ -100,7 +107,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Nền tảng & Gateway | 0/TBD | Not started | - |
+| 1. Nền tảng & Gateway | 0/6 | Planned | - |
 | 2. Hồ sơ nghề nghiệp | 0/TBD | Not started | - |
 | 3. Kết nối / Social Graph | 0/TBD | Not started | - |
 | 4. News Feed | 0/TBD | Not started | - |
