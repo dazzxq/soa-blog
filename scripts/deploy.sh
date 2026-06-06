@@ -123,6 +123,16 @@ fi
 envsubst '${PROFILE_SVC_DB_PASS} ${CONNECTION_SVC_DB_PASS} ${FEED_SVC_DB_PASS} ${SEARCH_SVC_DB_PASS} ${NOTIFICATION_SVC_DB_PASS}' < db/migrate-phase1.sql.tmpl | docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD"
 echo "[deploy] phase-1 DB cutover applied"
 
+# 7b) PHASE-2 ADDITIVE MIGRATION (idempotent; RESEARCH Pitfall 1) -------------
+# db/*.sql run ONLY on a fresh volume; the live volume already exists, so the
+# new columns/tables + demo seed are applied here against the running DB.
+# Non-destructive (ADD/CREATE IF NOT EXISTS) and idempotent — safe to re-run.
+# Plain .sql (no envsubst — no secret placeholders). No `|| true`: a migration
+# failure must surface, and mariadb is already confirmed healthy at this point.
+echo "[deploy] applying db/02-migrate-phase2.sql (additive)"
+docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" proconnect_profile < db/02-migrate-phase2.sql
+echo "[deploy] phase-2 additive migration applied"
+
 # 8) FULL-TOPOLOGY UP (ISSUE-3 step 4) -----------------------------------------
 # NOW bring up the rest of the 8-container stack — the proconnect_* DBs/users
 # exist, so the 5 PHP services can boot healthy. --remove-orphans drops the
