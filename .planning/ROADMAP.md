@@ -126,7 +126,7 @@ Plans:
 **Plans**: 4 plans
 Plans:
 - [x] 06-01-PLAN.md — Wave 1: scripts/smoke-phase6.sh (Wave 0 infra) + brand navy tokens (styles.css) + window.proNav() shared navbar (app.js)
-- [ ] 06-02-PLAN.md — Wave 2: feed.html 3-cột responsive (thẻ hồ sơ trái / compose+timeline giữa / suggestions+thẻ tĩnh phải) + proNav
+- [x] 06-02-PLAN.md — Wave 2: feed.html 3-cột responsive (thẻ hồ sơ trái / compose+timeline giữa / suggestions+thẻ tĩnh phải) + proNav
 - [ ] 06-03-PLAN.md — Wave 2: 7 trang còn lại (index/login/register/profile/profile-edit/connections/search) dùng proNav + brand navy + cache-bust
 - [ ] 06-04-PLAN.md — Wave 3: live cutover (codex-impl-review + commit/push + CI deploy + page-200 + regression + checkpoint thị giác) (autonomous: false)
 **UI hint**: yes
