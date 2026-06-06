@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProConnect — Bảng tin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="/assets/app.js?v=ph4-01"></script>
+
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="/assets/styles.css?v1778837733" />
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+<nav x-data="navbar()" class="bg-white border-b">
+  <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+    <a href="/" class="font-bold text-lg">ProConnect</a>
+    <div class="flex items-center gap-3 text-sm">
+      <template x-if="isLoggedIn">
+        <span class="flex items-center gap-3">
+          <a href="/feed.html" class="hover:underline">Bảng tin</a>
+          <a href="/connections.html" class="hover:underline">Kết nối</a>
+          <span class="subtle">Xin chào, <b x-text="user?.display_name || user?.username"></b></span>
+          <button @click="logout" class="text-red-600 hover:underline">Đăng xuất</button>
+        </span>
+      </template>
+      <template x-if="!isLoggedIn">
+        <span class="flex items-center gap-3">
+          <a href="/login.html" class="hover:underline">Đăng nhập</a>
+          <a href="/register.html" class="bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-700">Đăng ký</a>
+        </span>
+      </template>
+    </div>
+  </div>
+</nav>
+
+<main x-data="feedPage()" x-init="load()" class="max-w-3xl mx-auto px-4 py-6">
+
+  <h1 class="text-2xl font-bold mb-4">Bảng tin</h1>
+
+  <!-- Ô soạn bài -->
+  <section class="bg-white border rounded-lg p-6 mb-6">
+    <textarea x-model="draft.content" rows="3" placeholder="Bạn đang nghĩ gì?"
+              class="w-full border rounded p-3 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-slate-300"></textarea>
+    <input x-model="draft.image_url" type="text" placeholder="URL ảnh (tuỳ chọn)"
+           class="w-full border rounded p-2 text-sm mt-3 focus:outline-none focus:ring-2 focus:ring-slate-300" />
+    <div class="flex justify-end mt-3">
+      <button @click="submit()" :disabled="busy || !draft.content.trim()"
+              class="bg-slate-900 text-white px-4 py-2 rounded hover:bg-slate-700 disabled:opacity-50">Đăng</button>
+    </div>
+  </section>
+
+  <!-- Banner suy giảm -->
+  <template x-if="degraded">
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded mb-4 text-sm">
+      Một phần dữ liệu tải chưa đầy đủ.
+    </div>
+  </template>
+
+  <template x-if="loading">
+    <p class="subtle">Đang tải…</p>
+  </template>
+
+  <template x-if="!loading && error">
+    <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded mb-4" x-text="error"></div>
+  </template>
+
+  <template x-if="!loading && !error && !posts.length">
+    <p class="subtle text-sm">Chưa có bài viết nào trong bảng tin.</p>
+  </template>
+
+  <!-- Dòng thời gian -->
+  <template x-if="!loading">
+    <div class="space-y-4">
+      <template x-for="p in posts" :key="p.id">
+        <article class="bg-white border rounded-lg p-5">
+
+          <!-- Tác giả + thời gian -->
+          <div class="flex items-center gap-3 mb-3">
+            <span class="w-10 h-10 rounded-full bg-slate-300 overflow-hidden flex items-center justify-center text-sm font-bold text-slate-600 shrink-0">
+              <template x-if="p.author?.avatar_url">
+                <img :src="p.author.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
+              </template>
+              <template x-if="!p.author?.avatar_url">
+                <span x-text="(p.author?.display_name || p.author?.username || '?').trim().charAt(0).toUpperCase()"></span>
+              </template>
+            </span>
+            <div class="min-w-0">
+              <div class="font-semibold truncate" x-text="p.author?.display_name || p.author?.username || 'Người dùng'"></div>
+              <div class="subtle text-xs" x-text="formatDate(p.created_at)"></div>
+            </div>
+          </div>
+
+          <!-- Banner chia sẻ lại -->
+          <template x-if="p.repost_of">
+            <div class="mb-3">
+              <p class="subtle text-xs mb-2">đã chia sẻ một bài viết</p>
+              <template x-if="p.original">
+                <div class="border-l-4 border-slate-200 bg-slate-50 rounded p-3">
+                  <div class="font-medium text-sm mb-1" x-text="p.original.author?.display_name || p.original.author?.username || 'Người dùng'"></div>
+                  <p class="text-sm whitespace-pre-wrap break-words" x-text="p.original.content"></p>
+                  <template x-if="p.original.image_url">
+                    <img :src="p.original.image_url" alt="Ảnh bài viết gốc" class="mt-2 rounded max-h-80 w-auto" />
+                  </template>
+                </div>
+              </template>
+              <template x-if="!p.original">
+                <div class="border-l-4 border-slate-200 bg-slate-50 rounded p-3 subtle text-sm">
+                  Bài viết gốc đã bị xoá
+                </div>
+              </template>
+            </div>
+          </template>
+
+          <!-- Nội dung -->
+          <template x-if="p.content">
+            <p class="text-sm whitespace-pre-wrap break-words mb-3" x-text="p.content"></p>
+          </template>
+
+          <!-- Ảnh -->
+          <img :src="p.image_url" x-show="p.image_url" alt="Ảnh bài viết" class="rounded max-h-96 w-auto mb-3" />
+
+          <!-- Hàng reaction -->
+          <div class="flex items-center flex-wrap gap-1 border-t pt-3">
+            <template x-for="type in reactions" :key="type">
+              <button @click="p.my_reaction === type ? unreact(p.id) : react(p.id, type)" :disabled="busy"
+                      :class="p.my_reaction === type ? 'bg-slate-900 text-white' : 'hover:bg-slate-100'"
+                      class="text-xs border px-2 py-1 rounded disabled:opacity-50"
+                      x-text="reactionLabel(type)"></button>
+            </template>
+            <span class="subtle text-xs ml-2">
+              <span x-text="p.reaction_count"></span> cảm xúc
+            </span>
+          </div>
+
+          <!-- Hàng hành động -->
+          <div class="flex items-center gap-3 mt-3 text-sm">
+            <button @click="loadComments(p.id)" class="hover:underline">
+              Bình luận (<span x-text="p.comment_count"></span>)
+            </button>
+            <button @click="repost(p.id)" :disabled="busy" class="hover:underline disabled:opacity-50">Chia sẻ</button>
+            <template x-if="p.author_id === auth.user?.id">
+              <button @click="removePost(p.id)" :disabled="busy" class="text-red-600 hover:underline disabled:opacity-50">Xoá</button>
+            </template>
+          </div>
+
+          <!-- Khu vực bình luận -->
+          <template x-if="openComments[p.id]">
+            <div class="mt-4 border-t pt-3 space-y-3">
+              <template x-if="!(comments[p.id] && comments[p.id].length)">
+                <p class="subtle text-xs">Chưa có bình luận nào.</p>
+              </template>
+              <template x-for="c in (comments[p.id] || [])" :key="c.id">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <span class="font-medium text-sm" x-text="c.author?.display_name || c.author?.username || 'Người dùng'"></span>
+                    <p class="text-sm whitespace-pre-wrap break-words" x-text="c.body"></p>
+                  </div>
+                  <template x-if="c.author_id === auth.user?.id">
+                    <button @click="deleteComment(p.id, c.id)" :disabled="busy"
+                            class="text-xs text-red-600 hover:underline disabled:opacity-50 shrink-0">Xoá</button>
+                  </template>
+                </div>
+              </template>
+              <div class="flex items-center gap-2">
+                <input x-model="commentDraft[p.id]" type="text" placeholder="Viết bình luận…"
+                       @keydown.enter="addComment(p.id)"
+                       class="flex-1 border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300" />
+                <button @click="addComment(p.id)" :disabled="busy || !(commentDraft[p.id] || '').trim()"
+                        class="text-sm bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-700 disabled:opacity-50">Gửi</button>
+              </div>
+            </div>
+          </template>
+
+        </article>
+      </template>
+    </div>
+  </template>
+</main>
+
+<script>
+function feedPage() {
+  return {
+    posts: [],
+    loading: true,
+    error: '',
+    busy: false,
+    degraded: false,
+    draft: { content: '', image_url: '' },
+    openComments: {},
+    commentDraft: {},
+    comments: {},
+    reactions: ['like', 'love', 'haha', 'wow', 'sad', 'angry'],
+
+    reactionLabel(type) {
+      const m = {
+        like: '👍 Thích', love: '❤️ Yêu thích', haha: '😆 Haha',
+        wow: '😮 Wow', sad: '😢 Buồn', angry: '😠 Phẫn nộ',
+      };
+      return m[type] || type;
+    },
+
+    async load() {
+      if (!auth.isLoggedIn()) { window.location.href = '/login.html'; return; }
+      this.error = '';
+      try {
+        const r = await api.get('/feed?limit=20');
+        this.posts = r.data || [];
+        this.degraded = !!(r.meta && r.meta.degraded);
+      } catch (e) {
+        if (e.status === 401) { auth.logout(); window.location.href = '/login.html'; return; }
+        this.error = 'Không tải được bảng tin: ' + e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async submit() {
+      if (this.busy || !this.draft.content.trim()) return;
+      this.busy = true;
+      this.error = '';
+      try {
+        await api.post('/posts', {
+          content: this.draft.content,
+          image_url: this.draft.image_url || undefined,
+        });
+        this.draft = { content: '', image_url: '' };
+        await this.load();
+      } catch (e) {
+        this.error = 'Đăng bài không thành công: ' + e.message;
+      } finally {
+        this.busy = false;
+      }
+    },
+
+    react(id, type)   { return this._act(() => api.post('/posts/' + id + '/reactions', { type })); },
+    unreact(id)       { return this._act(() => api.delete('/posts/' + id + '/reactions')); },
+    repost(id)        { return this._act(() => api.post('/posts/' + id + '/repost')); },
+    removePost(id)    { return this._act(() => api.delete('/posts/' + id)); },
+
+    async loadComments(id) {
+      try {
+        const r = await api.get('/posts/' + id + '/comments');
+        this.comments[id] = r.data || [];
+        this.openComments[id] = true;
+      } catch (e) {
+        this.error = 'Không tải được bình luận: ' + e.message;
+      }
+    },
+
+    async addComment(id) {
+      const b = (this.commentDraft[id] || '').trim();
+      if (!b || this.busy) return;
+      this.busy = true;
+      this.error = '';
+      try {
+        await api.post('/posts/' + id + '/comments', { body: b });
+        this.commentDraft[id] = '';
+        await this.loadComments(id);
+        await this.load();
+      } catch (e) {
+        this.error = 'Gửi bình luận không thành công: ' + e.message;
+      } finally {
+        this.busy = false;
+      }
+    },
+
+    async deleteComment(pid, cid) {
+      if (this.busy) return;
+      this.busy = true;
+      this.error = '';
+      try {
+        await api.delete('/comments/' + cid);
+        await this.loadComments(pid);
+        await this.load();
+      } catch (e) {
+        this.error = 'Xoá bình luận không thành công: ' + e.message;
+      } finally {
+        this.busy = false;
+      }
+    },
+
+    async _act(fn) {
+      if (this.busy) return;
+      this.busy = true;
+      this.error = '';
+      try {
+        await fn();
+        await this.load();
+      } catch (e) {
+        this.error = 'Thao tác không thành công: ' + e.message;
+      } finally {
+        this.busy = false;
+      }
+    },
+  };
+}
+</script>
+</body>
+</html>
