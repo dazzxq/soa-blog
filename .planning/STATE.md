@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-04-PLAN.md
-last_updated: "2026-06-06T12:16:24.967Z"
+stopped_at: 01-06 file tasks committed (de2807e,8164dbc,b2d047b); STOPPED at Task 3 human-action production cutover
+last_updated: "2026-06-06T12:21:52.019Z"
 last_activity: 2026-06-06
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 6
-  completed_plans: 5
-  percent: 83
+  completed_plans: 6
+  percent: 100
 ---
 
 # Project State
@@ -57,6 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P05 | 2 min | 2 tasks | 6 files |
 | Phase 01 P03 | 5min | 2 tasks | 52 files |
 | Phase 01 P04 | 3m | 3 tasks | 39 files |
+| Phase 01 P06 | 3min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,7 @@ Recent decisions affecting current work:
 - [Phase 01]: X-Request-Id forwarded downstream via static set by RequestIdMiddleware, safe due to lazy per-request client construction (not the false php-fpm claim)
 - [Phase 01]: Public /api/profiles/{id} trimmed to D-07 allowlist {id,username,display_name} via array_intersect_key; email never exposed
 - [Phase 01]: post/comment fully retired: gateway code + compose blocks + service dirs git rm'd; services/=5
+- [Phase 01]: 01-06: deploy.sh no longer self-pulls (workflow does git pull --ff-only first so the new cutover logic runs on the first deploy); order = mariadb-only up+healthy -> BLOCKING pre-wipe mysqldump (abort on fail/empty) -> envsubst migrate -> full up --remove-orphans; public health gate now asserts status:ok for all 5 services.
 
 ### Pending Todos
 
@@ -91,9 +93,10 @@ None yet.
 - Ngân sách RAM cứng (2GB chia sẻ, ≤ 9 container): theo dõi số container ở mỗi phase thêm service mới — Phase 1, 3, 4, 5 đều thêm service.
 - Chưa có test framework (chỉ `php -l` ở CI): cân nhắc thêm PHPUnit trước refactor lớn ở Phase 1.
 - Tailwind Play CDN không production-grade cho UI phong phú hơn: cân nhắc build step ở Phase 6.
+- 01-06 PLAT-06 pending: live VPS .env edit (5 shell-safe *_SVC_DB_PASS) + production DB cutover is a human-action checkpoint, not yet performed. deploy.sh + workflow are wired and statically verified.
 
 ## Session Continuity
 
-Last session: 2026-06-06T12:16:15.268Z
-Stopped at: Completed 01-04-PLAN.md
+Last session: 2026-06-06T12:21:45.771Z
+Stopped at: 01-06 file tasks committed (de2807e,8164dbc,b2d047b); STOPPED at Task 3 human-action production cutover
 Resume file: None

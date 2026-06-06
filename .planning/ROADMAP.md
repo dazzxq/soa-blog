@@ -38,7 +38,7 @@ Plans:
 - [x] 01-03-PLAN.md — Wave 1: 4 stub services (connection/feed/search/notification) + 4 gateway clients
 - [x] 01-04-PLAN.md — Wave 2: gateway re-wire (DI/routes/5-way health/X-Request-Id) + 8-container compose
 - [x] 01-05-PLAN.md — Wave 1: DB provisioning (5 proconnect_* schemas + scoped users + reseed + idempotent migration)
-- [ ] 01-06-PLAN.md — Wave 3: CI/deploy + live-VPS cutover (autonomous: false)
+- [x] 01-06-PLAN.md — Wave 3: CI/deploy + live-VPS cutover (autonomous: false)
 
 ### Phase 2: Hồ sơ nghề nghiệp
 **Goal**: Người dùng có hồ sơ nghề nghiệp đầy đủ (ảnh đại diện/bìa, chức danh, vị trí, about, kinh nghiệm, học vấn, kỹ năng) chỉnh sửa được và xem công khai được hồ sơ người khác; gateway phục vụ hồ sơ đầy đủ qua MỘT endpoint composition.
