@@ -154,9 +154,12 @@ else fail "reindex không báo indexed/total>=5 (body=$reBody)"; fi
 # 4. SEARCH-01 by name: GET /api/search?q=duyet → 200; a hit with id +
 #    display_name containing "Duyet"; no @/email in body.
 # ---------------------------------------------------------------------------
-sName=$(curl -s "$GW/api/search?q=duyet" -H "Authorization: Bearer $TOK_DUYET" || true)
+# Search as LONG (user 3), NOT duyet — the gateway correctly EXCLUDES the viewer
+# from their own search results, so duyet searching "duyet" would (correctly) return
+# nothing. long↔duyet are connected, so the duyet hit carries connection_status:"connected".
+sName=$(curl -s "$GW/api/search?q=duyet" -H "Authorization: Bearer $TOK_LONG" || true)
 sNameCode=$(curl -s -o /dev/null -w '%{http_code}' "$GW/api/search?q=duyet" \
-              -H "Authorization: Bearer $TOK_DUYET" || true)
+              -H "Authorization: Bearer $TOK_LONG" || true)
 [ "$sNameCode" = "200" ] && pass "GET /api/search?q=duyet → 200 (SEARCH-01 name)" \
   || fail "GET /api/search?q=duyet → $sNameCode (mong đợi 200)"
 if echo "$sName" | grep -qE '"id":[0-9]+' && echo "$sName" | grep -qiE '"display_name":"[^"]*Duy'; then
@@ -170,7 +173,7 @@ assert_no_pii "/api/search?q=duyet" "$sName"
 # 5. SEARCH-01 by skill: GET /api/search?q=PHP → 200; contains duyet (id 2),
 #    proving skills_text is indexed via reindex (Pitfall 6).
 # ---------------------------------------------------------------------------
-sSkill=$(curl -s "$GW/api/search?q=PHP" -H "Authorization: Bearer $TOK_DUYET" || true)
+sSkill=$(curl -s "$GW/api/search?q=PHP" -H "Authorization: Bearer $TOK_LONG" || true)
 if echo "$sSkill" | grep -qE '"id":2[,}]'; then
   pass "search q=PHP chứa duyet (id 2) — skills_text được index (SEARCH-01 skill)"
 else
@@ -238,12 +241,15 @@ case "$reactCode" in
   2*) pass "diep react post 1 → $reactCode (NOTIF-01 reaction trigger, best-effort 2xx)" ;;
   *)  fail "diep react post 1 → $reactCode (mong đợi 2xx)" ;;
 esac
-cmtBody=$(curl -s -XPOST "$GW/api/posts/1/comments" \
+# ONE comment only — body + status code captured from the SAME call, and the
+# created comment is tracked for cleanup. (A previous version made a second,
+# UNtracked "probe" comment just for the status code; it was never deleted and
+# accumulated on seed post 1, breaking the smoke4 fan-trap canary. Fixed.)
+cmtResp=$(curl -s -w $'\n%{http_code}' -XPOST "$GW/api/posts/1/comments" \
             -H "Authorization: Bearer $TOK_DIEP" -H 'Content-Type: application/json' \
-            -d '{"body":"smoke phase5 bình luận"}')
-cmtCode=$(curl -s -o /dev/null -w '%{http_code}' -XPOST "$GW/api/posts/1/comments" \
-            -H "Authorization: Bearer $TOK_DIEP" -H 'Content-Type: application/json' \
-            -d '{"body":"smoke phase5 probe"}' || true)
+            -d '{"body":"smoke phase5 bình luận"}' || true)
+cmtCode=$(printf '%s' "$cmtResp" | tail -n1)
+cmtBody=$(printf '%s' "$cmtResp" | sed '$d')
 CMT_ID=$(first_id "$cmtBody")
 [ -n "$CMT_ID" ] && track_comment "$CMT_ID" "$TOK_DIEP"
 case "$cmtCode" in
