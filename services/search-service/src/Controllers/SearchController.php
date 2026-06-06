@@ -67,10 +67,10 @@ final class SearchController
         $stmt = Db::pdo()->prepare(
             'SELECT user_id, username, display_name, headline, location, skills_text, avatar_url
                FROM search_index
-              WHERE display_name LIKE :t1 ESCAPE \'\\\'
-                 OR username     LIKE :t2 ESCAPE \'\\\'
-                 OR headline     LIKE :t3 ESCAPE \'\\\'
-                 OR skills_text  LIKE :t4 ESCAPE \'\\\'
+              WHERE display_name LIKE :t1 ESCAPE \'\\\\\'
+                 OR username     LIKE :t2 ESCAPE \'\\\\\'
+                 OR headline     LIKE :t3 ESCAPE \'\\\\\'
+                 OR skills_text  LIKE :t4 ESCAPE \'\\\\\'
               ORDER BY display_name ASC
               LIMIT :lim'
         );
