@@ -13,7 +13,7 @@ ProConnect nâng cấp brownfield từ "SOA Blog" (3 service) thành một mạn
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Nền tảng & Gateway** - Refactor brownfield: `user-service`→`profile-service`, scaffold service/DB/route mới, giữ stack ≤ 9 container và site production sống (completed 2026-06-06)
-- [ ] **Phase 2: Hồ sơ nghề nghiệp** - Profile đầy đủ (experience/education/skills) + endpoint composition profile tại gateway
+- [x] **Phase 2: Hồ sơ nghề nghiệp** - Profile đầy đủ (experience/education/skills) + endpoint composition profile tại gateway (completed 2026-06-06)
 - [ ] **Phase 3: Kết nối / Social Graph** - Connection-service (lời mời, danh sách, gợi ý) + invariant graph cross-service tại gateway
 - [ ] **Phase 4: News Feed** - Feed-service (bài, reaction, comment, repost) + composition feed ghép nhiều service
 - [ ] **Phase 5: Tìm kiếm & Thông báo** - Tìm người dùng (composition) + notification near-real-time qua polling
@@ -55,7 +55,7 @@ Plans:
 - [x] 02-02-PLAN.md — Wave 1: profile-service data layer (basic+exp+edu+skills CRUD, X-User-Id scoped) + /users/{id}/full assembly
 - [x] 02-03-PLAN.md — Wave 2: gateway flagship /api/profiles/{id}/full composition (parallel settle+degrade) + OptionalJwtMiddleware + /me/* CRUD
 - [x] 02-04-PLAN.md — Wave 3: UI profile.html (view via /full) + profile-edit.html (edit via /me/*) + index link (Vietnamese, minimal)
-- [ ] 02-05-PLAN.md — Wave 4: live cutover (CI/CD deploy + live-volume migration) + full smoke verify (autonomous: false)
+- [x] 02-05-PLAN.md — Wave 4: live cutover (CI/CD deploy + live-volume migration) + full smoke verify (autonomous: false)
 **UI hint**: yes
 
 ### Phase 3: Kết nối / Social Graph
@@ -114,7 +114,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Nền tảng & Gateway | 6/6 | Complete    | 2026-06-06 |
-| 2. Hồ sơ nghề nghiệp | 0/5 | Not started | - |
+| 2. Hồ sơ nghề nghiệp | 5/5 | Complete    | 2026-06-06 |
 | 3. Kết nối / Social Graph | 0/TBD | Not started | - |
 | 4. News Feed | 0/TBD | Not started | - |
 | 5. Tìm kiếm & Thông báo | 0/TBD | Not started | - |
