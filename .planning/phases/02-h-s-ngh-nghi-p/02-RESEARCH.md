@@ -489,21 +489,24 @@ async function loadFull(id) {
 | A4 | New `.php` files ship to VPS via `docker compose build` (gateway + profile-service images rebuild on deploy) and need no manual step | Runtime State Inventory | LOW — `deploy.sh` line 55 runs `docker compose build --pull`; services build from `./services/...` context. Verify Dockerfile COPYs `src/` (it does — STACK.md). |
 | A5 | Treating an invalid/expired token as anonymous on `/full` (vs 401) is acceptable | Pattern 4 | LOW/PRODUCT — this is a UX choice; flag to user/Codex at plan review. Either behavior satisfies D-04 (which only specifies token-present-and-valid vs absent). |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+All three resolved during planning; each is implemented in a Phase 2 plan (see inline markers).
+
 
 1. **Showcase: one async call vs two in the settle array (Pattern 1 note A vs B).**
    - What we know: D-01 says "parallel ... ≥2 sources". With profile-full as a synchronous spine and only connection async, the settle array has one entry — technically still composition+degrade, but a weaker "parallel" story.
    - What's unclear: whether the team wants the slide to show a genuine 2-way parallel fan-out.
-   - Recommendation: Option B (both profile-full and connection in the settle array, profile-full treated as hard dep after settle). Slightly more code, much better presentation, still simple. Confirm at `/codex-plan-review`.
+   - Recommendation: Option B (both profile-full and connection in the settle array, profile-full treated as hard dep after settle). Slightly more code, much better presentation, still simple. Confirm at `/codex-plan-review`. **RESOLVED: implemented in Plan 03 Task 2** — AggregateController::profileFull puts BOTH getFullAsync + statusForAsync in the Utils::settle array (genuine 2-way parallel fan-out), profile treated as hard dep after settle.
 
 2. **Seed sample data for the 5 demo accounts (CONTEXT "Specific Ideas").**
    - What we know: CONTEXT suggests seeding sample exp/edu/skills so the demo has content.
    - What's unclear: whether to extend `db/99-seed.sql` (fresh-volume only) or ship a separate idempotent `db/02-seed-phase2.sql` applied on the live volume like the migration.
-   - Recommendation: ship a SEPARATE idempotent seed (`INSERT ... WHERE NOT EXISTS` or `INSERT IGNORE` keyed on a deterministic id) applied via the same deploy step, so the LIVE demo gets content. Pure `99-seed.sql` edits won't appear on the existing volume (same Pitfall-1 reason). Keep it small (a few rows for `duyet`/`demo`).
+   - Recommendation: ship a SEPARATE idempotent seed (`INSERT ... WHERE NOT EXISTS` or `INSERT IGNORE` keyed on a deterministic id) applied via the same deploy step, so the LIVE demo gets content. Pure `99-seed.sql` edits won't appear on the existing volume (same Pitfall-1 reason). Keep it small (a few rows for `duyet`/`demo`). **RESOLVED: implemented in Plan 01 Task 1** — idempotent demo seed (INSERT ... WHERE NOT EXISTS / guarded UPDATE on deterministic ids) lives inside db/02-migrate-phase2.sql, applied to the live volume via the same deploy step; db/99-seed.sql mirrors it (INSERT IGNORE) for fresh volumes.
 
 3. **Should `/api/profiles/{id}/full` for a logged-in viewer also support `/api/profiles/me/full` convenience?**
    - What we know: D-10 uses `/me` for writes; reads use `/{id}/full`.
-   - Recommendation: not required. The UI resolves own id via `/api/me` then calls `/{id}/full`. Skip `/me/full` to keep surface minimal unless trivial.
+   - Recommendation: not required. The UI resolves own id via `/api/me` then calls `/{id}/full`. Skip `/me/full` to keep surface minimal unless trivial. **RESOLVED: implemented in Plan 04** — profile.html/profile-edit.html resolve own id via `/api/me` then call `/{id}/full`; no `/me/full` route was added (surface kept minimal).
 
 ## Environment Availability
 
@@ -634,10 +637,10 @@ async function loadFull(id) {
 | Pitfalls | HIGH | Each grounded in a specific verified file |
 | MariaDB DDL idempotency syntax | MEDIUM | Confirm `SELECT VERSION()` on VPS |
 
-### Open Questions
-1. Showcase: one async call vs two in the settle array (recommend Option B — both async — for a genuine parallel fan-out slide). Confirm at /codex-plan-review.
-2. Seed sample exp/edu/skills for demo accounts via a separate idempotent live seed (99-seed.sql won't reach the existing volume).
-3. Optional `/me/full` convenience — recommend skipping (resolve id via /api/me then /{id}/full).
+### Open Questions (RESOLVED)
+1. Showcase: one async call vs two in the settle array (Option B — both async — for a genuine parallel fan-out slide). RESOLVED: implemented in Plan 03 Task 2 (Utils::settle over getFullAsync + statusForAsync).
+2. Seed sample exp/edu/skills for demo accounts via a separate idempotent live seed (99-seed.sql won't reach the existing volume). RESOLVED: implemented in Plan 01 Task 1 (idempotent seed inside db/02-migrate-phase2.sql).
+3. Optional `/me/full` convenience — skipped. RESOLVED: implemented in Plan 04 (resolve id via /api/me then /{id}/full; no /me/full route added).
 
 ### Ready for Planning
 Research complete. Planner can create PLAN.md files. Remember the mandatory CLAUDE.md gates: `/codex-plan-review` before coding, `/codex-impl-review` before commit.
