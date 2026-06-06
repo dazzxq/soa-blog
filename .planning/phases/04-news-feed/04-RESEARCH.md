@@ -676,7 +676,7 @@ function feedPage() {
 | A6 | A repost stores `content=''` (empty) and shows the original via `repost_of` | Pattern 6 / Code Examples | LOW — D-04 says repost shows the original; the repost row's own content is unused. If planner prefers nullable `content` for reposts, one-word DDL change. |
 | A7 | The "genuine parallel fan-out" slide is satisfied by composing-across-3-services + degrade, even though Steps 1→2→3 are data-dependent (sequential) | Pattern 1 note | LOW/PRESENTATION — the composition story is strong; the literal `Utils::settle` can wrap Step 3 + author-batch for a visible parallel call. Decide the exact shape at plan review. |
 
-## Open Questions
+## Open Questions (RESOLVED — Q1 showPost scope, Q2 POST verb, Q3 seed ids 1=demo,2=duyet,3=long — all decided in Plans 02/03/01)
 
 1. **Single-post `GET /api/posts/{id}` composition scope.**
    - What we know: D-05 lists `GET /api/posts/{id}` (1 post, composed). It should return the post + author + counts + my_reaction, and (if a repost) the original.
