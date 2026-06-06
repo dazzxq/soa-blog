@@ -201,8 +201,10 @@
         '</template>' +
         // RIGHT (logged-in): nav links + invite badge + bell + profile menu
         '<template x-if="isLoggedIn">' +
-          '<div class="flex items-center gap-4 text-sm shrink-0">' +
-            '<a href="/feed.html" :class="active===\'feed\' ? \'pro-link-active\' : \'hover:underline\'">Bảng tin</a>' +
+          '<div class="flex items-center gap-3 sm:gap-4 text-sm shrink-0 min-w-0">' +
+            // "Bảng tin" text link hidden on xs (logo already links to feed) to avoid
+            // navbar overflow on small screens (codex impl-review fix).
+            '<a href="/feed.html" class="hidden sm:inline" :class="active===\'feed\' ? \'pro-link-active\' : \'hover:underline\'">Bảng tin</a>' +
             '<a href="/connections.html" class="relative" :class="active===\'connections\' ? \'pro-link-active\' : \'hover:underline\'">' +
               'Kết nối' +
               '<span x-show="invites>0" x-cloak ' +
@@ -241,9 +243,10 @@
             '</div>' +
             // Profile menu — avatar/name → dropdown (Hồ sơ / Chỉnh sửa / Đăng xuất)
             '<div class="relative" x-data="{m:false}">' +
-              '<button @click="m=!m" class="flex items-center gap-1 hover:text-slate-600">' +
-                '<span x-text="me.display_name || me.username"></span>' +
-                '<span aria-hidden="true">▾</span>' +
+              '<button @click="m=!m" class="flex items-center gap-1 hover:text-slate-600 min-w-0">' +
+                // truncate long Vietnamese names on small screens (codex impl-review fix)
+                '<span class="max-w-[100px] sm:max-w-none truncate" x-text="me.display_name || me.username"></span>' +
+                '<span aria-hidden="true" class="shrink-0">▾</span>' +
               '</button>' +
               '<div x-show="m" @click.outside="m=false" x-cloak ' +
                    'class="absolute right-0 mt-2 w-44 bg-white border rounded-lg shadow-lg z-30 text-left">' +
