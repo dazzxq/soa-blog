@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 6 plans
 Plans:
 - [x] 01-01-PLAN.md — Wave 0: scripts/smoke-phase1.sh validation infra
-- [ ] 01-02-PLAN.md — Wave 1: git mv user-service→profile-service + ProfileClient
+- [x] 01-02-PLAN.md — Wave 1: git mv user-service→profile-service + ProfileClient
 - [ ] 01-03-PLAN.md — Wave 1: 4 stub services (connection/feed/search/notification) + 4 gateway clients
 - [ ] 01-04-PLAN.md — Wave 2: gateway re-wire (DI/routes/5-way health/X-Request-Id) + 8-container compose
 - [ ] 01-05-PLAN.md — Wave 1: DB provisioning (5 proconnect_* schemas + scoped users + reseed + idempotent migration)
