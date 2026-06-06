@@ -67,7 +67,13 @@ Plans:
   2. Người dùng xem được danh sách kết nối của mình và danh sách lời mời đang chờ (đã nhận / đã gửi)
   3. Trên hồ sơ người khác hiển thị đúng trạng thái quan hệ (chưa kết nối / đã gửi lời mời / chờ phản hồi / đã kết nối), và hệ thống gợi ý "Người bạn có thể biết"
   4. **(Gateway demonstrated)** Gateway chặn invariant cross-service cho graph: gửi lời mời tới user không tồn tại → 404; gửi trùng hoặc khi đã kết nối → 409 (kiểm tra profile-service trước khi ghi vào connection-service)
-**Plans**: TBD
+**Plans**: 5 plans
+Plans:
+- [ ] 03-01-PLAN.md — Wave 0: db/03-migrate-phase3.sql (live additive connections table + demo seed) + smoke-phase3.sh, wired into deploy.sh
+- [ ] 03-02-PLAN.md — Wave 1: connection-service build-out (ConnectionController raw-PDO graph CRUD + viewer-relative status D-05, X-User-Id scoped) + routes
+- [ ] 03-03-PLAN.md — Wave 2: gateway D-01 invariant (self/404/409/503-then-write) + enriched lists/suggestions (email allowlist) + ConnectionClient + routes/DI; lights up /full
+- [ ] 03-04-PLAN.md — Wave 3: UI connections.html + profile.html relationship badge/actions (Vietnamese, minimal)
+- [ ] 03-05-PLAN.md — Wave 4: live cutover (codex-impl-review + CI/CD deploy + live-volume migration + full smoke verify) (autonomous: false)
 **UI hint**: yes
 
 ### Phase 4: News Feed
@@ -115,7 +121,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Nền tảng & Gateway | 6/6 | Complete    | 2026-06-06 |
 | 2. Hồ sơ nghề nghiệp | 5/5 | Complete    | 2026-06-06 |
-| 3. Kết nối / Social Graph | 0/TBD | Not started | - |
+| 3. Kết nối / Social Graph | 0/5 | Not started | - |
 | 4. News Feed | 0/TBD | Not started | - |
 | 5. Tìm kiếm & Thông báo | 0/TBD | Not started | - |
 | 6. Giao diện ProConnect | 0/TBD | Not started | - |
