@@ -153,6 +153,17 @@ echo "[deploy] applying db/04-migrate-phase4.sql (additive)"
 docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" proconnect_feed < db/04-migrate-phase4.sql
 echo "[deploy] phase-4 additive migration applied"
 
+# 7e) PHASE-5 ADDITIVE MIGRATION (idempotent; RESEARCH Pitfall 1) -------------
+# Creates search_index (proconnect_search) + notifications (proconnect_notification)
+# + demo seed in the live volume. Spans TWO DBs, so applied WITHOUT a DB arg —
+# the file switches DBs internally via USE blocks (mirrors migrate-phase1.sql.tmpl).
+# Non-destructive (CREATE IF NOT EXISTS + guarded seed), safe to re-run. No `|| true`:
+# a failure must surface and block deploy BEFORE full-topology up, so search-service
+# and notification-service never boot against missing tables.
+echo "[deploy] applying db/05-migrate-phase5.sql (additive)"
+docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" < db/05-migrate-phase5.sql
+echo "[deploy] phase-5 additive migration applied"
+
 # 8) FULL-TOPOLOGY UP (ISSUE-3 step 4) -----------------------------------------
 # NOW bring up the rest of the 8-container stack — the proconnect_* DBs/users
 # exist, so the 5 PHP services can boot healthy. --remove-orphans drops the
