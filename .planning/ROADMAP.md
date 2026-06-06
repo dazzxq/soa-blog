@@ -87,7 +87,7 @@ Plans:
   4. **(Gateway demonstrated)** Gateway có endpoint composition feed: mỗi bài kèm thông tin tác giả, số reaction, số comment, và reaction của người xem — gộp song song từ nhiều service, degrade an toàn khi một phần lỗi
 **Plans**: 5 plans
 Plans:
-- [ ] 04-01-PLAN.md — Wave 0: db/04-migrate-phase4.sql (live additive posts/reactions/comments + demo seed) + smoke-phase4.sh, wired into deploy.sh
+- [x] 04-01-PLAN.md — Wave 0: db/04-migrate-phase4.sql (live additive posts/reactions/comments + demo seed) + smoke-phase4.sh, wired into deploy.sh
 - [ ] 04-02-PLAN.md — Wave 1: feed-service build-out (PostController CRUD+reactions+timeline query, CommentController, routes; X-User-Id scoped)
 - [ ] 04-03-PLAN.md — Wave 2: gateway /api/feed 3-service composition (connection+feed+profile, settle+degrade+email-allowlist+repost-batch) + FeedClient + routes/DI
 - [ ] 04-04-PLAN.md — Wave 3: UI feed.html (compose+timeline+react/comment/repost/delete) + index nav link (Vietnamese, minimal)

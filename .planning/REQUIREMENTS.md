@@ -38,12 +38,12 @@ Requirements cho bản phát hành đầu của milestone ProConnect. Mỗi REQ 
 
 ### News Feed (FEED)
 
-- [ ] **FEED-01**: Người dùng đăng bài viết dạng text, tuỳ chọn kèm ảnh qua URL
-- [ ] **FEED-02**: Feed hiển thị timeline gồm bài của bản thân và những người đã kết nối, sắp xếp mới nhất
-- [ ] **FEED-03**: Người dùng thả reaction (like + một số loại cảm xúc) cho bài viết, mỗi người một reaction
-- [ ] **FEED-04**: Người dùng bình luận bài viết
-- [ ] **FEED-05**: Người dùng chia sẻ lại (repost) một bài viết lên feed của mình
-- [ ] **FEED-06**: Gateway có endpoint composition cho feed: mỗi bài kèm thông tin tác giả, số reaction, số comment, reaction của người xem — gộp từ nhiều service
+- [x] **FEED-01**: Người dùng đăng bài viết dạng text, tuỳ chọn kèm ảnh qua URL
+- [x] **FEED-02**: Feed hiển thị timeline gồm bài của bản thân và những người đã kết nối, sắp xếp mới nhất
+- [x] **FEED-03**: Người dùng thả reaction (like + một số loại cảm xúc) cho bài viết, mỗi người một reaction
+- [x] **FEED-04**: Người dùng bình luận bài viết
+- [x] **FEED-05**: Người dùng chia sẻ lại (repost) một bài viết lên feed của mình
+- [x] **FEED-06**: Gateway có endpoint composition cho feed: mỗi bài kèm thông tin tác giả, số reaction, số comment, reaction của người xem — gộp từ nhiều service
 
 ### Tìm kiếm (SEARCH)
 
@@ -118,12 +118,12 @@ Cập nhật bởi roadmapper sau khi tạo ROADMAP.md (2026-06-06).
 | CONN-05 | Phase 3 | Complete |
 | CONN-06 | Phase 3 | Complete |
 | CONN-07 | Phase 3 | Complete |
-| FEED-01 | Phase 4 | Pending |
-| FEED-02 | Phase 4 | Pending |
-| FEED-03 | Phase 4 | Pending |
-| FEED-04 | Phase 4 | Pending |
-| FEED-05 | Phase 4 | Pending |
-| FEED-06 | Phase 4 | Pending |
+| FEED-01 | Phase 4 | Complete |
+| FEED-02 | Phase 4 | Complete |
+| FEED-03 | Phase 4 | Complete |
+| FEED-04 | Phase 4 | Complete |
+| FEED-05 | Phase 4 | Complete |
+| FEED-06 | Phase 4 | Complete |
 | SEARCH-01 | Phase 5 | Pending |
 | SEARCH-02 | Phase 5 | Pending |
 | NOTIF-01 | Phase 5 | Pending |
