@@ -3,12 +3,14 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
+use App\Controllers\AggregateController;
 use App\Controllers\AuthController;
 use App\Controllers\HealthController;
 use App\Controllers\ProfilesController;
 use App\JsonErrorHandler;
 use App\Middleware\CorsMiddleware;
 use App\Middleware\JwtAuthMiddleware;
+use App\Middleware\OptionalJwtMiddleware;
 use App\Middleware\LoggingMiddleware;
 use App\Middleware\RateLimitMiddleware;
 use App\Middleware\RequestIdMiddleware;
@@ -52,7 +54,12 @@ $container->set(HealthController::class, fn(Container $c) => new HealthControlle
     $c->get(NotificationClient::class),
 ));
 $container->set(ProfilesController::class, fn(Container $c) => new ProfilesController($c->get(ProfileClient::class)));
+$container->set(AggregateController::class, fn(Container $c) => new AggregateController(
+    $c->get(ProfileClient::class),
+    $c->get(ConnectionClient::class),
+));
 $container->set(JwtAuthMiddleware::class, fn() => new JwtAuthMiddleware($jwtSecret));
+$container->set(OptionalJwtMiddleware::class, fn() => new OptionalJwtMiddleware($jwtSecret));
 
 AppFactory::setContainer($container);
 $app = AppFactory::create();
