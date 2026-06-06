@@ -60,7 +60,7 @@ Requirements cho bản phát hành đầu của milestone ProConnect. Mỗi REQ 
 
 - [ ] **UI-01**: Toàn bộ giao diện mang nhận diện ProConnect (navy #1e3a8a, logo mắt xích, tagline) — tự thiết kế, không dùng brand asset LinkedIn
 - [ ] **UI-02**: Trang feed bố cục 3 cột kiểu mạng nghề nghiệp (thẻ hồ sơ trái, feed giữa, gợi ý/quảng cáo phải) — responsive
-- [ ] **UI-03**: Trang hồ sơ có ảnh bìa + ảnh đại diện + các section experience/education/skills
+- [x] **UI-03**: Trang hồ sơ có ảnh bìa + ảnh đại diện + các section experience/education/skills
 - [ ] **UI-04**: Thanh điều hướng có ô tìm kiếm, badge thông báo, badge lời mời kết nối, menu hồ sơ
 - [ ] **UI-05**: Toàn bộ chữ tiếng Việt có dấu
 
@@ -110,7 +110,7 @@ Cập nhật bởi roadmapper sau khi tạo ROADMAP.md (2026-06-06).
 | PROF-05 | Phase 2 | Complete |
 | PROF-06 | Phase 2 | Complete |
 | PROF-07 | Phase 2 | Complete |
-| UI-03 | Phase 2 | Pending |
+| UI-03 | Phase 2 | Complete |
 | CONN-01 | Phase 3 | Pending |
 | CONN-02 | Phase 3 | Pending |
 | CONN-03 | Phase 3 | Pending |
