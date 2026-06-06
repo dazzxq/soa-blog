@@ -12,7 +12,7 @@ ProConnect nâng cấp brownfield từ "SOA Blog" (3 service) thành một mạn
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Nền tảng & Gateway** - Refactor brownfield: `user-service`→`profile-service`, scaffold service/DB/route mới, giữ stack ≤ 9 container và site production sống
+- [x] **Phase 1: Nền tảng & Gateway** - Refactor brownfield: `user-service`→`profile-service`, scaffold service/DB/route mới, giữ stack ≤ 9 container và site production sống (completed 2026-06-06)
 - [ ] **Phase 2: Hồ sơ nghề nghiệp** - Profile đầy đủ (experience/education/skills) + endpoint composition profile tại gateway
 - [ ] **Phase 3: Kết nối / Social Graph** - Connection-service (lời mời, danh sách, gợi ý) + invariant graph cross-service tại gateway
 - [ ] **Phase 4: News Feed** - Feed-service (bài, reaction, comment, repost) + composition feed ghép nhiều service
@@ -107,7 +107,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Nền tảng & Gateway | 0/6 | Planned | - |
+| 1. Nền tảng & Gateway | 6/6 | Complete    | 2026-06-06 |
 | 2. Hồ sơ nghề nghiệp | 0/TBD | Not started | - |
 | 3. Kết nối / Social Graph | 0/TBD | Not started | - |
 | 4. News Feed | 0/TBD | Not started | - |
