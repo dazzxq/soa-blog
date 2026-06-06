@@ -86,6 +86,19 @@
   window.auth       = auth;
   window.formatDate = formatDate;
 
+  // ---------- Profile loader (Phase-1 endpoints only) ----------
+  // Uses /api/me (JWT) to resolve the current account, then /api/profiles/{id}
+  // for the public basic profile {id, username, display_name}. The retired blog
+  // post/comment endpoints are intentionally NOT called here (removed in Phase 1).
+  window.loadProfile = async function () {
+    if (!auth.isLoggedIn()) return null;
+    const me = await api.get('/me');                 // { data: { id, username, display_name, ... } }
+    const id = me.data && me.data.id;
+    if (!id) return me.data || null;
+    const prof = await api.get('/profiles/' + id);   // { data: { id, username, display_name } }
+    return prof.data || me.data || null;
+  };
+
   // Top-bar binding — pages declare <nav x-data="navbar()">
   window.navbar = function () {
     return {
