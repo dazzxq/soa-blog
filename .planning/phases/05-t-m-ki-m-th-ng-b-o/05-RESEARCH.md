@@ -758,7 +758,7 @@ echo "[deploy] phase-5 additive migration applied"
 | A4 | Reindex auth = any logged-in user (Claude's discretion) rather than an admin gate. | Pattern 3 | Low — explicitly Claude's discretion in CONTEXT; can gate to a specific user if the team wants. |
 | A5 | notification-service `create` trusts the gateway-supplied body `user_id`/`actor_id` (no X-User-Id on create) because the gateway is the only network-isolated caller. | Pattern 6 | Low — matches D-07 trust-by-network; alternative is to also pass X-User-Id=actor and derive, but recipient ≠ caller so the body is needed regardless. |
 
-## Open Questions
+## Open Questions (RESOLVED — A1 settle, A2 avatar_url in index, A3 single multi-USE migration — adopted in plans 05-04/05-01)
 
 1. **Batch vs N status calls in search composition.**
    - What we know: `ConnectionClient::statusFor` is per-pair; `statusForAsync` exists; there is NO batch status route in connection-service.
