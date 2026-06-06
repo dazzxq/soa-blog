@@ -223,15 +223,22 @@ final class ConnectionsController
 
         $profiles = [];
         if ($ids !== []) {
-            $res = $this->profiles->batch($ids);
-            if ($res->getStatusCode() === 200) {
-                foreach ((array) ($this->decode($res)['data'] ?? []) as $u) {
-                    $profiles[(int) ($u['id'] ?? 0)] = array_intersect_key(
-                        $u,
-                        array_flip(['id', 'username', 'display_name', 'avatar_url']),
-                    );
+            // A profile-service outage/timeout must DEGRADE (cards with profile:null),
+            // never bubble a 500 (codex-impl-review fix). batch() can throw GuzzleException
+            // on a network failure even with http_errors=false, so catch it here too.
+            try {
+                $res = $this->profiles->batch($ids);
+                if ($res->getStatusCode() === 200) {
+                    foreach ((array) ($this->decode($res)['data'] ?? []) as $u) {
+                        $profiles[(int) ($u['id'] ?? 0)] = array_intersect_key(
+                            $u,
+                            array_flip(['id', 'username', 'display_name', 'avatar_url']),
+                        );
+                    }
+                } else {
+                    $degraded = true;
                 }
-            } else {
+            } catch (GuzzleException $e) {
                 $degraded = true;
             }
         }
