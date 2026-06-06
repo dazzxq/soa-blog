@@ -104,6 +104,24 @@ for pair in "duyet:$TOK_DUYET" "long:$TOK_LONG" "diep:$TOK_DIEP"; do
   if [ -n "$tok" ]; then pass "login $name → token"; else fail "login $name (không trả token)"; fi
 done
 
+# Idempotent pre-clean (fixes leftover-edge flakiness): diep(4) and tai(5) are NOT in
+# the demo seed (seed = duyet↔long, demo→duyet on users 1/2/3), so remove ALL of diep's
+# edges left over from prior runs — every outgoing pending request AND every accepted
+# connection. This guarantees a clean diep/tai fixture regardless of what an earlier
+# (possibly aborted) run left behind, without ever touching the seed edges.
+diep_out=$(curl -s "$GW/api/connections/requests?direction=outgoing" -H "Authorization: Bearer $TOK_DIEP" 2>/dev/null || true)
+for rid in $(printf '%s' "$diep_out" | python3 -c 'import sys,json
+try: print(" ".join(str(x.get("id")) for x in json.load(sys.stdin).get("data",[])))
+except Exception: print("")' 2>/dev/null || true); do
+  curl -s -o /dev/null -XDELETE "$GW/api/connections/requests/$rid" -H "Authorization: Bearer $TOK_DIEP" 2>/dev/null || true
+done
+diep_conn=$(curl -s "$GW/api/connections" -H "Authorization: Bearer $TOK_DIEP" 2>/dev/null || true)
+for uid in $(printf '%s' "$diep_conn" | python3 -c 'import sys,json
+try: print(" ".join(str(x.get("user_id")) for x in json.load(sys.stdin).get("data",[])))
+except Exception: print("")' 2>/dev/null || true); do
+  curl -s -o /dev/null -XDELETE "$GW/api/connections/$uid" -H "Authorization: Bearer $TOK_DIEP" 2>/dev/null || true
+done
+
 # ---------------------------------------------------------------------------
 # 2. CONN-07 self-invite: duyet invites duyet (2) → 400.
 # ---------------------------------------------------------------------------
