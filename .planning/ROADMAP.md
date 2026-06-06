@@ -105,7 +105,7 @@ Plans:
   4. **(Gateway demonstrated)** Kết quả tìm kiếm được gateway compose (gộp dữ liệu tìm kiếm với trạng thái quan hệ của người xem); thông báo được gateway điều phối/định tuyến tập trung
 **Plans**: 7 plans
 Plans:
-- [ ] 05-01-PLAN.md — Wave 0: db/05-migrate-phase5.sql (search_index + notifications, idempotent, demo seed) + smoke-phase5.sh, wired into deploy.sh
+- [x] 05-01-PLAN.md — Wave 0: db/05-migrate-phase5.sql (search_index + notifications, idempotent, demo seed) + smoke-phase5.sh, wired into deploy.sh
 - [ ] 05-02-PLAN.md — Wave 1: search-service build-out (SearchController LIKE search + upsert, routes)
 - [ ] 05-03-PLAN.md — Wave 1: notification-service build-out (NotificationController recipient-scoped CRUD + unread_count + mark-read, routes)
 - [ ] 05-04-PLAN.md — Wave 2: gateway search compose (connection_status via settle + email allowlist + degrade) + reindex pull + SearchClient + routes/DI

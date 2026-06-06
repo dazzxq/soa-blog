@@ -47,14 +47,14 @@ Requirements cho bản phát hành đầu của milestone ProConnect. Mỗi REQ 
 
 ### Tìm kiếm (SEARCH)
 
-- [ ] **SEARCH-01**: Người dùng tìm người dùng theo tên, chức danh hoặc kỹ năng
-- [ ] **SEARCH-02**: Kết quả tìm kiếm hiển thị thẻ người dùng (ảnh, tên, chức danh) kèm nút kết nối nhanh và trạng thái quan hệ
+- [x] **SEARCH-01**: Người dùng tìm người dùng theo tên, chức danh hoặc kỹ năng
+- [x] **SEARCH-02**: Kết quả tìm kiếm hiển thị thẻ người dùng (ảnh, tên, chức danh) kèm nút kết nối nhanh và trạng thái quan hệ
 
 ### Thông báo (NOTIF)
 
-- [ ] **NOTIF-01**: Người dùng nhận thông báo khi có lời mời kết nối mới, reaction mới, hoặc comment mới trên bài của mình
-- [ ] **NOTIF-02**: Giao diện cập nhật thông báo gần-thời-gian-thực bằng polling (badge số lượng chưa đọc), không dùng WebSocket
-- [ ] **NOTIF-03**: Người dùng đánh dấu thông báo đã đọc
+- [x] **NOTIF-01**: Người dùng nhận thông báo khi có lời mời kết nối mới, reaction mới, hoặc comment mới trên bài của mình
+- [x] **NOTIF-02**: Giao diện cập nhật thông báo gần-thời-gian-thực bằng polling (badge số lượng chưa đọc), không dùng WebSocket
+- [x] **NOTIF-03**: Người dùng đánh dấu thông báo đã đọc
 
 ### Giao diện & Thương hiệu (UI)
 
@@ -124,11 +124,11 @@ Cập nhật bởi roadmapper sau khi tạo ROADMAP.md (2026-06-06).
 | FEED-04 | Phase 4 | Complete |
 | FEED-05 | Phase 4 | Complete |
 | FEED-06 | Phase 4 | Complete |
-| SEARCH-01 | Phase 5 | Pending |
-| SEARCH-02 | Phase 5 | Pending |
-| NOTIF-01 | Phase 5 | Pending |
-| NOTIF-02 | Phase 5 | Pending |
-| NOTIF-03 | Phase 5 | Pending |
+| SEARCH-01 | Phase 5 | Complete |
+| SEARCH-02 | Phase 5 | Complete |
+| NOTIF-01 | Phase 5 | Complete |
+| NOTIF-02 | Phase 5 | Complete |
+| NOTIF-03 | Phase 5 | Complete |
 | UI-01 | Phase 6 | Pending |
 | UI-02 | Phase 6 | Pending |
 | UI-04 | Phase 6 | Pending |

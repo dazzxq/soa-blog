@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-04-PLAN.md
-last_updated: "2026-06-06T22:11:59.909Z"
-last_activity: 2026-06-06 -- Phase 5 execution started
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-06-06T22:16:43.259Z"
+last_activity: 2026-06-06
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 28
-  completed_plans: 21
-  percent: 75
+  completed_plans: 22
+  percent: 79
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-06-06)
 ## Current Position
 
 Phase: 5 (Tìm kiếm & Thông báo) — EXECUTING
-Plan: 1 of 7
-Status: Executing Phase 5
-Last activity: 2026-06-06 -- Phase 5 execution started
+Plan: 2 of 7
+Status: Ready to execute
+Last activity: 2026-06-06
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -73,6 +73,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-news-feed P02 | 3min | 2 tasks | 3 files |
 | Phase 04 P03 | 3min | 3 tasks | 4 files |
 | Phase 04-news-feed P04 | 4min | 3 tasks | 2 files |
+| Phase 05-t-m-ki-m-th-ng-b-o P01 | 6 min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -116,6 +117,8 @@ Recent decisions affecting current work:
 - [Phase 04]: 04-03: /api/feed UNION-BATCH composition: resolve repost originals (Utils::settle, no N+1) THEN ONE ProfileClient::batch over {post-authors ∪ original-authors} (FEED-UNION-BATCH marker, exactly-one ->batch in feed()); fan-out is sequential by construction, ≤2 round trips after the timeline spine.
 - [Phase 04]: 04-03: every author card (post/original/comment) email-allowlisted via array_intersect_key to {id,username,display_name,avatar_url}; no 'email' literal in FeedController. feed-service is the only hard dep — connections/reposts/profiles failures degrade to meta.degraded + null, never 500. Mutations are thin Json::raw passthrough mapping JWT me() -> X-User-Id (invariants live in feed-service).
 - [Phase 04-news-feed]: 04-04: web/feed.html = feedPage() Alpine page (compose + newest-first timeline) cloning connections.html shell + _act(busy); x-text for ALL user content (XSS-safe, D-10, no x-html); delete buttons gated on author_id===auth.user.id; repost source via p.original or 'Bài viết gốc đã bị xoá'; degraded banner; 6-emotion picker w/ VN labels; app.js?v=ph4-01 (app.js unchanged). index.html gets 'Bảng tin' nav link. Runtime browser verify deferred to VPS Plan 05 (Docker absent locally).
+- [Phase 05-t-m-ki-m-th-ng-b-o]: 05-01: phase-5 migration is a single multi-USE plain .sql spanning proconnect_search (search_index incl avatar_url) + proconnect_notification (notifications), applied in deploy.sh with NO DB arg (file switches DBs via USE, mirroring migrate-phase1.sql.tmpl); idempotent CREATE IF NOT EXISTS + guarded seed (5 search rows, duyet findable by name + PHP skill; 2 unread duyet notifications), zero DROP/ALTER.
+- [Phase 05-t-m-ki-m-th-ng-b-o]: 05-01: smoke-phase5.sh non-destructive (trap restore EXIT + pre-clean leftover demo->tai request) covers SEARCH-01/02 + NOTIF-01/02/03 + PII guard; never deletes demo seed; runtime run deferred to VPS/CI Plan 07 (Docker absent locally). Fresh-volume schema files keep USE (deviation: plan said no-USE, would mis-target DB on fresh init).
 
 ### Pending Todos
 
@@ -134,6 +137,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-06T21:22:51.777Z
-Stopped at: Completed 04-04-PLAN.md
+Last session: 2026-06-06T22:16:35.089Z
+Stopped at: Completed 05-01-PLAN.md
 Resume file: None
