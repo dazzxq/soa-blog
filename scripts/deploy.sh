@@ -101,7 +101,7 @@ if [ -n "$LEGACY" ]; then
   fi
   echo "[deploy] backup OK ($(wc -c < "$BACKUP_FILE") bytes)"
 else
-  echo "[deploy] no legacy blog_users DB present — skipping backup (already migrated)"
+  echo "[deploy] no legacy blog_* schemas present — skipping backup (already migrated)"
 fi
 
 # 7) APPLY MIGRATION (ISSUE-3 step 3; idempotent; RESEARCH Pitfall 1 option B) -
@@ -114,7 +114,13 @@ if ! command -v envsubst >/dev/null 2>&1; then
   echo "[deploy] FATAL: envsubst not found (install gettext-base)" >&2
   exit 6
 fi
-envsubst < db/migrate-phase1.sql.tmpl | docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD"
+# WHITELIST MANDATORY (ISSUE-1): restrict envsubst to ONLY the 5 DB-password
+# placeholders. Unrestricted envsubst would also try to expand the bcrypt seed
+# hash tokens ($2y$12$ALzJ3z...) as shell variables and replace them with empty
+# strings, corrupting all 5 demo-account password hashes and breaking login
+# (PROF-01). The single-quoted whitelist makes envsubst leave every other
+# $-sequence (the bcrypt hashes) byte-for-byte intact.
+envsubst '${PROFILE_SVC_DB_PASS} ${CONNECTION_SVC_DB_PASS} ${FEED_SVC_DB_PASS} ${SEARCH_SVC_DB_PASS} ${NOTIFICATION_SVC_DB_PASS}' < db/migrate-phase1.sql.tmpl | docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD"
 echo "[deploy] phase-1 DB cutover applied"
 
 # 8) FULL-TOPOLOGY UP (ISSUE-3 step 4) -----------------------------------------
