@@ -39,4 +39,83 @@ final class ConnectionClient
             'query' => ['viewer' => $viewerId, 'target' => $targetId],
         ]);
     }
+
+    // --- Phase 3: synchronous status + graph mutations/lists (X-User-Id scoped) ---
+    // statusForAsync (above) is the D-05 contract used by AggregateController and
+    // MUST NOT change. The sync variant below feeds the sendRequest invariant.
+
+    /**
+     * Synchronous viewer-relative status — used by the sendRequest invariant and
+     * GET /api/connections/status/{userId}. Shares the same computation route as
+     * statusForAsync (the single status computation, D-05).
+     */
+    public function statusFor(int $viewer, int $target): ResponseInterface
+    {
+        return $this->http->request('GET', '/connections/status', [
+            'query' => ['viewer' => $viewer, 'target' => $target],
+        ]);
+    }
+
+    public function createRequest(int $requester, int $target): ResponseInterface
+    {
+        return $this->http->request('POST', '/connections', [
+            'json'    => ['addressee_id' => $target],
+            'headers' => ['Content-Type' => 'application/json', 'X-User-Id' => (string) $requester],
+        ]);
+    }
+
+    public function accept(int $caller, int $id): ResponseInterface
+    {
+        return $this->http->request('POST', '/connections/' . $id . '/accept', [
+            'headers' => ['X-User-Id' => (string) $caller],
+        ]);
+    }
+
+    /**
+     * DELETE a pending request — reject (addressee) and cancel (requester) both
+     * map here; connection-service scopes the delete to either pending party.
+     */
+    public function deleteRequest(int $caller, int $id): ResponseInterface
+    {
+        return $this->http->request('DELETE', '/connections/' . $id, [
+            'headers' => ['X-User-Id' => (string) $caller],
+        ]);
+    }
+
+    public function removeEdge(int $caller, int $otherUserId): ResponseInterface
+    {
+        return $this->http->request('DELETE', '/connections/by-user/' . $otherUserId, [
+            'headers' => ['X-User-Id' => (string) $caller],
+        ]);
+    }
+
+    public function listAccepted(int $user): ResponseInterface
+    {
+        return $this->http->request('GET', '/connections', [
+            'query' => ['user' => $user],
+        ]);
+    }
+
+    public function listPending(int $user, string $direction): ResponseInterface
+    {
+        return $this->http->request('GET', '/connections/pending', [
+            'query' => ['user' => $user, 'direction' => $direction],
+        ]);
+    }
+
+    /**
+     * Suggestions: the gateway supplies the candidate universe (composed from
+     * profile-service via ProfileClient::allUsers); connection-service returns
+     * the un-edged subset.
+     */
+    public function suggestions(int $user, array $candidateIds, int $limit): ResponseInterface
+    {
+        return $this->http->request('GET', '/connections/suggestions', [
+            'query' => [
+                'user'       => $user,
+                'candidates' => implode(',', $candidateIds),
+                'limit'      => $limit,
+            ],
+        ]);
+    }
 }

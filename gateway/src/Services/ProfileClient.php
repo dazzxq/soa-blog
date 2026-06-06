@@ -128,6 +128,25 @@ final class ProfileClient
         ]);
     }
 
+    /**
+     * Candidate universe for the gateway-composed suggestions (Pitfall 6 / Open Q1):
+     * connection-service cannot enumerate users, so the gateway pulls the public-safe
+     * user list from profile-service GET /users and supplies it as the candidate set.
+     *
+     * Returns the decoded `data` list (NOT a ResponseInterface). profile-service
+     * GET /users returns only public fields (id, username, display_name, avatar_url —
+     * NEVER email); this path adds no email. Degrades to [] on any non-200, never throws.
+     */
+    public function allUsers(int $limit = 100): array
+    {
+        $res = $this->http->request('GET', '/users', ['query' => ['limit' => $limit]]);
+        if ($res->getStatusCode() !== 200) {
+            return [];
+        }
+        $body = json_decode((string) $res->getBody(), true);
+        return is_array($body['data'] ?? null) ? $body['data'] : [];
+    }
+
     public function create(array $body): ResponseInterface
     {
         return $this->http->request('POST', '/users', [
