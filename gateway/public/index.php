@@ -8,6 +8,7 @@ use App\Controllers\AuthController;
 use App\Controllers\ConnectionsController;
 use App\Controllers\FeedController;
 use App\Controllers\HealthController;
+use App\Controllers\NotificationsController;
 use App\Controllers\ProfilesController;
 use App\Controllers\SearchController;
 use App\JsonErrorHandler;
@@ -64,11 +65,17 @@ $container->set(AggregateController::class, fn(Container $c) => new AggregateCon
 $container->set(ConnectionsController::class, fn(Container $c) => new ConnectionsController(
     $c->get(ProfileClient::class),
     $c->get(ConnectionClient::class),
+    $c->get(NotificationClient::class),
 ));
 $container->set(FeedController::class, fn(Container $c) => new FeedController(
     $c->get(FeedClient::class),
     $c->get(ProfileClient::class),
     $c->get(ConnectionClient::class),
+    $c->get(NotificationClient::class),
+));
+$container->set(NotificationsController::class, fn(Container $c) => new NotificationsController(
+    $c->get(NotificationClient::class),
+    $c->get(ProfileClient::class),
 ));
 $container->set(SearchController::class, fn(Container $c) => new SearchController(
     $c->get(SearchClient::class),

@@ -6,6 +6,7 @@ use App\Controllers\AuthController;
 use App\Controllers\ConnectionsController;
 use App\Controllers\FeedController;
 use App\Controllers\HealthController;
+use App\Controllers\NotificationsController;
 use App\Controllers\ProfilesController;
 use App\Controllers\SearchController;
 use App\Middleware\JwtAuthMiddleware;
@@ -78,5 +79,12 @@ return static function (App $app): void {
         // viewer's connection_status; reindex() rebuilds the index from profile-service.
         $g->get ('/search',         [SearchController::class, 'search'])->add($jwtMw);
         $g->post('/search/reindex', [SearchController::class, 'reindex'])->add($jwtMw);
+
+        // Notifications (NOTIF-02/03, JWT REQUIRED, recipient = token identity).
+        // The literal /notifications/read-all is registered BEFORE the parameterized
+        // /notifications/{id}/read so FastRoute matches the literal first.
+        $g->get ('/notifications',                  [NotificationsController::class, 'index'])->add($jwtMw);
+        $g->post('/notifications/read-all',         [NotificationsController::class, 'markAllRead'])->add($jwtMw);
+        $g->post('/notifications/{id:[0-9]+}/read', [NotificationsController::class, 'markRead'])->add($jwtMw);
     });
 };
