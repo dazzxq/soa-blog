@@ -5,68 +5,44 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ProConnect — Bảng tin</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="/assets/app.js?v=ph5-06"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { navy: { DEFAULT: '#1e3a8a', dark: '#172f6b', light: '#3b5bbd' } } } } };
+  </script>
+  <script defer src="/assets/app.js?v=ph6-01"></script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v1778837733" />
+  <link rel="stylesheet" href="/assets/styles.css?v=ph6-01" />
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen">
 
-<nav x-data="navbar()" class="bg-white border-b">
-  <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-    <a href="/" class="font-bold text-lg">ProConnect</a>
-    <div class="flex items-center gap-3 text-sm">
-      <template x-if="isLoggedIn">
-        <span class="flex items-center gap-3">
-          <form @submit.prevent="location.href='/search.html?q='+encodeURIComponent($refs.nq.value)" class="hidden sm:block">
-            <input x-ref="nq" type="search" placeholder="Tìm kiếm"
-                   class="border rounded px-2 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-slate-300" />
-          </form>
-          <div x-data="notificationBell()" x-init="start()" class="relative">
-            <button @click="open = !open" class="relative hover:text-slate-600" title="Thông báo">
-              <span aria-hidden="true">🔔</span>
-              <span x-show="unread > 0"
-                    class="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center"
-                    x-text="unread"></span>
-            </button>
-            <div x-show="open" @click.outside="open = false" x-cloak
-                 class="absolute right-0 mt-2 w-80 bg-white border rounded-lg shadow-lg z-10 text-left">
-              <div class="flex items-center justify-between px-3 py-2 border-b">
-                <span class="font-semibold text-sm">Thông báo</span>
-                <button @click="markAll()" class="text-xs text-blue-600 hover:underline">Đánh dấu tất cả đã đọc</button>
-              </div>
-              <template x-if="!items.length">
-                <p class="subtle text-sm px-3 py-4">Chưa có thông báo nào.</p>
-              </template>
-              <ul class="max-h-80 overflow-y-auto divide-y">
-                <template x-for="n in items" :key="n.id">
-                  <li @click="markOne(n.id)"
-                      :class="n.read_at ? 'hover:bg-slate-50' : 'bg-slate-50 hover:bg-slate-100 font-semibold'"
-                      class="px-3 py-2 cursor-pointer">
-                    <p class="text-sm" x-text="message(n)"></p>
-                    <p class="subtle text-xs mt-0.5" x-text="formatDate(n.created_at)"></p>
-                  </li>
-                </template>
-              </ul>
-            </div>
-          </div>
-          <a href="/feed.html" class="hover:underline">Bảng tin</a>
-          <a href="/connections.html" class="hover:underline">Kết nối</a>
-          <span class="subtle">Xin chào, <b x-text="user?.display_name || user?.username"></b></span>
-          <button @click="logout" class="text-red-600 hover:underline">Đăng xuất</button>
-        </span>
-      </template>
-      <template x-if="!isLoggedIn">
-        <span class="flex items-center gap-3">
-          <a href="/login.html" class="hover:underline">Đăng nhập</a>
-          <a href="/register.html" class="bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-700">Đăng ký</a>
-        </span>
-      </template>
-    </div>
-  </div>
-</nav>
+<div id="pronav"></div>
 
-<main x-data="feedPage()" x-init="load()" class="max-w-3xl mx-auto px-4 py-6">
+<main x-data="feedPage()" x-init="load()" class="max-w-5xl mx-auto px-4 py-6">
+
+  <div class="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_300px] gap-6">
+
+  <!-- ===== Cột trái: thẻ hồ sơ tóm tắt ===== -->
+  <aside class="order-2 lg:order-1">
+    <div class="bg-white border rounded-lg overflow-hidden">
+      <div class="h-12 pro-surface"></div>
+      <div class="px-4 pb-4 -mt-6">
+        <span class="w-14 h-14 rounded-full border-4 border-white bg-slate-300 overflow-hidden flex items-center justify-center text-lg font-bold text-slate-600">
+          <template x-if="me?.avatar_url">
+            <img :src="me.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover rounded-full" />
+          </template>
+          <template x-if="!me?.avatar_url">
+            <span x-text="(me?.display_name || me?.username || '?').trim().charAt(0).toUpperCase()"></span>
+          </template>
+        </span>
+        <p class="font-semibold mt-2 truncate" x-text="me?.display_name || me?.username || ''"></p>
+        <p class="subtle text-sm truncate" x-text="me?.headline || ''"></p>
+        <a :href="'/profile.html?id=' + (me?.id || '')" class="block mt-3 text-sm text-center border rounded py-1.5 hover:bg-slate-50">Xem hồ sơ</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== Cột giữa: compose + timeline (NGUYÊN BẢN) ===== -->
+  <div class="order-1 lg:order-2">
 
   <h1 class="text-2xl font-bold mb-4">Bảng tin</h1>
 
@@ -78,7 +54,7 @@
            class="w-full border rounded p-2 text-sm mt-3 focus:outline-none focus:ring-2 focus:ring-slate-300" />
     <div class="flex justify-end mt-3">
       <button @click="submit()" :disabled="busy || !draft.content.trim()"
-              class="bg-slate-900 text-white px-4 py-2 rounded hover:bg-slate-700 disabled:opacity-50">Đăng</button>
+              class="pro-btn px-4 py-2 rounded disabled:opacity-50">Đăng</button>
     </div>
   </section>
 
@@ -156,7 +132,7 @@
           <div class="flex items-center flex-wrap gap-1 border-t pt-3">
             <template x-for="type in reactions" :key="type">
               <button @click="p.my_reaction === type ? unreact(p.id) : react(p.id, type)" :disabled="busy"
-                      :class="p.my_reaction === type ? 'bg-slate-900 text-white' : 'hover:bg-slate-100'"
+                      :class="p.my_reaction === type ? 'pro-btn' : 'hover:bg-slate-100'"
                       class="text-xs border px-2 py-1 rounded disabled:opacity-50"
                       x-text="reactionLabel(type)"></button>
             </template>
@@ -199,7 +175,7 @@
                        @keydown.enter="addComment(p.id)"
                        class="flex-1 border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300" />
                 <button @click="addComment(p.id)" :disabled="busy || !(commentDraft[p.id] || '').trim()"
-                        class="text-sm bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-700 disabled:opacity-50">Gửi</button>
+                        class="text-sm pro-btn px-3 py-1.5 rounded disabled:opacity-50">Gửi</button>
               </div>
             </div>
           </template>
@@ -208,6 +184,48 @@
       </template>
     </div>
   </template>
+
+  </div><!-- /cột giữa -->
+
+  <!-- ===== Cột phải: gợi ý + thẻ tĩnh ===== -->
+  <aside class="order-3 lg:order-3 hidden lg:block space-y-4">
+
+    <!-- Người bạn có thể biết (/api/connections/suggestions) -->
+    <div class="bg-white border rounded-lg p-4">
+      <h2 class="font-semibold text-sm mb-3">Người bạn có thể biết</h2>
+      <template x-if="!suggestions.length">
+        <p class="subtle text-xs">Chưa có gợi ý.</p>
+      </template>
+      <ul class="space-y-3">
+        <template x-for="s in suggestions" :key="s.user_id">
+          <li class="flex items-center justify-between gap-2">
+            <a :href="'/profile.html?id=' + s.user_id" class="flex items-center gap-2 min-w-0 hover:underline">
+              <span class="w-9 h-9 rounded-full bg-slate-300 overflow-hidden flex items-center justify-center text-sm font-bold text-slate-600 shrink-0">
+                <template x-if="s.profile?.avatar_url">
+                  <img :src="s.profile.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover rounded-full" />
+                </template>
+                <template x-if="!s.profile?.avatar_url">
+                  <span x-text="(s.profile?.display_name || s.profile?.username || '?').trim().charAt(0).toUpperCase()"></span>
+                </template>
+              </span>
+              <span class="truncate text-sm" x-text="s.profile?.display_name || s.profile?.username || 'Người dùng'"></span>
+            </a>
+            <button @click="invite(s.user_id)" :disabled="busy"
+                    class="text-xs pro-btn px-2 py-1 rounded disabled:opacity-50 shrink-0">Kết nối</button>
+          </li>
+        </template>
+      </ul>
+    </div>
+
+    <!-- Thẻ tĩnh: Về ProConnect -->
+    <div class="bg-white border rounded-lg p-4 text-sm">
+      <h2 class="font-semibold mb-1" style="color:#1e3a8a">Về ProConnect</h2>
+      <p class="subtle">Mạng xã hội nghề nghiệp — đồ án SOA / API Gateway (PTIT INT1448). Tất cả dữ liệu demo.</p>
+    </div>
+
+  </aside>
+
+  </div><!-- /grid 3 cột -->
 </main>
 
 <script>
@@ -218,6 +236,8 @@ function feedPage() {
     error: '',
     busy: false,
     degraded: false,
+    me: null,
+    suggestions: [],
     draft: { content: '', image_url: '' },
     openComments: {},
     commentDraft: {},
@@ -245,6 +265,9 @@ function feedPage() {
       } finally {
         this.loading = false;
       }
+      // Cột trái & phải — best-effort, lỗi không chặn bảng tin
+      try { this.me = (await api.get('/me')).data; } catch (e) { /* degrade an toàn */ }
+      try { this.suggestions = ((await api.get('/connections/suggestions')).data || []).slice(0, 5); } catch (e) { /* degrade an toàn */ }
     },
 
     async submit() {
@@ -269,6 +292,7 @@ function feedPage() {
     unreact(id)       { return this._act(() => api.delete('/posts/' + id + '/reactions')); },
     repost(id)        { return this._act(() => api.post('/posts/' + id + '/repost')); },
     removePost(id)    { return this._act(() => api.delete('/posts/' + id)); },
+    invite(id)        { return this._act(() => api.post('/connections/requests', { target_id: id })); },
 
     async loadComments(id) {
       try {
@@ -328,5 +352,6 @@ function feedPage() {
   };
 }
 </script>
+<script>document.addEventListener('DOMContentLoaded', () => window.proNav('feed'));</script>
 </body>
 </html>
