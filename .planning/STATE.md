@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-02-PLAN.md
-last_updated: "2026-06-06T18:49:54.335Z"
+stopped_at: Completed 02-03-PLAN.md
+last_updated: "2026-06-06T18:54:21.575Z"
 last_activity: 2026-06-06
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 11
-  completed_plans: 8
-  percent: 73
+  completed_plans: 9
+  percent: 82
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-06-06)
 ## Current Position
 
 Phase: 2 (Hồ sơ nghề nghiệp) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-06-06
 
@@ -60,6 +60,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P06 | 3min | 2 tasks | 4 files |
 | Phase 02 P01 | 4min | 3 tasks | 5 files |
 | Phase 02 P02 | 6min | 3 tasks | 3 files |
+| Phase 02 P03 | 3min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -86,6 +87,8 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-02: exp/edu/skills writes return UNIFORM 404 on 0-rowcount (never 403) — not-found vs not-owned indistinguishable, closing the IDOR row-existence oracle; no disambiguating SELECT
 - [Phase 02]: 02-02: /users/{id}/full emits a public column allowlist (no email/password_hash) at the profile-service data layer; gateway adds a second allowlist in Plan 03
 - [Phase 02]: 02-02: every write scoped strictly by X-User-Id header; user_id never read from body (grep-enforced); profile-service still verifies NO JWT
+- [Phase 02]: 02-03: flagship GET /api/profiles/{id}/full = 2-way parallel Utils::settle fan-out (profile-full hard dep + connection degradable); meta.degraded on stub 404 (D-03); public+auth-aware via new OptionalJwtMiddleware (invalid token -> anonymous, never 401); allowlist excludes email
+- [Phase 02]: 02-03: /api/profiles/me/* owner CRUD maps JWT user_id -> path id + X-User-Id (body user_id never trusted, no IDOR surface); updateBasic re-applies email/password_hash allowlist to success body since profile-service update() returns find() (SELECTs email)
 
 ### Pending Todos
 
@@ -104,6 +107,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-06T18:49:47.434Z
-Stopped at: Completed 02-02-PLAN.md
+Last session: 2026-06-06T18:54:14.504Z
+Stopped at: Completed 02-03-PLAN.md
 Resume file: None
