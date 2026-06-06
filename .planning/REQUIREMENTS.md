@@ -23,7 +23,7 @@ Requirements cho bản phát hành đầu của milestone ProConnect. Mỗi REQ 
 - [x] **PROF-03**: Người dùng thêm/sửa/xoá các mục Kinh nghiệm làm việc (công ty, vị trí, mốc thời gian, mô tả)
 - [x] **PROF-04**: Người dùng thêm/sửa/xoá các mục Học vấn (trường, ngành, mốc thời gian)
 - [x] **PROF-05**: Người dùng thêm/xoá danh sách Kỹ năng
-- [ ] **PROF-06**: Người dùng xem hồ sơ công khai của người khác qua trang profile riêng
+- [x] **PROF-06**: Người dùng xem hồ sơ công khai của người khác qua trang profile riêng
 - [x] **PROF-07**: Gateway có endpoint composition trả về hồ sơ đầy đủ (thông tin cơ bản + experience + education + skills + trạng thái kết nối với người xem) trong một request
 
 ### Kết nối / Social Graph (CONN)
@@ -108,7 +108,7 @@ Cập nhật bởi roadmapper sau khi tạo ROADMAP.md (2026-06-06).
 | PROF-03 | Phase 2 | Complete |
 | PROF-04 | Phase 2 | Complete |
 | PROF-05 | Phase 2 | Complete |
-| PROF-06 | Phase 2 | Pending |
+| PROF-06 | Phase 2 | Complete |
 | PROF-07 | Phase 2 | Complete |
 | UI-03 | Phase 2 | Pending |
 | CONN-01 | Phase 3 | Pending |

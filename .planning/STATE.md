@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-06-06T18:16:07.240Z"
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-06-06T18:49:54.335Z"
 last_activity: 2026-06-06
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 11
-  completed_plans: 7
-  percent: 64
+  completed_plans: 8
+  percent: 73
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-06-06)
 ## Current Position
 
 Phase: 2 (Hồ sơ nghề nghiệp) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-06-06
 
@@ -59,6 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P04 | 3m | 3 tasks | 39 files |
 | Phase 01 P06 | 3min | 2 tasks | 4 files |
 | Phase 02 P01 | 4min | 3 tasks | 5 files |
+| Phase 02 P02 | 6min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,9 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-06: deploy.sh no longer self-pulls (workflow does git pull --ff-only first so the new cutover logic runs on the first deploy); order = mariadb-only up+healthy -> BLOCKING pre-wipe mysqldump (abort on fail/empty) -> envsubst migrate -> full up --remove-orphans; public health gate now asserts status:ok for all 5 services.
 - [Phase 02]: 02-01: phase-2 live migration is a PLAIN .sql (no envsubst/secrets) applied BLOCKING in deploy.sh after the phase-1 cutover; idempotent ADD/CREATE IF NOT EXISTS + guarded demo seed inside it for the live volume, mirrored to 01-schema/99-seed for fresh volumes.
 - [Phase 02]: 02-01: smoke-phase2.sh mutates ONLY headline (seed-guaranteed non-null) with trap restore EXIT registered before capture + RESTORE_READY gate + jesc; non-destructive under set -euo pipefail. It is the Phase-2 gate; runtime run deferred to VPS (Docker absent locally).
+- [Phase 02]: 02-02: exp/edu/skills writes return UNIFORM 404 on 0-rowcount (never 403) — not-found vs not-owned indistinguishable, closing the IDOR row-existence oracle; no disambiguating SELECT
+- [Phase 02]: 02-02: /users/{id}/full emits a public column allowlist (no email/password_hash) at the profile-service data layer; gateway adds a second allowlist in Plan 03
+- [Phase 02]: 02-02: every write scoped strictly by X-User-Id header; user_id never read from body (grep-enforced); profile-service still verifies NO JWT
 
 ### Pending Todos
 
@@ -100,6 +104,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-06T18:15:59.412Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-06-06T18:49:47.434Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None
