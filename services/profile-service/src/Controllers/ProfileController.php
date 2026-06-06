@@ -145,17 +145,20 @@ final class ProfileController
         $sql  = 'UPDATE experience SET ' . implode(', ', $sets) . ' WHERE id = :eid AND user_id = :caller';
         $stmt = Db::pdo()->prepare($sql);
         $stmt->execute($params);
-        if ($stmt->rowCount() === 0) {
-            // IDOR-safe: not-found and not-owned are intentionally indistinguishable.
-            throw new DomainError(404, 'EXPERIENCE_NOT_FOUND', 'Không tìm thấy mục kinh nghiệm.');
-        }
-
+        // NOTE: do NOT use rowCount() as existence proof — MariaDB reports rows *changed*,
+        // so a no-op PATCH (same values) yields rowCount()===0 even when the row exists and
+        // is owned (false 404). Existence is proven by the scoped SELECT below instead.
         $stmt = Db::pdo()->prepare(
             'SELECT id, company, title, start_date, end_date, description
              FROM experience WHERE id = :eid AND user_id = :caller LIMIT 1'
         );
         $stmt->execute([':eid' => $eid, ':caller' => $caller]);
-        return Json::ok($res, $stmt->fetch());
+        $row = $stmt->fetch();
+        if ($row === false) {
+            // IDOR-safe: not-found and not-owned are intentionally indistinguishable.
+            throw new DomainError(404, 'EXPERIENCE_NOT_FOUND', 'Không tìm thấy mục kinh nghiệm.');
+        }
+        return Json::ok($res, $row);
     }
 
     public function deleteExperience(Request $req, Response $res, array $args): Response
@@ -281,16 +284,18 @@ final class ProfileController
         $sql  = 'UPDATE education SET ' . implode(', ', $sets) . ' WHERE id = :eid AND user_id = :caller';
         $stmt = Db::pdo()->prepare($sql);
         $stmt->execute($params);
-        if ($stmt->rowCount() === 0) {
-            throw new DomainError(404, 'EDUCATION_NOT_FOUND', 'Không tìm thấy mục học vấn.');
-        }
-
+        // Existence proven by the scoped SELECT (NOT rowCount): a no-op PATCH (same values)
+        // yields rowCount()===0 in MariaDB even for an existing owned row → would be a false 404.
         $stmt = Db::pdo()->prepare(
             'SELECT id, school, degree, field, start_year, end_year
              FROM education WHERE id = :eid AND user_id = :caller LIMIT 1'
         );
         $stmt->execute([':eid' => $eid, ':caller' => $caller]);
-        return Json::ok($res, $stmt->fetch());
+        $row = $stmt->fetch();
+        if ($row === false) {
+            throw new DomainError(404, 'EDUCATION_NOT_FOUND', 'Không tìm thấy mục học vấn.');
+        }
+        return Json::ok($res, $row);
     }
 
     public function deleteEducation(Request $req, Response $res, array $args): Response

@@ -114,12 +114,12 @@ INSERT INTO education (id, user_id, school, degree, field, start_year, end_year)
 SELECT 2, 1, 'Trường Demo', 'Cử nhân', 'Khoa học máy tính', 2019, 2023
 WHERE NOT EXISTS (SELECT 1 FROM education WHERE id = 2);
 
--- 5d) skills — explicit ids, guarded (UNIQUE(user_id,name) is a second guard).
-INSERT INTO skills (id, user_id, name)
-SELECT 1, 2, 'PHP'        WHERE NOT EXISTS (SELECT 1 FROM skills WHERE id = 1);
-INSERT INTO skills (id, user_id, name)
-SELECT 2, 2, 'Docker'     WHERE NOT EXISTS (SELECT 1 FROM skills WHERE id = 2);
-INSERT INTO skills (id, user_id, name)
-SELECT 3, 2, 'Kiến trúc hướng dịch vụ' WHERE NOT EXISTS (SELECT 1 FROM skills WHERE id = 3);
-INSERT INTO skills (id, user_id, name)
-SELECT 4, 1, 'JavaScript' WHERE NOT EXISTS (SELECT 1 FROM skills WHERE id = 4);
+-- 5d) skills — INSERT IGNORE so re-runs are no-ops on EITHER the PK (id) OR the
+-- UNIQUE(user_id,name) natural key. A plain id-only guard would still raise a
+-- duplicate-key error (aborting the whole migration) if a user had added a
+-- same-named skill after the initial seed (Codex impl-review fix).
+INSERT IGNORE INTO skills (id, user_id, name) VALUES
+  (1, 2, 'PHP'),
+  (2, 2, 'Docker'),
+  (3, 2, 'Kiến trúc hướng dịch vụ'),
+  (4, 1, 'JavaScript');
