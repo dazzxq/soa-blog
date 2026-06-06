@@ -1,0 +1,28 @@
+<svg width="320" height="80" viewBox="0 0 320 80" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ProConnect">
+  <title>ProConnect</title>
+
+  <!-- Icon: two interlocking chain links (kết nối) -->
+  <g transform="translate(8,12)">
+    <!-- back link -->
+    <rect x="2" y="14" width="34" height="28" rx="14"
+          fill="none" stroke="#1e3a8a" stroke-width="7"/>
+    <!-- front link, overlapping → interlock illusion -->
+    <rect x="22" y="14" width="34" height="28" rx="14"
+          fill="none" stroke="#2563eb" stroke-width="7"/>
+    <!-- mask the back link where front passes over, to sell the weave -->
+    <rect x="29" y="14" width="7" height="9" rx="3" fill="#1e3a8a"/>
+    <rect x="29" y="33" width="7" height="9" rx="3" fill="#1e3a8a"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="78" y="52" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="34" font-weight="700" letter-spacing="-0.5">
+    <tspan fill="#1e3a8a">Pro</tspan><tspan fill="#2563eb">Connect</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="79" y="70" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="11" font-weight="400" letter-spacing="1.5" fill="#64748b">
+    NƠI NGHỀ NGHIỆP GẶP NHAU
+  </text>
+</svg>
