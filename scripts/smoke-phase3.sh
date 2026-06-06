@@ -144,7 +144,7 @@ sendBody=$(curl -s -XPOST "$GW/api/connections/requests" \
 sendCode=$(curl -s -o /dev/null -w '%{http_code}' -XPOST "$GW/api/connections/requests" \
             -H "Authorization: Bearer $TOK_DIEP" -H 'Content-Type: application/json' \
             -d '{"target_id":5}' || true)
-edgeId=$(echo "$sendBody" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+edgeId=$(echo "$sendBody" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2 || true)
 [ -n "$edgeId" ] && track_edge "$edgeId" "$TOK_DIEP"
 case "$sendCode" in
   200|201|409) pass "diep→tai invite handled ($sendCode) (CONN-01)" ;;
@@ -194,10 +194,19 @@ fi
 #    long accepts → status connected for both; then remove to restore.
 #    NOTE: diep↔long is NOT a seed fixture, so creating+removing it is safe.
 # ---------------------------------------------------------------------------
+# Idempotent pre-clean: remove any leftover diep↔long edge from a prior run
+# (accepted connection OR pending request) so this invite always starts fresh.
+# DELETE /api/connections/{userId} removes an accepted edge; cancelling a pending
+# outgoing needs the request id, so also sweep diep's outgoing for an addressee=3.
+curl -s -o /dev/null -XDELETE "$GW/api/connections/3" -H "Authorization: Bearer $TOK_DIEP" 2>/dev/null || true
+preReq=$(curl -s "$GW/api/connections/requests?direction=outgoing" -H "Authorization: Bearer $TOK_DIEP" 2>/dev/null || true)
+preId=$(echo "$preReq" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2 || true)
+[ -n "$preId" ] && curl -s -o /dev/null -XDELETE "$GW/api/connections/requests/$preId" -H "Authorization: Bearer $TOK_DIEP" 2>/dev/null || true
+
 accBody=$(curl -s -XPOST "$GW/api/connections/requests" \
             -H "Authorization: Bearer $TOK_DIEP" -H 'Content-Type: application/json' \
             -d '{"target_id":3}')
-accId=$(echo "$accBody" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+accId=$(echo "$accBody" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2 || true)
 [ -n "$accId" ] && track_edge "$accId" "$TOK_DIEP"
 if [ -n "$accId" ]; then
   accCode=$(curl -s -o /dev/null -w '%{http_code}' -XPOST "$GW/api/connections/requests/$accId/accept" \
@@ -211,9 +220,11 @@ if [ -n "$accId" ]; then
   else
     fail "status diep↔long không phải connected sau accept"
   fi
-  # Remove the accepted edge to restore (DELETE as either party).
-  curl -s -o /dev/null -XDELETE "$GW/api/connections/$accId" -H "Authorization: Bearer $TOK_DIEP" >/dev/null 2>&1 \
-    || curl -s -o /dev/null -XDELETE "$GW/api/connections/requests/$accId" -H "Authorization: Bearer $TOK_DIEP" >/dev/null 2>&1 || true
+  # Remove the accepted edge to restore. DELETE /api/connections/{userId} takes the
+  # OTHER party's USER id (long=3), NOT the request/edge id — diep removes its
+  # connection with user 3. (Prior bug used $accId here, so the edge was never
+  # removed and leaked into the demo graph / broke idempotency.)
+  curl -s -o /dev/null -XDELETE "$GW/api/connections/3" -H "Authorization: Bearer $TOK_DIEP" 2>/dev/null || true
 else
   fail "diep→long invite không trả id (không thể test accept)"
 fi
@@ -225,7 +236,7 @@ fi
 rejBody=$(curl -s -XPOST "$GW/api/connections/requests" \
             -H "Authorization: Bearer $TOK_DIEP" -H 'Content-Type: application/json' \
             -d '{"target_id":3}')
-rejId=$(echo "$rejBody" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+rejId=$(echo "$rejBody" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2 || true)
 [ -n "$rejId" ] && track_edge "$rejId" "$TOK_DIEP"
 if [ -n "$rejId" ]; then
   rejCode=$(curl -s -o /dev/null -w '%{http_code}' -XPOST "$GW/api/connections/requests/$rejId/reject" \
@@ -308,7 +319,7 @@ assert_no_pii "/profiles/3/full (duyet)" "$payoff"
 #     duyet's incoming list; do NOT accept it (would clobber the seed fixture).
 # ---------------------------------------------------------------------------
 seedReq=$(curl -s "$GW/api/connections/requests?direction=incoming" -H "Authorization: Bearer $TOK_DUYET" || true)
-seedId=$(echo "$seedReq" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+seedId=$(echo "$seedReq" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2 || true)
 if [ -n "$seedId" ]; then
   ownCode=$(curl -s -o /dev/null -w '%{http_code}' -XPOST "$GW/api/connections/requests/$seedId/accept" \
               -H "Authorization: Bearer $TOK_DIEP")
