@@ -13,6 +13,9 @@ node_modules/
 data/
 mariadb_data/
 
+# Pre-wipe DB dumps taken by scripts/deploy.sh before the destructive migration
+backups/
+
 # SSL certs
 deploy/certs/*.pem
 deploy/certs/*.key
