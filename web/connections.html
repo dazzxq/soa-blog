@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProConnect — Kết nối</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="/assets/app.js?v=ph2-04"></script>
+
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="/assets/styles.css?v1778837733" />
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+<nav x-data="navbar()" class="bg-white border-b">
+  <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+    <a href="/" class="font-bold text-lg">ProConnect</a>
+    <div class="flex items-center gap-3 text-sm">
+      <template x-if="isLoggedIn">
+        <span class="flex items-center gap-3">
+          <a href="/connections.html" class="hover:underline">Kết nối</a>
+          <span class="subtle">Xin chào, <b x-text="user?.display_name || user?.username"></b></span>
+          <button @click="logout" class="text-red-600 hover:underline">Đăng xuất</button>
+        </span>
+      </template>
+      <template x-if="!isLoggedIn">
+        <span class="flex items-center gap-3">
+          <a href="/login.html" class="hover:underline">Đăng nhập</a>
+          <a href="/register.html" class="bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-700">Đăng ký</a>
+        </span>
+      </template>
+    </div>
+  </div>
+</nav>
+
+<main x-data="connectionsPage()" x-init="load()" class="max-w-3xl mx-auto px-4 py-6">
+
+  <h1 class="text-2xl font-bold mb-4">Kết nối của bạn</h1>
+
+  <template x-if="loading">
+    <p class="subtle">Đang tải…</p>
+  </template>
+
+  <template x-if="!loading && error">
+    <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded mb-4" x-text="error"></div>
+  </template>
+
+  <template x-if="!loading">
+    <div class="space-y-6">
+
+      <!-- 1. Kết nối của tôi -->
+      <section class="bg-white border rounded-lg p-6">
+        <h2 class="text-lg font-semibold mb-3">Kết nối của tôi</h2>
+        <template x-if="!conns.length">
+          <p class="subtle text-sm">Chưa có kết nối nào.</p>
+        </template>
+        <ul class="space-y-3">
+          <template x-for="c in conns" :key="c.user_id">
+            <li class="flex items-center justify-between gap-3">
+              <a :href="'/profile.html?id=' + c.user_id" class="flex items-center gap-3 min-w-0 hover:underline">
+                <span class="w-10 h-10 rounded-full bg-slate-300 overflow-hidden flex items-center justify-center text-sm font-bold text-slate-600 shrink-0">
+                  <template x-if="c.profile && c.profile.avatar_url">
+                    <img :src="c.profile.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
+                  </template>
+                  <template x-if="!(c.profile && c.profile.avatar_url)">
+                    <span x-text="initial(c.profile)"></span>
+                  </template>
+                </span>
+                <span class="truncate" x-text="name(c.profile)"></span>
+              </a>
+              <button @click="remove(c.user_id)" :disabled="busy"
+                      class="text-sm border px-3 py-1.5 rounded hover:bg-slate-50 disabled:opacity-50 shrink-0">Xoá kết nối</button>
+            </li>
+          </template>
+        </ul>
+      </section>
+
+      <!-- 2. Lời mời đã nhận -->
+      <section class="bg-white border rounded-lg p-6">
+        <h2 class="text-lg font-semibold mb-3">Lời mời đã nhận</h2>
+        <template x-if="!incoming.length">
+          <p class="subtle text-sm">Chưa có lời mời nào.</p>
+        </template>
+        <ul class="space-y-3">
+          <template x-for="r in incoming" :key="r.request_id">
+            <li class="flex items-center justify-between gap-3">
+              <a :href="'/profile.html?id=' + r.user_id" class="flex items-center gap-3 min-w-0 hover:underline">
+                <span class="w-10 h-10 rounded-full bg-slate-300 overflow-hidden flex items-center justify-center text-sm font-bold text-slate-600 shrink-0">
+                  <template x-if="r.profile && r.profile.avatar_url">
+                    <img :src="r.profile.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
+                  </template>
+                  <template x-if="!(r.profile && r.profile.avatar_url)">
+                    <span x-text="initial(r.profile)"></span>
+                  </template>
+                </span>
+                <span class="truncate" x-text="name(r.profile)"></span>
+              </a>
+              <span class="flex items-center gap-2 shrink-0">
+                <button @click="accept(r.request_id)" :disabled="busy"
+                        class="text-sm bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-700 disabled:opacity-50">Chấp nhận</button>
+                <button @click="reject(r.request_id)" :disabled="busy"
+                        class="text-sm border px-3 py-1.5 rounded hover:bg-slate-50 disabled:opacity-50">Từ chối</button>
+              </span>
+            </li>
+          </template>
+        </ul>
+      </section>
+
+      <!-- 3. Lời mời đã gửi -->
+      <section class="bg-white border rounded-lg p-6">
+        <h2 class="text-lg font-semibold mb-3">Lời mời đã gửi</h2>
+        <template x-if="!outgoing.length">
+          <p class="subtle text-sm">Bạn chưa gửi lời mời nào.</p>
+        </template>
+        <ul class="space-y-3">
+          <template x-for="r in outgoing" :key="r.request_id">
+            <li class="flex items-center justify-between gap-3">
+              <a :href="'/profile.html?id=' + r.user_id" class="flex items-center gap-3 min-w-0 hover:underline">
+                <span class="w-10 h-10 rounded-full bg-slate-300 overflow-hidden flex items-center justify-center text-sm font-bold text-slate-600 shrink-0">
+                  <template x-if="r.profile && r.profile.avatar_url">
+                    <img :src="r.profile.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
+                  </template>
+                  <template x-if="!(r.profile && r.profile.avatar_url)">
+                    <span x-text="initial(r.profile)"></span>
+                  </template>
+                </span>
+                <span class="truncate" x-text="name(r.profile)"></span>
+              </a>
+              <button @click="cancel(r.request_id)" :disabled="busy"
+                      class="text-sm border px-3 py-1.5 rounded hover:bg-slate-50 disabled:opacity-50 shrink-0">Huỷ lời mời</button>
+            </li>
+          </template>
+        </ul>
+      </section>
+
+      <!-- 4. Người bạn có thể biết -->
+      <section class="bg-white border rounded-lg p-6">
+        <h2 class="text-lg font-semibold mb-3">Người bạn có thể biết</h2>
+        <template x-if="!suggestions.length">
+          <p class="subtle text-sm">Chưa có gợi ý nào.</p>
+        </template>
+        <ul class="space-y-3">
+          <template x-for="s in suggestions" :key="s.user_id">
+            <li class="flex items-center justify-between gap-3">
+              <a :href="'/profile.html?id=' + s.user_id" class="flex items-center gap-3 min-w-0 hover:underline">
+                <span class="w-10 h-10 rounded-full bg-slate-300 overflow-hidden flex items-center justify-center text-sm font-bold text-slate-600 shrink-0">
+                  <template x-if="s.profile && s.profile.avatar_url">
+                    <img :src="s.profile.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
+                  </template>
+                  <template x-if="!(s.profile && s.profile.avatar_url)">
+                    <span x-text="initial(s.profile)"></span>
+                  </template>
+                </span>
+                <span class="truncate" x-text="name(s.profile)"></span>
+              </a>
+              <button @click="sendInvite(s.user_id)" :disabled="busy"
+                      class="text-sm bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-700 disabled:opacity-50 shrink-0">Kết nối</button>
+            </li>
+          </template>
+        </ul>
+      </section>
+
+    </div>
+  </template>
+</main>
+
+<script>
+function connectionsPage() {
+  return {
+    loading: true,
+    error: '',
+    busy: false,
+    conns: [],
+    incoming: [],
+    outgoing: [],
+    suggestions: [],
+
+    async load() {
+      if (!auth.isLoggedIn()) { window.location.href = '/login.html'; return; }
+      this.error = '';
+      try {
+        const [c, inc, out, sug] = await Promise.all([
+          api.get('/connections'),
+          api.get('/connections/requests?direction=incoming'),
+          api.get('/connections/requests?direction=outgoing'),
+          api.get('/connections/suggestions'),
+        ]);
+        this.conns = c.data || [];
+        this.incoming = inc.data || [];
+        this.outgoing = out.data || [];
+        this.suggestions = sug.data || [];
+      } catch (e) {
+        if (e.status === 401) { auth.logout(); window.location.href = '/login.html'; return; }
+        this.error = 'Không tải được danh sách kết nối: ' + e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async _act(fn) {
+      if (this.busy) return;
+      this.busy = true;
+      this.error = '';
+      try {
+        await fn();
+        await this.load();
+      } catch (e) {
+        this.error = 'Thao tác không thành công: ' + e.message;
+      } finally {
+        this.busy = false;
+      }
+    },
+
+    sendInvite(targetId) { return this._act(() => api.post('/connections/requests', { target_id: targetId })); },
+    accept(reqId)        { return this._act(() => api.post('/connections/requests/' + reqId + '/accept')); },
+    reject(reqId)        { return this._act(() => api.post('/connections/requests/' + reqId + '/reject')); },
+    cancel(reqId)        { return this._act(() => api.delete('/connections/requests/' + reqId)); },
+    remove(userId)       { return this._act(() => api.delete('/connections/' + userId)); },
+
+    name(profile) {
+      if (!profile) return 'Người dùng';
+      return profile.display_name || profile.username || 'Người dùng';
+    },
+
+    initial(profile) {
+      const n = (profile && (profile.display_name || profile.username)) || '?';
+      return n.trim().charAt(0).toUpperCase();
+    },
+  };
+}
+</script>
+</body>
+</html>
