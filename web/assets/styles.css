@@ -4,3 +4,29 @@ html, body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto,
 .subtle { color: rgb(107 114 128); }
 .fade-in { animation: fadeIn .25s ease-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* ---------------------------------------------------------------------------
+   ProConnect brand tokens (D-01). Navy #1e3a8a primary.
+
+   Token architecture (D-01): the Tailwind utility token `navy` (bg-navy /
+   text-navy) is declared per page via an inline `tailwind.config` snippet,
+   because the Play CDN only reads config it finds inline on each page. THIS file
+   supplies the plain-CSS counterparts — `--navy*` CSS vars + ready-made `.pro-*`
+   component helpers used ALONGSIDE Tailwind. Both serve D-01 and do NOT conflict.
+   No @apply (no build step) — these are plain CSS rules.
+   --------------------------------------------------------------------------- */
+:root {
+  --navy:         #1e3a8a;  /* primary */
+  --navy-hover:   #172f6b;  /* hover/active */
+  --navy-accent:  #3b5bbd;  /* light accent */
+  --navy-surface: #eef2ff;  /* tinted surface */
+}
+
+.pro-btn { background: var(--navy); color: #fff; }
+.pro-btn:hover { background: var(--navy-hover); }
+.pro-link-active { color: var(--navy); font-weight: 600; }
+.pro-badge { background: #dc2626; color: #fff; }   /* red count badge — keep contrast */
+.pro-surface { background: var(--navy-surface); }
+
+/* Hide Alpine-bound elements (dropdowns) until Alpine initialises — no flash. */
+[x-cloak] { display: none !important; }
