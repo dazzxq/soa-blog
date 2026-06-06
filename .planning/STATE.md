@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-06-06T19:57:16.236Z"
+stopped_at: Completed 03-03-PLAN.md
+last_updated: "2026-06-06T20:01:18.647Z"
 last_activity: 2026-06-06
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 16
-  completed_plans: 13
-  percent: 81
+  completed_plans: 14
+  percent: 88
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-06-06)
 ## Current Position
 
 Phase: 3 (Kết nối / Social Graph) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-06-06
 
@@ -65,6 +65,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-h-s-ngh-nghi-p P04 | 3min | 2 tasks | 6 files |
 | Phase 03 P01 | 3 min | 3 tasks | 4 files |
 | Phase 03 P02 | 2 min | 2 tasks | 2 files |
+| Phase 03 P03 | 6min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,9 @@ Recent decisions affecting current work:
 - [Phase 03]: connections uses STORED pair_lo/pair_hi + uq_pair to make opposite-direction invite race impossible (deterministic statusBetween)
 - [Phase 03]: reject(addressee)+cancel(requester) collapse to one pending-scoped DELETE (either party) — Codex-approved
 - [Phase 03]: single 23000 catch backstops both uq_conn_pair (same-dir dup) and uq_pair (opposite-dir race) → 409
+- [Phase 03]: 03-03: sendRequest mirrors delete()'s 503-on-incomplete (NOT createComment >=500 passthrough) on BOTH cross-service checks — never writes a connection on unverified profile/status info
+- [Phase 03]: 03-03: any non-200 (not just >=500) profile/status response is treated as incomplete -> 503 no-write; suggestions candidate universe composed at gateway via ProfileClient::allUsers (graph service cannot enumerate users)
+- [Phase 03]: 03-03: D-05 /full connection_status now lights up with ZERO AggregateController change; all connection cards email-allowlisted to id/username/display_name/avatar_url
 
 ### Pending Todos
 
@@ -115,6 +119,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-06T19:57:11.225Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-06-06T20:01:12.075Z
+Stopped at: Completed 03-03-PLAN.md
 Resume file: None
