@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 1 context gathered
-last_updated: "2026-06-06T11:48:21.277Z"
-last_activity: 2026-06-06 -- Phase 1 planning complete
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-06-06T11:56:53.289Z"
+last_activity: 2026-06-06
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 6
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 17
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-06)
 
 **Core value:** API Gateway điều phối một hệ microservices đủ phong phú (profile, connection/graph, feed, search) thể hiện rõ và thuyết phục các trách nhiệm cốt lõi của Gateway pattern.
-**Current focus:** Phase 1 — Nền tảng & Gateway
+**Current focus:** Phase 01 — Nền tảng & Gateway
 
 ## Current Position
 
-Phase: 1 of 6 (Nền tảng & Gateway)
-Plan: 0 of TBD in current phase
+Phase: 01 (Nền tảng & Gateway) — EXECUTING
+Plan: 2 of 6
 Status: Ready to execute
-Last activity: 2026-06-06 -- Phase 1 planning complete
+Last activity: 2026-06-06
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: —
 
 *Updated after each plan completion*
+| Phase 01 P01 | 8 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -64,6 +65,8 @@ Recent decisions affecting current work:
 - [Roadmap]: Giữ stack ≤ 9 container (ngân sách 2GB RAM); 1 MariaDB nhiều schema; notification polling (không WebSocket).
 - [Roadmap]: UI tính năng (UI-03) fold vào Phase 2; chrome thương hiệu (UI-01/02/04) gom vào Phase 6 sau khi mọi tính năng tồn tại để navbar/badge nối đúng.
 - [Roadmap]: Mỗi phase tính năng thêm 1 endpoint composition hoặc invariant tại gateway để pattern luôn nổi bật.
+- [Phase 01]: Smoke script written first (Wave 0) as the automated gate every later wave runs after docker compose up -d --wait
+- [Phase 01]: X-Request-Id smoke assertion proves DOWNSTREAM receipt (D-12): gateway response-header id must equal a rid echoed in the /api/health body, not bare header presence
 
 ### Pending Todos
 
@@ -81,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-06T10:45:02.664Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-n-n-t-ng-gateway/01-CONTEXT.md
+Last session: 2026-06-06T11:56:47.575Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: None
