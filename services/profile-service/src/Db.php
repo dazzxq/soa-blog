@@ -19,8 +19,8 @@ final class Db
         }
 
         $host = getenv('DB_HOST') ?: 'mariadb';
-        $name = getenv('DB_NAME') ?: 'blog_users';
-        $user = getenv('DB_USER') ?: 'user_svc';
+        $name = getenv('DB_NAME') ?: 'proconnect_profile';
+        $user = getenv('DB_USER') ?: 'profile_svc';
         $pass = getenv('DB_PASS') ?: '';
 
         $dsn = sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', $host, $name);

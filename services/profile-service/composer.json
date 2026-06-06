@@ -1,6 +1,6 @@
 {
-  "name": "soa-blog/user-service",
-  "description": "User microservice for SOA Blog",
+  "name": "soa-blog/profile-service",
+  "description": "Profile microservice for ProConnect",
   "type": "project",
   "require": {
     "php": ">=8.2",
