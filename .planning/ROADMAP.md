@@ -125,7 +125,7 @@ Plans:
   4. Toàn bộ chữ trong UI và error message là tiếng Việt có dấu
 **Plans**: 4 plans
 Plans:
-- [ ] 06-01-PLAN.md — Wave 1: scripts/smoke-phase6.sh (Wave 0 infra) + brand navy tokens (styles.css) + window.proNav() shared navbar (app.js)
+- [x] 06-01-PLAN.md — Wave 1: scripts/smoke-phase6.sh (Wave 0 infra) + brand navy tokens (styles.css) + window.proNav() shared navbar (app.js)
 - [ ] 06-02-PLAN.md — Wave 2: feed.html 3-cột responsive (thẻ hồ sơ trái / compose+timeline giữa / suggestions+thẻ tĩnh phải) + proNav
 - [ ] 06-03-PLAN.md — Wave 2: 7 trang còn lại (index/login/register/profile/profile-edit/connections/search) dùng proNav + brand navy + cache-bust
 - [ ] 06-04-PLAN.md — Wave 3: live cutover (codex-impl-review + commit/push + CI deploy + page-200 + regression + checkpoint thị giác) (autonomous: false)
@@ -143,4 +143,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Kết nối / Social Graph | 4/5 | Complete    | 2026-06-06 |
 | 4. News Feed | 5/5 | Complete    | 2026-06-06 |
 | 5. Tìm kiếm & Thông báo | 7/7 | Complete    | 2026-06-06 |
-| 6. Giao diện ProConnect | 0/4 | Not started | - |
+| 6. Giao diện ProConnect | 1/4 | In Progress|  |
