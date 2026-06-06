@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-06-06T20:01:18.647Z"
+stopped_at: Completed 03-04-PLAN.md
+last_updated: "2026-06-06T20:05:19.563Z"
 last_activity: 2026-06-06
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 16
-  completed_plans: 14
-  percent: 88
+  completed_plans: 15
+  percent: 94
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-06-06)
 ## Current Position
 
 Phase: 3 (Kết nối / Social Graph) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-06-06
 
@@ -66,6 +66,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03 P01 | 3 min | 3 tasks | 4 files |
 | Phase 03 P02 | 2 min | 2 tasks | 2 files |
 | Phase 03 P03 | 6min | 3 tasks | 5 files |
+| Phase 03-k-t-n-i-social-graph P04 | 2min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,7 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-03: sendRequest mirrors delete()'s 503-on-incomplete (NOT createComment >=500 passthrough) on BOTH cross-service checks — never writes a connection on unverified profile/status info
 - [Phase 03]: 03-03: any non-200 (not just >=500) profile/status response is treated as incomplete -> 503 no-write; suggestions candidate universe composed at gateway via ProfileClient::allUsers (graph service cannot enumerate users)
 - [Phase 03]: 03-03: D-05 /full connection_status now lights up with ZERO AggregateController change; all connection cards email-allowlisted to id/username/display_name/avatar_url
+- [Phase 03-k-t-n-i-social-graph]: 03-04: connections.html + profile.html badge UI; mutations reload-after via /api/connections/*; profile.html resolves request_id via /requests?direction= before cancel/accept/reject; no email leak, x-text only
 
 ### Pending Todos
 
@@ -119,6 +121,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-06T20:01:12.075Z
-Stopped at: Completed 03-03-PLAN.md
+Last session: 2026-06-06T20:05:14.214Z
+Stopped at: Completed 03-04-PLAN.md
 Resume file: None
