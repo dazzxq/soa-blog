@@ -25,4 +25,18 @@ final class ConnectionClient
     {
         return $this->http->requestAsync('GET', '/health');
     }
+
+    /**
+     * Viewer-relative connection status between two users (D-03).
+     *
+     * Phase 2: connection-service is still a stub exposing only /health, so this
+     * path 404s → the gateway's settle fan-out degrades to meta.degraded. Phase 3
+     * implements GET /connections/status with ZERO gateway rework (D-03).
+     */
+    public function statusForAsync(int $viewerId, int $targetId): PromiseInterface
+    {
+        return $this->http->requestAsync('GET', '/connections/status', [
+            'query' => ['viewer' => $viewerId, 'target' => $targetId],
+        ]);
+    }
 }

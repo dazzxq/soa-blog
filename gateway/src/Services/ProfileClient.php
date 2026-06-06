@@ -37,6 +37,77 @@ final class ProfileClient
     }
 
     /**
+     * Full public-safe profile (basic + experience + education + skills, no email).
+     * Used by the flagship /api/profiles/{id}/full composition.
+     */
+    public function getFull(int $id): ResponseInterface
+    {
+        return $this->http->request('GET', '/users/' . $id . '/full');
+    }
+    public function getFullAsync(int $id): PromiseInterface
+    {
+        return $this->http->requestAsync('GET', '/users/' . $id . '/full');
+    }
+
+    // --- Owner-only CRUD (X-User-Id scoped; never trusts a body user_id) ---
+
+    public function addExperience(int $userId, array $body): ResponseInterface
+    {
+        return $this->http->request('POST', '/users/' . $userId . '/experience', [
+            'json'    => $body,
+            'headers' => ['Content-Type' => 'application/json', 'X-User-Id' => (string) $userId],
+        ]);
+    }
+    public function updateExperience(int $userId, int $eid, array $body): ResponseInterface
+    {
+        return $this->http->request('PATCH', '/users/' . $userId . '/experience/' . $eid, [
+            'json'    => $body,
+            'headers' => ['Content-Type' => 'application/json', 'X-User-Id' => (string) $userId],
+        ]);
+    }
+    public function deleteExperience(int $userId, int $eid): ResponseInterface
+    {
+        return $this->http->request('DELETE', '/users/' . $userId . '/experience/' . $eid, [
+            'headers' => ['X-User-Id' => (string) $userId],
+        ]);
+    }
+
+    public function addEducation(int $userId, array $body): ResponseInterface
+    {
+        return $this->http->request('POST', '/users/' . $userId . '/education', [
+            'json'    => $body,
+            'headers' => ['Content-Type' => 'application/json', 'X-User-Id' => (string) $userId],
+        ]);
+    }
+    public function updateEducation(int $userId, int $eid, array $body): ResponseInterface
+    {
+        return $this->http->request('PATCH', '/users/' . $userId . '/education/' . $eid, [
+            'json'    => $body,
+            'headers' => ['Content-Type' => 'application/json', 'X-User-Id' => (string) $userId],
+        ]);
+    }
+    public function deleteEducation(int $userId, int $eid): ResponseInterface
+    {
+        return $this->http->request('DELETE', '/users/' . $userId . '/education/' . $eid, [
+            'headers' => ['X-User-Id' => (string) $userId],
+        ]);
+    }
+
+    public function addSkill(int $userId, array $body): ResponseInterface
+    {
+        return $this->http->request('POST', '/users/' . $userId . '/skills', [
+            'json'    => $body,
+            'headers' => ['Content-Type' => 'application/json', 'X-User-Id' => (string) $userId],
+        ]);
+    }
+    public function deleteSkill(int $userId, int $sid): ResponseInterface
+    {
+        return $this->http->request('DELETE', '/users/' . $userId . '/skills/' . $sid, [
+            'headers' => ['X-User-Id' => (string) $userId],
+        ]);
+    }
+
+    /**
      * Batch fetch — gateway uses this to enrich aggregated responses.
      */
     public function batch(array $ids): ResponseInterface
