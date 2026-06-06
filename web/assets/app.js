@@ -159,4 +159,150 @@
       },
     };
   };
+
+  // ===========================================================================
+  // Shared ProConnect navbar (Phase 6, D-02 DRY / UI-01 / UI-04).
+  //
+  // ONE navbar for all 8 pages. Each page drops a `<div id="pronav"></div>`
+  // placeholder and calls `proNav(active)`. No build, no templating, no markup
+  // duplication. SECURITY (T-06-01/02): PRONAV_HTML below is a STATIC dev-authored
+  // string — it interpolates NO user data and NO token. Every user value
+  // (display_name, notif message) renders via Alpine `x-text` only — never the
+  // unsafe HTML-binding directive.
+  //
+  // Alpine 3 init model (T-06-19): Alpine walks the DOM ONCE at init. An x-data
+  // node attached AFTER that walk gets NO reactivity unless we re-scan it. So
+  // proNav() calls `Alpine.initTree(el)` when Alpine is ready — making the navbar
+  // reactive whether proNav runs BEFORE Alpine init (Alpine's own walk picks it
+  // up; initTree absent → skipped safely) or AFTER (we initialise the subtree).
+  // ===========================================================================
+
+  // Chain-link logo (two interlocking navy rings) — self-designed inline SVG, no
+  // third-party brand assets (T-06-04). Vietnamese tagline "Kết nối chuyên nghiệp".
+  var PRONAV_HTML =
+    '<nav class="bg-white border-b sticky top-0 z-20">' +
+      '<div class="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">' +
+        // LEFT: logo + brand + tagline
+        '<a href="/feed.html" class="flex items-center gap-2 shrink-0">' +
+          '<svg viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke="#1e3a8a" stroke-width="2" ' +
+               'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+            '<rect x="2" y="8" width="13" height="8" rx="4"></rect>' +
+            '<rect x="9" y="8" width="13" height="8" rx="4"></rect>' +
+          '</svg>' +
+          '<span class="font-bold text-lg" style="color:#1e3a8a">ProConnect</span>' +
+          '<span class="hidden md:inline text-xs subtle">Kết nối chuyên nghiệp</span>' +
+        '</a>' +
+        // MIDDLE: search (logged-in only) → /search.html?q=
+        '<template x-if="isLoggedIn">' +
+          '<form @submit.prevent="location.href=\'/search.html?q=\'+encodeURIComponent($refs.nq.value)" class="hidden sm:block flex-1 max-w-xs">' +
+            '<input x-ref="nq" type="search" placeholder="Tìm người, kỹ năng…" ' +
+                   'class="border rounded px-3 py-1.5 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-300" />' +
+          '</form>' +
+        '</template>' +
+        // RIGHT (logged-in): nav links + invite badge + bell + profile menu
+        '<template x-if="isLoggedIn">' +
+          '<div class="flex items-center gap-4 text-sm shrink-0">' +
+            '<a href="/feed.html" :class="active===\'feed\' ? \'pro-link-active\' : \'hover:underline\'">Bảng tin</a>' +
+            '<a href="/connections.html" class="relative" :class="active===\'connections\' ? \'pro-link-active\' : \'hover:underline\'">' +
+              'Kết nối' +
+              '<span x-show="invites>0" x-cloak ' +
+                    'class="pro-badge absolute -top-2 -right-3 text-xs rounded-full min-w-[18px] h-[18px] px-1 inline-flex items-center justify-center" ' +
+                    'x-text="invites"></span>' +
+            '</a>' +
+            // Notification bell — reuse Phase-5 window.notificationBell (initTree
+            // initialises this nested x-data too). Markup mirrors feed.html.
+            '<div x-data="notificationBell()" x-init="start()" class="relative">' +
+              '<button @click="open = !open" class="relative hover:text-slate-600" title="Thông báo">' +
+                '<span aria-hidden="true">🔔</span>' +
+                '<span x-show="unread > 0" x-cloak ' +
+                      'class="pro-badge absolute -top-2 -right-2 text-xs rounded-full min-w-[18px] h-[18px] px-1 inline-flex items-center justify-center" ' +
+                      'x-text="unread"></span>' +
+              '</button>' +
+              '<div x-show="open" @click.outside="open = false" x-cloak ' +
+                   'class="absolute right-0 mt-2 w-80 bg-white border rounded-lg shadow-lg z-30 text-left">' +
+                '<div class="flex items-center justify-between px-3 py-2 border-b">' +
+                  '<span class="font-semibold text-sm">Thông báo</span>' +
+                  '<button @click="markAll()" class="text-xs hover:underline" style="color:#1e3a8a">Đánh dấu tất cả đã đọc</button>' +
+                '</div>' +
+                '<template x-if="!items.length">' +
+                  '<p class="subtle text-sm px-3 py-4">Chưa có thông báo nào.</p>' +
+                '</template>' +
+                '<ul class="max-h-80 overflow-y-auto divide-y">' +
+                  '<template x-for="n in items" :key="n.id">' +
+                    '<li @click="markOne(n.id)" ' +
+                        ':class="n.read_at ? \'hover:bg-slate-50\' : \'pro-surface hover:bg-slate-100 font-semibold\'" ' +
+                        'class="px-3 py-2 cursor-pointer">' +
+                      '<p class="text-sm" x-text="message(n)"></p>' +
+                      '<p class="subtle text-xs mt-0.5" x-text="formatDate(n.created_at)"></p>' +
+                    '</li>' +
+                  '</template>' +
+                '</ul>' +
+              '</div>' +
+            '</div>' +
+            // Profile menu — avatar/name → dropdown (Hồ sơ / Chỉnh sửa / Đăng xuất)
+            '<div class="relative" x-data="{m:false}">' +
+              '<button @click="m=!m" class="flex items-center gap-1 hover:text-slate-600">' +
+                '<span x-text="me.display_name || me.username"></span>' +
+                '<span aria-hidden="true">▾</span>' +
+              '</button>' +
+              '<div x-show="m" @click.outside="m=false" x-cloak ' +
+                   'class="absolute right-0 mt-2 w-44 bg-white border rounded-lg shadow-lg z-30 text-left">' +
+                '<a :href="\'/profile.html?id=\'+me.id" class="block px-3 py-2 hover:bg-slate-50">Hồ sơ của tôi</a>' +
+                '<a href="/profile-edit.html" class="block px-3 py-2 hover:bg-slate-50">Chỉnh sửa hồ sơ</a>' +
+                '<button @click="logout()" class="block w-full text-left px-3 py-2 text-red-600 hover:bg-slate-50">Đăng xuất</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</template>' +
+        // RIGHT (logged-out): Đăng nhập / Đăng ký
+        '<template x-if="!isLoggedIn">' +
+          '<div class="flex items-center gap-3 text-sm shrink-0">' +
+            '<a href="/login.html" class="hover:underline">Đăng nhập</a>' +
+            '<a href="/register.html" class="pro-btn px-3 py-1.5 rounded">Đăng ký</a>' +
+          '</div>' +
+        '</template>' +
+      '</div>' +
+    '</nav>';
+
+  // Alpine component backing #pronav: login state, current user, invite badge poll.
+  window.proNavData = function (active) {
+    return {
+      active: active || '',
+      isLoggedIn: auth.isLoggedIn(),
+      me: auth.user() || {},
+      invites: 0,
+      timer: null,
+      init() {
+        if (!this.isLoggedIn) return;
+        this.loadInvites();
+        this.timer = setInterval(() => this.loadInvites(), 15000); // D-06 ~15s
+      },
+      async loadInvites() {
+        try {
+          // D-06: incoming pending connection requests → invite badge count.
+          const r = await api.get('/connections/requests?direction=incoming');
+          this.invites = (r.data || []).length;
+        } catch (e) { /* degrade: keep last badge */ }
+      },
+      logout() { auth.logout(); window.location.href = '/'; }, // really clears token then redirects
+    };
+  };
+
+  // Inject the shared navbar into <div id="pronav"> and make it reactive.
+  // active: 'feed' | 'connections' | 'search' | 'profile' | '' (highlights link).
+  window.proNav = function (active) {
+    var el = document.getElementById('pronav');
+    if (!el) return;
+    el.setAttribute('x-data', 'proNavData("' + (active || '') + '")');
+    el.setAttribute('x-init', 'init()');
+    el.innerHTML = PRONAV_HTML; // STATIC markup — no user data interpolated (T-06-01/02)
+    // Reactivity contract (T-06-19): set-attribute + innerHTML alone does NOT make
+    // an after-init subtree reactive. Alpine.initTree(el) does — safe in BOTH cases:
+    //   - proNav AFTER Alpine init → we initialise this subtree here.
+    //   - proNav BEFORE Alpine init → initTree is undefined, skipped; Alpine's own
+    //     walk later picks up the x-data we just set.
+    if (window.Alpine && typeof Alpine.initTree === 'function') {
+      Alpine.initTree(el);
+    }
+  };
 })();
