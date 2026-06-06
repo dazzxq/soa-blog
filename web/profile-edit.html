@@ -5,32 +5,15 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ProConnect — Chỉnh sửa hồ sơ</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="/assets/app.js?v=ph5-06"></script>
+  <script>tailwind.config = { theme:{ extend:{ colors:{ navy:{ DEFAULT:'#1e3a8a', dark:'#172f6b', light:'#3b5bbd' } } } } };</script>
+  <script defer src="/assets/app.js?v=ph6-01"></script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v1778837733" />
+  <link rel="stylesheet" href="/assets/styles.css?v=ph6-01" />
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen">
 
-<nav x-data="navbar()" class="bg-white border-b">
-  <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-    <a href="/" class="font-bold text-lg">ProConnect</a>
-    <div class="flex items-center gap-3 text-sm">
-      <template x-if="isLoggedIn">
-        <span class="flex items-center gap-3">
-          <span class="subtle">Xin chào, <b x-text="user?.display_name || user?.username"></b></span>
-          <button @click="logout" class="text-red-600 hover:underline">Đăng xuất</button>
-        </span>
-      </template>
-      <template x-if="!isLoggedIn">
-        <span class="flex items-center gap-3">
-          <a href="/login.html" class="hover:underline">Đăng nhập</a>
-          <a href="/register.html" class="bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-700">Đăng ký</a>
-        </span>
-      </template>
-    </div>
-  </div>
-</nav>
+<div id="pronav"></div>
 
 <main x-data="profileEditPage()" x-init="init()" class="max-w-3xl mx-auto px-4 py-6 space-y-6">
 
@@ -79,7 +62,7 @@
             <span class="text-sm subtle">Giới thiệu</span>
             <textarea x-model="basic.about" rows="4" class="mt-1 w-full border rounded px-3 py-2"></textarea>
           </label>
-          <button @click="saveBasic()" class="bg-slate-900 text-white px-4 py-2 rounded hover:bg-slate-700">Lưu</button>
+          <button @click="saveBasic()" class="pro-btn text-white px-4 py-2 rounded">Lưu</button>
         </div>
       </section>
 
@@ -112,7 +95,7 @@
                   </div>
                   <textarea x-model="expForm.description" rows="2" placeholder="Mô tả" class="w-full border rounded px-3 py-2"></textarea>
                   <div class="flex gap-2">
-                    <button @click="saveExp(ex.id)" class="bg-slate-900 text-white px-3 py-1.5 rounded text-sm">Lưu</button>
+                    <button @click="saveExp(ex.id)" class="pro-btn text-white px-3 py-1.5 rounded text-sm">Lưu</button>
                     <button @click="cancelEditExp()" class="border px-3 py-1.5 rounded text-sm">Huỷ</button>
                   </div>
                 </div>
@@ -162,7 +145,7 @@
                     <input x-model="eduForm.end_year" type="number" placeholder="Năm kết thúc" class="border rounded px-3 py-2 w-40" />
                   </div>
                   <div class="flex gap-2">
-                    <button @click="saveEdu(ed.id)" class="bg-slate-900 text-white px-3 py-1.5 rounded text-sm">Lưu</button>
+                    <button @click="saveEdu(ed.id)" class="pro-btn text-white px-3 py-1.5 rounded text-sm">Lưu</button>
                     <button @click="cancelEditEdu()" class="border px-3 py-1.5 rounded text-sm">Huỷ</button>
                   </div>
                 </div>
@@ -368,5 +351,6 @@ function profileEditPage() {
   };
 }
 </script>
+<script>document.addEventListener('DOMContentLoaded', () => window.proNav('profile'));</script>
 </body>
 </html>
