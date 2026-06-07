@@ -8,22 +8,22 @@
   <script>
     tailwind.config = { theme: { extend: { colors: { navy: { DEFAULT: '#1e3a8a', dark: '#172f6b', light: '#3b5bbd' } } } } };
   </script>
-  <script defer src="/assets/app.js?v=ph6-01"></script>
+  <script defer src="/assets/app.js?v=glass-1"></script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=ph6-01" />
+  <link rel="stylesheet" href="/assets/styles.css?v=glass-1" />
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
+<body class="text-slate-900 min-h-screen">
 
 <div id="pronav"></div>
 
-<main x-data="feedPage()" x-init="load()" class="max-w-5xl mx-auto px-4 py-6">
+<main x-data="feedPage()" x-init="load()" class="max-w-5xl mx-auto px-4 py-6 fade-in">
 
   <div class="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_300px] gap-6">
 
   <!-- ===== Cột trái: thẻ hồ sơ tóm tắt ===== -->
   <aside class="order-2 lg:order-1">
-    <div class="bg-white border rounded-lg overflow-hidden">
+    <div class="glass overflow-hidden">
       <div class="h-12 pro-surface"></div>
       <div class="px-4 pb-4 -mt-6">
         <span class="w-14 h-14 rounded-full border-4 border-white bg-slate-300 overflow-hidden flex items-center justify-center text-lg font-bold text-slate-600">
@@ -36,7 +36,7 @@
         </span>
         <p class="font-semibold mt-2 truncate" x-text="me?.display_name || me?.username || ''"></p>
         <p class="subtle text-sm truncate" x-text="me?.headline || ''"></p>
-        <a :href="'/profile.html?id=' + (me?.id || '')" class="block mt-3 text-sm text-center border rounded py-1.5 hover:bg-slate-50">Xem hồ sơ</a>
+        <a :href="'/profile.html?id=' + (me?.id || '')" class="pro-btn-ghost block mt-3 text-sm text-center rounded-lg py-1.5">Xem hồ sơ</a>
       </div>
     </div>
   </aside>
@@ -47,14 +47,14 @@
   <h1 class="text-2xl font-bold mb-4">Bảng tin</h1>
 
   <!-- Ô soạn bài -->
-  <section class="bg-white border rounded-lg p-6 mb-6">
+  <section class="glass p-6 mb-6">
     <textarea x-model="draft.content" rows="3" placeholder="Bạn đang nghĩ gì?"
-              class="w-full border rounded p-3 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-slate-300"></textarea>
+              class="glass-input w-full p-3 text-sm resize-y"></textarea>
     <input x-model="draft.image_url" type="text" placeholder="URL ảnh (tuỳ chọn)"
-           class="w-full border rounded p-2 text-sm mt-3 focus:outline-none focus:ring-2 focus:ring-slate-300" />
+           class="glass-input w-full p-2 text-sm mt-3" />
     <div class="flex justify-end mt-3">
       <button @click="submit()" :disabled="busy || !draft.content.trim()"
-              class="pro-btn px-4 py-2 rounded disabled:opacity-50">Đăng</button>
+              class="pro-btn px-4 py-2 rounded-lg disabled:opacity-50">Đăng</button>
     </div>
   </section>
 
@@ -81,7 +81,7 @@
   <template x-if="!loading">
     <div class="space-y-4">
       <template x-for="p in posts" :key="p.id">
-        <article class="bg-white border rounded-lg p-5">
+        <article class="glass glass-hover p-5">
 
           <!-- Tác giả + thời gian -->
           <div class="flex items-center gap-3 mb-3">
@@ -104,7 +104,7 @@
             <div class="mb-3">
               <p class="subtle text-xs mb-2">đã chia sẻ một bài viết</p>
               <template x-if="p.original">
-                <div class="border-l-4 border-slate-200 bg-slate-50 rounded p-3">
+                <div class="surface-soft border-l-4 border-slate-200 p-3">
                   <div class="font-medium text-sm mb-1" x-text="p.original.author?.display_name || p.original.author?.username || 'Người dùng'"></div>
                   <p class="text-sm whitespace-pre-wrap break-words" x-text="p.original.content"></p>
                   <template x-if="p.original.image_url">
@@ -113,7 +113,7 @@
                 </div>
               </template>
               <template x-if="!p.original">
-                <div class="border-l-4 border-slate-200 bg-slate-50 rounded p-3 subtle text-sm">
+                <div class="surface-soft border-l-4 border-slate-200 p-3 subtle text-sm">
                   Bài viết gốc đã bị xoá
                 </div>
               </template>
@@ -173,9 +173,9 @@
               <div class="flex items-center gap-2">
                 <input x-model="commentDraft[p.id]" type="text" placeholder="Viết bình luận…"
                        @keydown.enter="addComment(p.id)"
-                       class="flex-1 border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300" />
+                       class="glass-input flex-1 p-2 text-sm" />
                 <button @click="addComment(p.id)" :disabled="busy || !(commentDraft[p.id] || '').trim()"
-                        class="text-sm pro-btn px-3 py-1.5 rounded disabled:opacity-50">Gửi</button>
+                        class="text-sm pro-btn px-3 py-1.5 rounded-lg disabled:opacity-50">Gửi</button>
               </div>
             </div>
           </template>
@@ -191,7 +191,7 @@
   <aside class="order-3 space-y-4"><!-- stacks below the feed on mobile (visible, not dropped), 3rd column on lg+ (codex impl-review fix) -->
 
     <!-- Người bạn có thể biết (/api/connections/suggestions) -->
-    <div class="bg-white border rounded-lg p-4">
+    <div class="glass p-4">
       <h2 class="font-semibold text-sm mb-3">Người bạn có thể biết</h2>
       <template x-if="!suggestions.length">
         <p class="subtle text-xs">Chưa có gợi ý.</p>
@@ -199,7 +199,7 @@
       <ul class="space-y-3">
         <template x-for="s in suggestions" :key="s.user_id">
           <li class="flex items-center justify-between gap-2">
-            <a :href="'/profile.html?id=' + s.user_id" class="flex items-center gap-2 min-w-0 hover:underline">
+            <a :href="'/profile.html?id=' + s.user_id" class="glass-hover flex items-center gap-2 min-w-0 rounded-lg p-1 -m-1">
               <span class="w-9 h-9 rounded-full bg-slate-300 overflow-hidden flex items-center justify-center text-sm font-bold text-slate-600 shrink-0">
                 <template x-if="s.profile?.avatar_url">
                   <img :src="s.profile.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover rounded-full" />
@@ -211,14 +211,14 @@
               <span class="truncate text-sm" x-text="s.profile?.display_name || s.profile?.username || 'Người dùng'"></span>
             </a>
             <button @click="invite(s.user_id)" :disabled="busy"
-                    class="text-xs pro-btn px-2 py-1 rounded disabled:opacity-50 shrink-0">Kết nối</button>
+                    class="text-xs pro-btn px-2 py-1 rounded-lg disabled:opacity-50 shrink-0">Kết nối</button>
           </li>
         </template>
       </ul>
     </div>
 
     <!-- Thẻ tĩnh: Về ProConnect -->
-    <div class="bg-white border rounded-lg p-4 text-sm">
+    <div class="glass p-4 text-sm">
       <h2 class="font-semibold mb-1" style="color:#1e3a8a">Về ProConnect</h2>
       <p class="subtle">Mạng xã hội nghề nghiệp — đồ án SOA / API Gateway (PTIT INT1448). Tất cả dữ liệu demo.</p>
     </div>
