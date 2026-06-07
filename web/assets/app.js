@@ -180,8 +180,8 @@
   // Chain-link logo (two interlocking navy rings) — self-designed inline SVG, no
   // third-party brand assets (T-06-04). Vietnamese tagline "Kết nối chuyên nghiệp".
   var PRONAV_HTML =
-    '<nav class="bg-white border-b sticky top-0 z-20">' +
-      '<div class="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">' +
+    '<nav class="glass-nav sticky top-0 z-30">' +
+      '<div class="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">' +
         // LEFT: logo + brand + tagline
         '<a href="/feed.html" class="flex items-center gap-2 shrink-0">' +
           '<svg viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke="#1e3a8a" stroke-width="2" ' +
@@ -196,7 +196,7 @@
         '<template x-if="isLoggedIn">' +
           '<form @submit.prevent="location.href=\'/search.html?q=\'+encodeURIComponent($refs.nq.value)" class="hidden sm:block flex-1 max-w-xs">' +
             '<input x-ref="nq" type="search" placeholder="Tìm người, kỹ năng…" ' +
-                   'class="border rounded px-3 py-1.5 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-300" />' +
+                   'class="glass-input px-3 py-1.5 text-sm w-full" />' +
           '</form>' +
         '</template>' +
         // RIGHT (logged-in): nav links + invite badge + bell + profile menu
@@ -221,7 +221,7 @@
                       'x-text="unread"></span>' +
               '</button>' +
               '<div x-show="open" @click.outside="open = false" x-cloak ' +
-                   'class="absolute right-0 mt-2 w-80 bg-white border rounded-lg shadow-lg z-30 text-left">' +
+                   'class="absolute right-0 mt-2 w-80 glass-strong rounded-2xl z-40 text-left overflow-hidden">' +
                 '<div class="flex items-center justify-between px-3 py-2 border-b">' +
                   '<span class="font-semibold text-sm">Thông báo</span>' +
                   '<button @click="markAll()" class="text-xs hover:underline" style="color:#1e3a8a">Đánh dấu tất cả đã đọc</button>' +
@@ -249,7 +249,7 @@
                 '<span aria-hidden="true" class="shrink-0">▾</span>' +
               '</button>' +
               '<div x-show="m" @click.outside="m=false" x-cloak ' +
-                   'class="absolute right-0 mt-2 w-44 bg-white border rounded-lg shadow-lg z-30 text-left">' +
+                   'class="absolute right-0 mt-2 w-44 glass-strong rounded-2xl z-40 text-left overflow-hidden">' +
                 '<a :href="\'/profile.html?id=\'+me.id" class="block px-3 py-2 hover:bg-slate-50">Hồ sơ của tôi</a>' +
                 '<a href="/profile-edit.html" class="block px-3 py-2 hover:bg-slate-50">Chỉnh sửa hồ sơ</a>' +
                 '<button @click="logout()" class="block w-full text-left px-3 py-2 text-red-600 hover:bg-slate-50">Đăng xuất</button>' +

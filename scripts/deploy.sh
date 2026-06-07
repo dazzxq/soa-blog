@@ -164,6 +164,15 @@ echo "[deploy] applying db/05-migrate-phase5.sql (additive)"
 docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" < db/05-migrate-phase5.sql
 echo "[deploy] phase-5 additive migration applied"
 
+# 7f) DEMO CONTENT SEED (idempotent INSERT IGNORE; rich English fake content) --
+# Extra demo users + posts + reactions/comments + connections so the feed/search/
+# profiles look alive. Spans 3 DBs via USE blocks (no DB arg). Non-destructive +
+# idempotent (INSERT IGNORE on explicit ids / unique pairs). NON-BLOCKING (`|| true`):
+# this is demo content, not schema — a hiccup must never block a deploy.
+echo "[deploy] applying db/06-seed-demo-data.sql (demo content seed)"
+docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" < db/06-seed-demo-data.sql || echo "[deploy] WARN: demo seed non-fatal issue (continuing)"
+echo "[deploy] demo content seed applied"
+
 # 8) FULL-TOPOLOGY UP (ISSUE-3 step 4) -----------------------------------------
 # NOW bring up the rest of the 8-container stack — the proconnect_* DBs/users
 # exist, so the 5 PHP services can boot healthy. --remove-orphans drops the
