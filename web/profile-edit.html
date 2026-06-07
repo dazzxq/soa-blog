@@ -6,20 +6,20 @@
   <title>ProConnect — Chỉnh sửa hồ sơ</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { theme:{ extend:{ colors:{ navy:{ DEFAULT:'#1e3a8a', dark:'#172f6b', light:'#3b5bbd' } } } } };</script>
-  <script defer src="/assets/app.js?v=ph6-01"></script>
+  <script defer src="/assets/app.js?v=glass-1"></script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=ph6-01" />
+  <link rel="stylesheet" href="/assets/styles.css?v=glass-1" />
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
+<body class="text-slate-900 min-h-screen">
 
 <div id="pronav"></div>
 
-<main x-data="profileEditPage()" x-init="init()" class="max-w-3xl mx-auto px-4 py-6 space-y-6">
+<main x-data="profileEditPage()" x-init="init()" class="max-w-3xl mx-auto px-4 py-6 space-y-6 fade-in">
 
   <div class="flex items-center justify-between">
     <h1 class="text-2xl font-bold">Chỉnh sửa hồ sơ</h1>
-    <a :href="myId ? ('/profile.html?id=' + myId) : '/profile.html'" class="text-sm border px-3 py-1.5 rounded hover:bg-slate-50">Xem hồ sơ</a>
+    <a :href="myId ? ('/profile.html?id=' + myId) : '/profile.html'" class="pro-btn-ghost text-sm px-3 py-1.5 rounded">Xem hồ sơ</a>
   </div>
 
   <!-- Toast thông báo -->
@@ -35,43 +35,43 @@
     <div class="space-y-6">
 
       <!-- Thông tin cơ bản (PROF-02) -->
-      <section class="bg-white border rounded-lg p-6">
+      <section class="glass-strong p-6">
         <h2 class="text-lg font-semibold mb-4">Thông tin cơ bản</h2>
         <div class="space-y-3">
           <label class="block">
             <span class="text-sm subtle">Tên hiển thị</span>
-            <input x-model="basic.display_name" type="text" class="mt-1 w-full border rounded px-3 py-2" />
+            <input x-model="basic.display_name" type="text" class="glass-input mt-1 w-full px-3 py-2" />
           </label>
           <label class="block">
             <span class="text-sm subtle">Chức danh (headline)</span>
-            <input x-model="basic.headline" type="text" maxlength="160" class="mt-1 w-full border rounded px-3 py-2" />
+            <input x-model="basic.headline" type="text" maxlength="160" class="glass-input mt-1 w-full px-3 py-2" />
           </label>
           <label class="block">
             <span class="text-sm subtle">Địa điểm</span>
-            <input x-model="basic.location" type="text" maxlength="128" class="mt-1 w-full border rounded px-3 py-2" />
+            <input x-model="basic.location" type="text" maxlength="128" class="glass-input mt-1 w-full px-3 py-2" />
           </label>
           <label class="block">
             <span class="text-sm subtle">URL ảnh đại diện</span>
-            <input x-model="basic.avatar_url" type="url" class="mt-1 w-full border rounded px-3 py-2" />
+            <input x-model="basic.avatar_url" type="url" class="glass-input mt-1 w-full px-3 py-2" />
           </label>
           <label class="block">
             <span class="text-sm subtle">URL ảnh bìa</span>
-            <input x-model="basic.cover_url" type="url" class="mt-1 w-full border rounded px-3 py-2" />
+            <input x-model="basic.cover_url" type="url" class="glass-input mt-1 w-full px-3 py-2" />
           </label>
           <label class="block">
             <span class="text-sm subtle">Giới thiệu</span>
-            <textarea x-model="basic.about" rows="4" class="mt-1 w-full border rounded px-3 py-2"></textarea>
+            <textarea x-model="basic.about" rows="4" class="glass-input mt-1 w-full px-3 py-2"></textarea>
           </label>
           <button @click="saveBasic()" class="pro-btn text-white px-4 py-2 rounded">Lưu</button>
         </div>
       </section>
 
       <!-- Kinh nghiệm (PROF-03) -->
-      <section class="bg-white border rounded-lg p-6">
+      <section class="glass-strong p-6">
         <h2 class="text-lg font-semibold mb-4">Kinh nghiệm</h2>
         <ul class="space-y-3 mb-4">
           <template x-for="ex in experience" :key="ex.id">
-            <li class="border rounded p-3">
+            <li class="surface-soft p-3">
               <template x-if="editExpId !== ex.id">
                 <div class="flex items-start justify-between gap-2">
                   <div>
@@ -87,16 +87,16 @@
               </template>
               <template x-if="editExpId === ex.id">
                 <div class="space-y-2">
-                  <input x-model="expForm.company" placeholder="Công ty" class="w-full border rounded px-3 py-2" />
-                  <input x-model="expForm.title" placeholder="Chức danh" class="w-full border rounded px-3 py-2" />
+                  <input x-model="expForm.company" placeholder="Công ty" class="glass-input w-full px-3 py-2" />
+                  <input x-model="expForm.title" placeholder="Chức danh" class="glass-input w-full px-3 py-2" />
                   <div class="flex gap-2">
-                    <input x-model="expForm.start_date" type="date" class="border rounded px-3 py-2" />
-                    <input x-model="expForm.end_date" type="date" class="border rounded px-3 py-2" />
+                    <input x-model="expForm.start_date" type="date" class="glass-input px-3 py-2" />
+                    <input x-model="expForm.end_date" type="date" class="glass-input px-3 py-2" />
                   </div>
-                  <textarea x-model="expForm.description" rows="2" placeholder="Mô tả" class="w-full border rounded px-3 py-2"></textarea>
+                  <textarea x-model="expForm.description" rows="2" placeholder="Mô tả" class="glass-input w-full px-3 py-2"></textarea>
                   <div class="flex gap-2">
                     <button @click="saveExp(ex.id)" class="pro-btn text-white px-3 py-1.5 rounded text-sm">Lưu</button>
-                    <button @click="cancelEditExp()" class="border px-3 py-1.5 rounded text-sm">Huỷ</button>
+                    <button @click="cancelEditExp()" class="pro-btn-ghost px-3 py-1.5 rounded text-sm">Huỷ</button>
                   </div>
                 </div>
               </template>
@@ -105,23 +105,23 @@
         </ul>
         <div class="border-t pt-4 space-y-2">
           <p class="text-sm font-medium">Thêm kinh nghiệm</p>
-          <input x-model="newExp.company" placeholder="Công ty" class="w-full border rounded px-3 py-2" />
-          <input x-model="newExp.title" placeholder="Chức danh" class="w-full border rounded px-3 py-2" />
+          <input x-model="newExp.company" placeholder="Công ty" class="glass-input w-full px-3 py-2" />
+          <input x-model="newExp.title" placeholder="Chức danh" class="glass-input w-full px-3 py-2" />
           <div class="flex gap-2">
-            <input x-model="newExp.start_date" type="date" class="border rounded px-3 py-2" />
-            <input x-model="newExp.end_date" type="date" class="border rounded px-3 py-2" />
+            <input x-model="newExp.start_date" type="date" class="glass-input px-3 py-2" />
+            <input x-model="newExp.end_date" type="date" class="glass-input px-3 py-2" />
           </div>
-          <textarea x-model="newExp.description" rows="2" placeholder="Mô tả" class="w-full border rounded px-3 py-2"></textarea>
-          <button @click="addExp()" class="border px-4 py-2 rounded hover:bg-slate-50">Thêm</button>
+          <textarea x-model="newExp.description" rows="2" placeholder="Mô tả" class="glass-input w-full px-3 py-2"></textarea>
+          <button @click="addExp()" class="pro-btn-ghost px-4 py-2 rounded">Thêm</button>
         </div>
       </section>
 
       <!-- Học vấn (PROF-04) -->
-      <section class="bg-white border rounded-lg p-6">
+      <section class="glass-strong p-6">
         <h2 class="text-lg font-semibold mb-4">Học vấn</h2>
         <ul class="space-y-3 mb-4">
           <template x-for="ed in education" :key="ed.id">
-            <li class="border rounded p-3">
+            <li class="surface-soft p-3">
               <template x-if="editEduId !== ed.id">
                 <div class="flex items-start justify-between gap-2">
                   <div>
@@ -137,16 +137,16 @@
               </template>
               <template x-if="editEduId === ed.id">
                 <div class="space-y-2">
-                  <input x-model="eduForm.school" placeholder="Trường" class="w-full border rounded px-3 py-2" />
-                  <input x-model="eduForm.degree" placeholder="Bằng cấp" class="w-full border rounded px-3 py-2" />
-                  <input x-model="eduForm.field" placeholder="Chuyên ngành" class="w-full border rounded px-3 py-2" />
+                  <input x-model="eduForm.school" placeholder="Trường" class="glass-input w-full px-3 py-2" />
+                  <input x-model="eduForm.degree" placeholder="Bằng cấp" class="glass-input w-full px-3 py-2" />
+                  <input x-model="eduForm.field" placeholder="Chuyên ngành" class="glass-input w-full px-3 py-2" />
                   <div class="flex gap-2">
-                    <input x-model="eduForm.start_year" type="number" placeholder="Năm bắt đầu" class="border rounded px-3 py-2 w-40" />
-                    <input x-model="eduForm.end_year" type="number" placeholder="Năm kết thúc" class="border rounded px-3 py-2 w-40" />
+                    <input x-model="eduForm.start_year" type="number" placeholder="Năm bắt đầu" class="glass-input px-3 py-2 w-40" />
+                    <input x-model="eduForm.end_year" type="number" placeholder="Năm kết thúc" class="glass-input px-3 py-2 w-40" />
                   </div>
                   <div class="flex gap-2">
                     <button @click="saveEdu(ed.id)" class="pro-btn text-white px-3 py-1.5 rounded text-sm">Lưu</button>
-                    <button @click="cancelEditEdu()" class="border px-3 py-1.5 rounded text-sm">Huỷ</button>
+                    <button @click="cancelEditEdu()" class="pro-btn-ghost px-3 py-1.5 rounded text-sm">Huỷ</button>
                   </div>
                 </div>
               </template>
@@ -155,23 +155,23 @@
         </ul>
         <div class="border-t pt-4 space-y-2">
           <p class="text-sm font-medium">Thêm học vấn</p>
-          <input x-model="newEdu.school" placeholder="Trường" class="w-full border rounded px-3 py-2" />
-          <input x-model="newEdu.degree" placeholder="Bằng cấp" class="w-full border rounded px-3 py-2" />
-          <input x-model="newEdu.field" placeholder="Chuyên ngành" class="w-full border rounded px-3 py-2" />
+          <input x-model="newEdu.school" placeholder="Trường" class="glass-input w-full px-3 py-2" />
+          <input x-model="newEdu.degree" placeholder="Bằng cấp" class="glass-input w-full px-3 py-2" />
+          <input x-model="newEdu.field" placeholder="Chuyên ngành" class="glass-input w-full px-3 py-2" />
           <div class="flex gap-2">
-            <input x-model="newEdu.start_year" type="number" placeholder="Năm bắt đầu" class="border rounded px-3 py-2 w-40" />
-            <input x-model="newEdu.end_year" type="number" placeholder="Năm kết thúc" class="border rounded px-3 py-2 w-40" />
+            <input x-model="newEdu.start_year" type="number" placeholder="Năm bắt đầu" class="glass-input px-3 py-2 w-40" />
+            <input x-model="newEdu.end_year" type="number" placeholder="Năm kết thúc" class="glass-input px-3 py-2 w-40" />
           </div>
-          <button @click="addEdu()" class="border px-4 py-2 rounded hover:bg-slate-50">Thêm</button>
+          <button @click="addEdu()" class="pro-btn-ghost px-4 py-2 rounded">Thêm</button>
         </div>
       </section>
 
       <!-- Kỹ năng (PROF-05) -->
-      <section class="bg-white border rounded-lg p-6">
+      <section class="glass-strong p-6">
         <h2 class="text-lg font-semibold mb-4">Kỹ năng</h2>
         <div class="flex flex-wrap gap-2 mb-4">
           <template x-for="sk in skills" :key="sk.id">
-            <span class="inline-flex items-center gap-1 text-sm bg-slate-100 text-slate-700 px-3 py-1 rounded-full">
+            <span class="surface-soft inline-flex items-center gap-1 text-sm text-slate-700 px-3 py-1 rounded-full">
               <span x-text="sk.name"></span>
               <button @click="deleteSkill(sk.id)" class="text-slate-400 hover:text-red-600" title="Xoá">✕</button>
             </span>
@@ -181,8 +181,8 @@
           </template>
         </div>
         <div class="flex gap-2">
-          <input x-model="newSkill" @keydown.enter.prevent="addSkill()" placeholder="Tên kỹ năng" maxlength="80" class="flex-1 border rounded px-3 py-2" />
-          <button @click="addSkill()" class="border px-4 py-2 rounded hover:bg-slate-50">Thêm</button>
+          <input x-model="newSkill" @keydown.enter.prevent="addSkill()" placeholder="Tên kỹ năng" maxlength="80" class="glass-input flex-1 px-3 py-2" />
+          <button @click="addSkill()" class="pro-btn-ghost px-4 py-2 rounded">Thêm</button>
         </div>
       </section>
 

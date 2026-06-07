@@ -6,16 +6,16 @@
   <title>ProConnect — Hồ sơ</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { theme:{ extend:{ colors:{ navy:{ DEFAULT:'#1e3a8a', dark:'#172f6b', light:'#3b5bbd' } } } } };</script>
-  <script defer src="/assets/app.js?v=ph6-01"></script>
+  <script defer src="/assets/app.js?v=glass-1"></script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=ph6-01" />
+  <link rel="stylesheet" href="/assets/styles.css?v=glass-1" />
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
+<body class="text-slate-900 min-h-screen">
 
 <div id="pronav"></div>
 
-<main x-data="profilePage()" x-init="load()" class="max-w-3xl mx-auto px-4 py-6">
+<main x-data="profilePage()" x-init="load()" class="max-w-3xl mx-auto px-4 py-6 fade-in">
 
   <template x-if="loading">
     <p class="subtle">Đang tải hồ sơ…</p>
@@ -35,13 +35,14 @@
         </div>
       </template>
 
-      <section class="bg-white border rounded-lg overflow-hidden mb-6">
+      <section class="glass overflow-hidden mb-6">
         <!-- Ảnh bìa -->
-        <div class="h-32 bg-slate-200">
-          <template x-if="profile.cover_url">
-            <img :src="profile.cover_url" alt="Ảnh bìa" class="w-full h-32 object-cover" />
-          </template>
-        </div>
+        <template x-if="profile.cover_url">
+          <img :src="profile.cover_url" alt="Ảnh bìa" class="object-cover w-full h-32 sm:h-44 rounded-t-2xl" />
+        </template>
+        <template x-if="!profile.cover_url">
+          <div class="w-full h-32 sm:h-44 rounded-t-2xl bg-gradient-to-r from-navy via-navy-light to-navy"></div>
+        </template>
 
         <div class="px-6 pb-6">
           <!-- Ảnh đại diện chồng lên ảnh bìa -->
@@ -55,7 +56,7 @@
               </template>
             </div>
             <template x-if="isOwner">
-              <a href="/profile-edit.html" class="text-sm border px-3 py-1.5 rounded hover:bg-slate-50">Chỉnh sửa hồ sơ</a>
+              <a href="/profile-edit.html" class="pro-btn-ghost text-sm px-3 py-1.5 rounded">Chỉnh sửa hồ sơ</a>
             </template>
           </div>
 
@@ -104,19 +105,19 @@
             </template>
             <template x-if="!isOwner && profile.connection_status === 'pending_outgoing'">
               <button @click="cancelInvite()" :disabled="connBusy"
-                      class="text-xs border px-3 py-1 rounded hover:bg-slate-50 disabled:opacity-50">Huỷ lời mời</button>
+                      class="pro-btn-ghost text-xs px-3 py-1 rounded disabled:opacity-50">Huỷ lời mời</button>
             </template>
             <template x-if="!isOwner && profile.connection_status === 'pending_incoming'">
               <span class="flex items-center gap-2">
                 <button @click="acceptInvite()" :disabled="connBusy"
                         class="pro-btn text-xs text-white px-3 py-1 rounded disabled:opacity-50">Chấp nhận</button>
                 <button @click="rejectInvite()" :disabled="connBusy"
-                        class="text-xs border px-3 py-1 rounded hover:bg-slate-50 disabled:opacity-50">Từ chối</button>
+                        class="pro-btn-ghost text-xs px-3 py-1 rounded disabled:opacity-50">Từ chối</button>
               </span>
             </template>
             <template x-if="!isOwner && profile.connection_status === 'connected'">
               <button @click="removeConn()" :disabled="connBusy"
-                      class="text-xs border px-3 py-1 rounded hover:bg-slate-50 disabled:opacity-50">Xoá kết nối</button>
+                      class="pro-btn-ghost text-xs px-3 py-1 rounded disabled:opacity-50">Xoá kết nối</button>
             </template>
           </div>
 
@@ -128,11 +129,11 @@
 
       <!-- Kinh nghiệm -->
       <template x-if="profile.experience && profile.experience.length">
-        <section class="bg-white border rounded-lg p-6 mb-6">
+        <section class="glass p-6 mb-6">
           <h2 class="text-lg font-semibold mb-3">Kinh nghiệm</h2>
           <ul class="space-y-4">
             <template x-for="ex in profile.experience" :key="ex.id">
-              <li class="border-l-2 border-slate-200 pl-3">
+              <li class="surface-soft p-3">
                 <p class="font-medium" x-text="ex.title"></p>
                 <p class="text-sm text-slate-700" x-text="ex.company"></p>
                 <p class="text-xs subtle" x-text="dateRange(ex.start_date, ex.end_date)"></p>
@@ -147,11 +148,11 @@
 
       <!-- Học vấn -->
       <template x-if="profile.education && profile.education.length">
-        <section class="bg-white border rounded-lg p-6 mb-6">
+        <section class="glass p-6 mb-6">
           <h2 class="text-lg font-semibold mb-3">Học vấn</h2>
           <ul class="space-y-4">
             <template x-for="ed in profile.education" :key="ed.id">
-              <li class="border-l-2 border-slate-200 pl-3">
+              <li class="surface-soft p-3">
                 <p class="font-medium" x-text="ed.school"></p>
                 <p class="text-sm text-slate-700" x-text="[ed.degree, ed.field].filter(Boolean).join(' · ')"></p>
                 <p class="text-xs subtle" x-text="yearRange(ed.start_year, ed.end_year)"></p>
@@ -163,11 +164,11 @@
 
       <!-- Kỹ năng -->
       <template x-if="profile.skills && profile.skills.length">
-        <section class="bg-white border rounded-lg p-6">
+        <section class="glass p-6">
           <h2 class="text-lg font-semibold mb-3">Kỹ năng</h2>
           <div class="flex flex-wrap gap-2">
             <template x-for="sk in profile.skills" :key="sk.id">
-              <span class="text-sm bg-slate-100 text-slate-700 px-3 py-1 rounded-full" x-text="sk.name"></span>
+              <span class="surface-soft text-sm text-slate-700 px-3 py-1 rounded-full" x-text="sk.name"></span>
             </template>
           </div>
         </section>
