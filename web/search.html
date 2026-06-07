@@ -6,10 +6,10 @@
   <title>ProConnect — Tìm kiếm</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { theme:{ extend:{ colors:{ navy:{ DEFAULT:'#1e3a8a', dark:'#172f6b', light:'#3b5bbd' } } } } };</script>
-  <script defer src="/assets/app.js?v=glass-1"></script>
+  <script defer src="/assets/app.js?v=glass-2"></script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=glass-1" />
+  <link rel="stylesheet" href="/assets/styles.css?v=glass-2" />
 </head>
 <body class="text-slate-900 min-h-screen">
 
@@ -82,7 +82,7 @@
                  class="pro-btn-ghost text-sm px-3 py-1.5 rounded-xl">Chờ bạn phản hồi</a>
             </template>
             <template x-if="u.connection_status === 'connected'">
-              <span class="text-sm text-green-700 px-3 py-1.5">✓ Đã kết nối</span>
+              <span class="text-sm text-green-700 px-3 py-1.5"><i class="fa-solid fa-check mr-1" aria-hidden="true"></i>Đã kết nối</span>
             </template>
             <template x-if="u.connection_status === 'unknown'">
               <span class="inline-flex flex-col items-end">

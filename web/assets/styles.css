@@ -1,161 +1,134 @@
 /* ===========================================================================
-   ProConnect — Liquid Glass design system (light)
-   Inspired by Apple's Liquid Glass (WWDC 2025 HIG): translucent material,
-   specular edge highlights, soft depth, concentric radii. Glass is reserved
-   for the NAVIGATION + top-level CARD layer; nested items use a plain tinted
-   surface (no glass-on-glass — HIG guidance). CSS-only (blur + saturate +
-   layered shadows + a specular ::before) — no SVG displacement (cross-browser
-   + GPU-friendly). Navy #1e3a8a kept as the brand accent.
+   ProConnect — Liquid Glass design system (light, refined / flat)
+   Frosted-glass material (translucency + blur + hairline rim + soft depth) on
+   the nav + top-level card layer. NO decorative gradients, NO hover scale /
+   translate. Flat solid accents. Navy #1e3a8a brand. CSS-only, cross-browser.
    =========================================================================== */
 html, body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
 
 :root {
-  --navy:         #1e3a8a;  /* primary */
-  --navy-hover:   #172f6b;  /* hover/active */
-  --navy-accent:  #3b5bbd;  /* light accent */
-  --navy-surface: #eef2ff;  /* tinted surface */
+  --navy:         #1e3a8a;
+  --navy-hover:   #172f6b;
+  --navy-accent:  #3b5bbd;
+  --navy-surface: #eef2ff;
 
-  /* Liquid Glass tokens */
-  --glass-fill:        rgba(255, 255, 255, 0.55);
-  --glass-fill-strong: rgba(255, 255, 255, 0.72);
-  --glass-fill-nav:    rgba(255, 255, 255, 0.60);
+  --glass-fill:        rgba(255, 255, 255, 0.58);
+  --glass-fill-strong: rgba(255, 255, 255, 0.74);
+  --glass-fill-nav:    rgba(255, 255, 255, 0.62);
   --glass-stroke:      rgba(255, 255, 255, 0.65);
   --glass-blur:        18px;
-  --glass-radius:      1.25rem;
-  /* depth: soft tinted drop + crisp hairline rim + inner top specular */
+  --glass-radius:      1rem;
+  /* depth: soft tinted drop + crisp hairline rim + inner top highlight (no gradient) */
   --glass-shadow:
-      0 10px 30px -8px rgba(30, 58, 138, 0.18),
-      0 2px 8px -2px rgba(30, 58, 138, 0.10),
-      inset 0 1px 0 rgba(255, 255, 255, 0.75),
+      0 10px 28px -10px rgba(30, 58, 138, 0.16),
+      0 1px 4px -1px rgba(30, 58, 138, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.70),
       inset 0 0 0 1px var(--glass-stroke);
   --glass-shadow-hover:
-      0 18px 44px -10px rgba(30, 58, 138, 0.28),
-      0 4px 12px -2px rgba(30, 58, 138, 0.14),
-      inset 0 1px 0 rgba(255, 255, 255, 0.85),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.78);
+      0 14px 34px -10px rgba(30, 58, 138, 0.22),
+      0 2px 6px -1px rgba(30, 58, 138, 0.10),
+      inset 0 1px 0 rgba(255, 255, 255, 0.78),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.72);
 }
 
-/* ---- Mesh gradient backdrop (static) — gives the glass something to refract.
-   Soft brand-adjacent blobs on a near-white base. Fixed so it doesn't scroll. */
+/* Flat, calm backdrop (no gradient) — glass still reads via blur of content behind. */
 body {
   min-height: 100vh;
   color: #0f172a;
-  background-color: #eef1fb;
-  background-image:
-    radial-gradient(42rem 42rem at 8% -6%,  rgba(59, 91, 189, 0.28), transparent 60%),
-    radial-gradient(38rem 38rem at 102% 4%, rgba(99, 102, 241, 0.26), transparent 60%),
-    radial-gradient(36rem 36rem at 92% 96%, rgba(45, 212, 191, 0.20), transparent 60%),
-    radial-gradient(40rem 40rem at -4% 100%,rgba(168, 85, 247, 0.20), transparent 62%),
-    radial-gradient(50rem 50rem at 50% 40%, rgba(255, 255, 255, 0.55), transparent 70%);
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+  background-color: #eaeef6;
 }
 
 /* ---- Core glass material (top-level cards + nav) ---------------------------- */
 .glass, .glass-strong, .glass-nav {
   position: relative;
   background: var(--glass-fill);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-          backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-  border: 1px solid transparent;          /* rim comes from inset shadow */
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(170%);
+          backdrop-filter: blur(var(--glass-blur)) saturate(170%);
+  border: 1px solid transparent;          /* rim from inset shadow */
   border-radius: var(--glass-radius);
   box-shadow: var(--glass-shadow);
 }
 .glass-strong { background: var(--glass-fill-strong); }
 
-/* Specular highlight — a faint diagonal sheen across the top edge. */
-.glass::before, .glass-strong::before, .glass-nav::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.12) 24%, transparent 52%);
-  opacity: 0.7;
-  mix-blend-mode: screen;
-}
-
-/* Interactive lift for clickable glass cards. */
-.glass-hover { transition: box-shadow .25s ease, transform .25s ease; }
-.glass-hover:hover { box-shadow: var(--glass-shadow-hover); transform: translateY(-2px); }
+/* Hover = a slightly deeper shadow only. NO transform / scale / translate. */
+.glass-hover { transition: box-shadow .2s ease; }
+.glass-hover:hover { box-shadow: var(--glass-shadow-hover); }
 
 /* ---- Floating glass navigation bar ----------------------------------------- */
 .glass-nav {
   border-radius: 0 0 var(--glass-radius) var(--glass-radius);
-  -webkit-backdrop-filter: blur(24px) saturate(190%);
-          backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+          backdrop-filter: blur(24px) saturate(180%);
   background: var(--glass-fill-nav);
   box-shadow:
-      0 8px 28px -12px rgba(30, 58, 138, 0.22),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.55),
-      inset 0 1px 0 rgba(255, 255, 255, 0.80);
+      0 6px 20px -12px rgba(30, 58, 138, 0.18),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.50),
+      inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 
 /* ---- Nested surfaces (NO glass-on-glass): plain translucent tint ------------ */
-.surface-soft { background: rgba(255, 255, 255, 0.55); border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 0.9rem; }
-.surface-tint { background: var(--navy-surface); border-radius: 0.9rem; }
+.surface-soft { background: rgba(255, 255, 255, 0.55); border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 0.75rem; }
+.surface-tint { background: var(--navy-surface); border-radius: 0.75rem; }
 
-/* ---- Buttons: glossy navy with a top sheen --------------------------------- */
+/* ---- Buttons: FLAT solid navy (no gradient, no transform) ------------------- */
 .pro-btn {
-  background-image: linear-gradient(180deg, var(--navy-accent) 0%, var(--navy) 55%, var(--navy-hover) 100%);
+  background: var(--navy);
   color: #fff;
-  box-shadow: 0 6px 16px -6px rgba(30, 58, 138, 0.55), inset 0 1px 0 rgba(255,255,255,0.35);
-  transition: filter .2s ease, box-shadow .2s ease, transform .2s ease;
+  box-shadow: 0 1px 2px rgba(30, 58, 138, 0.25);
+  transition: background-color .15s ease;
 }
-.pro-btn:hover { filter: brightness(1.06); box-shadow: 0 10px 22px -6px rgba(30,58,138,0.6), inset 0 1px 0 rgba(255,255,255,0.4); transform: translateY(-1px); }
-.pro-btn:active { transform: translateY(0); filter: brightness(0.98); }
+.pro-btn:hover { background: var(--navy-hover); }
+.pro-btn:disabled { opacity: .5; }
 
-/* Ghost/glass secondary button (e.g. "Tìm kiếm", quick actions). */
+/* Ghost / secondary glass button (flat). */
 .pro-btn-ghost {
-  background: rgba(255,255,255,0.5);
+  background: rgba(255, 255, 255, 0.55);
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   color: var(--navy);
-  border: 1px solid rgba(30,58,138,0.18);
-  transition: background .2s ease, box-shadow .2s ease;
+  border: 1px solid rgba(30, 58, 138, 0.18);
+  transition: background-color .15s ease;
 }
-.pro-btn-ghost:hover { background: rgba(255,255,255,0.75); box-shadow: 0 4px 12px -4px rgba(30,58,138,0.25); }
+.pro-btn-ghost:hover { background: rgba(255, 255, 255, 0.85); }
 
 /* Glassy text input. */
 .glass-input {
-  background: rgba(255,255,255,0.6);
+  background: rgba(255, 255, 255, 0.62);
   -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-  border: 1px solid rgba(148,163,184,0.35);
-  border-radius: 0.75rem;
-  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 0.6rem;
+  transition: border-color .15s ease, box-shadow .15s ease;
 }
-.glass-input:focus { outline: none; background: rgba(255,255,255,0.85); border-color: var(--navy-accent); box-shadow: 0 0 0 3px rgba(59,91,189,0.18); }
+.glass-input:focus { outline: none; background: rgba(255, 255, 255, 0.9); border-color: var(--navy-accent); box-shadow: 0 0 0 3px rgba(59, 91, 189, 0.15); }
 
-/* ---- Brand / utility helpers (retained) ------------------------------------ */
+/* ---- Brand / utility helpers ----------------------------------------------- */
 .prose-vn p { white-space: pre-wrap; line-height: 1.65; }
 .subtle { color: rgb(71 85 105); }
 .pro-link-active { color: var(--navy); font-weight: 600; }
-.pro-badge { background: linear-gradient(180deg, #f87171, #dc2626); color: #fff; box-shadow: 0 1px 4px rgba(220,38,38,0.5); }
+.pro-badge { background: #dc2626; color: #fff; }
 .pro-surface { background: var(--navy-surface); }
 .text-navy { color: var(--navy); }
 
-/* Entrance animation. */
-.fade-in { animation: fadeIn .35s ease-out both; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+/* Entrance: opacity only (no translate). */
+.fade-in { animation: fadeIn .25s ease-out both; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 /* Hide Alpine-bound elements until Alpine initialises — no flash. */
 [x-cloak] { display: none !important; }
 
 /* ===========================================================================
-   Accessibility (HIG): respect reduced transparency / motion + contrast.
+   Accessibility: respect reduced transparency / motion.
    =========================================================================== */
 @media (prefers-reduced-transparency: reduce) {
-  .glass, .glass-strong, .glass-nav { -webkit-backdrop-filter: none; backdrop-filter: none; background: #ffffff; }
-  .glass-input, .pro-btn-ghost { -webkit-backdrop-filter: none; backdrop-filter: none; background: #ffffff; }
-  .glass::before, .glass-strong::before, .glass-nav::before { display: none; }
-  body { background-image: none; background-color: #f1f5f9; }
+  .glass, .glass-strong, .glass-nav, .glass-input, .pro-btn-ghost {
+    -webkit-backdrop-filter: none; backdrop-filter: none; background: #ffffff;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .glass-hover, .pro-btn, .pro-btn-ghost { transition: none; }
-  .glass-hover:hover, .pro-btn:hover { transform: none; }
+  .glass-hover, .pro-btn, .pro-btn-ghost, .glass-input { transition: none; }
   .fade-in { animation: none; }
 }
-/* Fallback: if backdrop-filter unsupported, fall back to opaque surfaces. */
+/* Fallback if backdrop-filter unsupported: opaque surfaces. */
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-  .glass { background: rgba(255,255,255,0.92); }
-  .glass-strong, .glass-nav { background: rgba(255,255,255,0.96); }
+  .glass { background: rgba(255, 255, 255, 0.94); }
+  .glass-strong, .glass-nav { background: rgba(255, 255, 255, 0.97); }
 }

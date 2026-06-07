@@ -6,6 +6,16 @@
   const TOKEN_KEY = 'soa_blog_token';
   const USER_KEY  = 'soa_blog_user';
 
+  // Load Font Awesome 6 once (all icons across the app use FA — no emoji).
+  if (!document.getElementById('fa-cdn')) {
+    var faLink = document.createElement('link');
+    faLink.id = 'fa-cdn';
+    faLink.rel = 'stylesheet';
+    faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css';
+    faLink.crossOrigin = 'anonymous';
+    document.head.appendChild(faLink);
+  }
+
   // ---------- Auth helpers ----------
 
   const auth = {
@@ -215,7 +225,7 @@
             // initialises this nested x-data too). Markup mirrors feed.html.
             '<div x-data="notificationBell()" x-init="start()" class="relative">' +
               '<button @click="open = !open" class="relative hover:text-slate-600" title="Thông báo">' +
-                '<span aria-hidden="true">🔔</span>' +
+                '<i class="fa-regular fa-bell text-lg" aria-hidden="true"></i>' +
                 '<span x-show="unread > 0" x-cloak ' +
                       'class="pro-badge absolute -top-2 -right-2 text-xs rounded-full min-w-[18px] h-[18px] px-1 inline-flex items-center justify-center" ' +
                       'x-text="unread"></span>' +
@@ -246,7 +256,7 @@
               '<button @click="m=!m" class="flex items-center gap-1 hover:text-slate-600 min-w-0">' +
                 // truncate long Vietnamese names on small screens (codex impl-review fix)
                 '<span class="max-w-[100px] sm:max-w-none truncate" x-text="me.display_name || me.username"></span>' +
-                '<span aria-hidden="true" class="shrink-0">▾</span>' +
+                '<i class="fa-solid fa-chevron-down text-xs shrink-0" aria-hidden="true"></i>' +
               '</button>' +
               '<div x-show="m" @click.outside="m=false" x-cloak ' +
                    'class="absolute right-0 mt-2 w-44 glass-strong rounded-2xl z-40 text-left overflow-hidden">' +

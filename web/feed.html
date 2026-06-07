@@ -8,18 +8,18 @@
   <script>
     tailwind.config = { theme: { extend: { colors: { navy: { DEFAULT: '#1e3a8a', dark: '#172f6b', light: '#3b5bbd' } } } } };
   </script>
-  <script defer src="/assets/app.js?v=glass-1"></script>
+  <script defer src="/assets/app.js?v=glass-2"></script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=glass-1" />
+  <link rel="stylesheet" href="/assets/styles.css?v=glass-2" />
 </head>
 <body class="text-slate-900 min-h-screen">
 
 <div id="pronav"></div>
 
-<main x-data="feedPage()" x-init="load()" class="max-w-5xl mx-auto px-4 py-6 fade-in">
+<main x-data="feedPage()" x-init="load()" class="max-w-[1248px] mx-auto px-4 py-6 fade-in">
 
-  <div class="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_300px] gap-6">
+  <div class="grid grid-cols-1 lg:grid-cols-[260px_640px_300px] gap-6 justify-center">
 
   <!-- ===== Cột trái: thẻ hồ sơ tóm tắt ===== -->
   <aside class="order-2 lg:order-1">
@@ -128,27 +128,50 @@
           <!-- Ảnh -->
           <img :src="p.image_url" x-show="p.image_url" alt="Ảnh bài viết" class="rounded max-h-96 w-auto mb-3" />
 
-          <!-- Hàng reaction -->
-          <div class="flex items-center flex-wrap gap-1 border-t pt-3">
-            <template x-for="type in reactions" :key="type">
-              <button @click="p.my_reaction === type ? unreact(p.id) : react(p.id, type)" :disabled="busy"
-                      :class="p.my_reaction === type ? 'pro-btn' : 'hover:bg-slate-100'"
-                      class="text-xs border px-2 py-1 rounded disabled:opacity-50"
-                      x-text="reactionLabel(type)"></button>
-            </template>
-            <span class="subtle text-xs ml-2">
-              <span x-text="p.reaction_count"></span> cảm xúc
+          <!-- Tóm tắt cảm xúc + bình luận (gom lại kiểu LinkedIn) -->
+          <div class="flex items-center justify-between text-xs subtle mt-3" x-show="p.reaction_count > 0 || p.comment_count > 0">
+            <span x-show="p.reaction_count > 0" class="flex items-center gap-1.5">
+              <span class="inline-flex items-center justify-center w-4 h-4 rounded-full" style="background:var(--navy)">
+                <i class="fa-solid fa-thumbs-up text-white" style="font-size:9px"></i>
+              </span>
+              <span x-text="p.reaction_count"></span>
             </span>
+            <button x-show="p.comment_count > 0" @click="loadComments(p.id)" class="hover:underline"
+                    x-text="p.comment_count + ' bình luận'"></button>
           </div>
 
-          <!-- Hàng hành động -->
-          <div class="flex items-center gap-3 mt-3 text-sm">
-            <button @click="loadComments(p.id)" class="hover:underline">
-              Bình luận (<span x-text="p.comment_count"></span>)
+          <!-- Hàng hành động: Thích (bộ chọn cảm xúc hiện khi hover) · Bình luận · Chia sẻ -->
+          <div class="flex items-center gap-1 border-t mt-2 pt-1 text-sm">
+            <div class="relative group flex-1">
+              <button @click="p.my_reaction ? unreact(p.id) : react(p.id, 'like')" :disabled="busy"
+                      class="w-full flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-slate-100 disabled:opacity-50"
+                      :class="p.my_reaction ? 'text-navy font-semibold' : 'subtle'">
+                <i class="fa-solid" :class="reactionIcon(p.my_reaction || 'like')"></i>
+                <span x-text="p.my_reaction ? reactionLabel(p.my_reaction) : 'Thích'"></span>
+              </button>
+              <!-- bộ chọn cảm xúc: chỉ hiện/ẩn khi hover (không scale/transform) -->
+              <div class="hidden group-hover:flex absolute bottom-full left-0 mb-1 glass-strong rounded-full px-2 py-1 gap-1 z-20">
+                <template x-for="type in reactions" :key="type">
+                  <button @click="react(p.id, type)" :disabled="busy" :title="reactionLabel(type)"
+                          class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-navy disabled:opacity-50">
+                    <i class="fa-solid" :class="reactionIcon(type)"></i>
+                  </button>
+                </template>
+              </div>
+            </div>
+            <button @click="loadComments(p.id)"
+                    class="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-slate-100 subtle">
+              <i class="fa-regular fa-comment"></i><span>Bình luận</span>
             </button>
-            <button @click="repost(p.id)" :disabled="busy" class="hover:underline disabled:opacity-50">Chia sẻ</button>
+            <button @click="repost(p.id)" :disabled="busy"
+                    class="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-slate-100 subtle disabled:opacity-50">
+              <i class="fa-solid fa-retweet"></i><span>Chia sẻ</span>
+            </button>
             <template x-if="p.author_id === auth.user?.id">
-              <button @click="removePost(p.id)" :disabled="busy" class="text-red-600 hover:underline disabled:opacity-50">Xoá</button>
+              <button @click="removePost(p.id)" :disabled="busy" title="Xoá bài viết"
+                      class="px-3 py-2 rounded-lg hover:bg-slate-100 text-red-600 disabled:opacity-50">
+                <i class="fa-regular fa-trash-can"></i>
+              </button>
             </template>
           </div>
 
@@ -245,11 +268,16 @@ function feedPage() {
     reactions: ['like', 'love', 'haha', 'wow', 'sad', 'angry'],
 
     reactionLabel(type) {
-      const m = {
-        like: '👍 Thích', love: '❤️ Yêu thích', haha: '😆 Haha',
-        wow: '😮 Wow', sad: '😢 Buồn', angry: '😠 Phẫn nộ',
-      };
+      const m = { like: 'Thích', love: 'Yêu thích', haha: 'Haha', wow: 'Wow', sad: 'Buồn', angry: 'Phẫn nộ' };
       return m[type] || type;
+    },
+
+    reactionIcon(type) {
+      const m = {
+        like: 'fa-thumbs-up', love: 'fa-heart', haha: 'fa-face-laugh-squint',
+        wow: 'fa-face-surprise', sad: 'fa-face-sad-tear', angry: 'fa-face-angry',
+      };
+      return m[type] || 'fa-thumbs-up';
     },
 
     async load() {

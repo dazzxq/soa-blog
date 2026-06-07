@@ -6,10 +6,10 @@
   <title>ProConnect — Chỉnh sửa hồ sơ</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { theme:{ extend:{ colors:{ navy:{ DEFAULT:'#1e3a8a', dark:'#172f6b', light:'#3b5bbd' } } } } };</script>
-  <script defer src="/assets/app.js?v=glass-1"></script>
+  <script defer src="/assets/app.js?v=glass-2"></script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=glass-1" />
+  <link rel="stylesheet" href="/assets/styles.css?v=glass-2" />
 </head>
 <body class="text-slate-900 min-h-screen">
 
@@ -173,7 +173,7 @@
           <template x-for="sk in skills" :key="sk.id">
             <span class="surface-soft inline-flex items-center gap-1 text-sm text-slate-700 px-3 py-1 rounded-full">
               <span x-text="sk.name"></span>
-              <button @click="deleteSkill(sk.id)" class="text-slate-400 hover:text-red-600" title="Xoá">✕</button>
+              <button @click="deleteSkill(sk.id)" class="text-slate-400 hover:text-red-600" title="Xoá"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
             </span>
           </template>
           <template x-if="!skills.length">
