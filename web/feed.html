@@ -142,17 +142,25 @@
 
           <!-- Hàng hành động: Thích (bộ chọn cảm xúc hiện khi hover) · Bình luận · Chia sẻ -->
           <div class="flex items-center gap-1 border-t mt-2 pt-1 text-sm">
-            <div class="relative group flex-1">
-              <button @click="p.my_reaction ? unreact(p.id) : react(p.id, 'like')" :disabled="busy"
-                      class="w-full flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-slate-100 disabled:opacity-50"
-                      :class="p.my_reaction ? 'text-navy font-semibold' : 'subtle'">
-                <i class="fa-solid" :class="reactionIcon(p.my_reaction || 'like')"></i>
-                <span x-text="p.my_reaction ? reactionLabel(p.my_reaction) : 'Thích'"></span>
-              </button>
-              <!-- bộ chọn cảm xúc: chỉ hiện/ẩn khi hover (không scale/transform) -->
-              <div class="hidden group-hover:flex absolute bottom-full left-0 mb-1 glass-strong rounded-full px-2 py-1 gap-1 z-20">
+            <!-- pk = picker mở: hover mở trên desktop, nút mũi tên mở khi chạm (touch) -->
+            <div class="relative flex-1" x-data="{ pk: false }" @mouseenter="pk = true" @mouseleave="pk = false">
+              <div class="flex items-center">
+                <button @click="p.my_reaction ? unreact(p.id) : react(p.id, 'like')" :disabled="busy"
+                        class="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-slate-100 disabled:opacity-50"
+                        :class="p.my_reaction ? 'text-navy font-semibold' : 'subtle'">
+                  <i class="fa-solid" :class="reactionIcon(p.my_reaction || 'like')"></i>
+                  <span x-text="p.my_reaction ? reactionLabel(p.my_reaction) : 'Thích'"></span>
+                </button>
+                <button @click="pk = !pk" :disabled="busy" title="Chọn cảm xúc" aria-label="Chọn cảm xúc"
+                        class="px-2 py-2 rounded-lg hover:bg-slate-100 subtle">
+                  <i class="fa-solid fa-chevron-up text-xs"></i>
+                </button>
+              </div>
+              <!-- bộ chọn cảm xúc (hiện/ẩn, không scale/transform) — hoạt động cả hover lẫn chạm -->
+              <div x-show="pk" x-cloak @click.outside="pk = false"
+                   class="flex absolute bottom-full left-0 mb-1 glass-strong rounded-full px-2 py-1 gap-1 z-20">
                 <template x-for="type in reactions" :key="type">
-                  <button @click="react(p.id, type)" :disabled="busy" :title="reactionLabel(type)"
+                  <button @click="react(p.id, type); pk = false" :disabled="busy" :title="reactionLabel(type)"
                           class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-navy disabled:opacity-50">
                     <i class="fa-solid" :class="reactionIcon(type)"></i>
                   </button>
