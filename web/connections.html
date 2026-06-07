@@ -6,10 +6,10 @@
   <title>ProConnect — Kết nối</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { theme:{ extend:{ colors:{ navy:{ DEFAULT:'#1e3a8a', dark:'#172f6b', light:'#3b5bbd' } } } } };</script>
-  <script defer src="/assets/app.js?v=glass-2"></script>
+  <script defer src="/assets/app.js?v=glass-3"></script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=glass-2" />
+  <link rel="stylesheet" href="/assets/styles.css?v=glass-3" />
 </head>
 <body class="text-slate-900 min-h-screen">
 
@@ -32,7 +32,7 @@
 
       <!-- 1. Kết nối của tôi -->
       <section class="glass p-6">
-        <h2 class="text-lg font-semibold mb-3">Kết nối của tôi</h2>
+        <h2 class="text-lg font-semibold mb-3">Kết nối của tôi (<span x-text="conns.length"></span>)</h2>
         <template x-if="!conns.length">
           <p class="subtle text-sm">Chưa có kết nối nào.</p>
         </template>
@@ -40,7 +40,7 @@
           <template x-for="c in conns" :key="c.user_id">
             <li class="surface-soft glass-hover flex items-center justify-between gap-3 p-3">
               <a :href="'/profile.html?id=' + c.user_id" class="flex items-center gap-3 min-w-0 hover:underline">
-                <span class="w-10 h-10 rounded-full bg-slate-300 overflow-hidden flex items-center justify-center text-sm font-bold text-slate-600 shrink-0">
+                <span class="avatar-fallback w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
                   <template x-if="c.profile && c.profile.avatar_url">
                     <img :src="c.profile.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
                   </template>
@@ -51,7 +51,7 @@
                 <span class="truncate" x-text="name(c.profile)"></span>
               </a>
               <button @click="remove(c.user_id)" :disabled="busy"
-                      class="pro-btn-ghost text-sm px-3 py-1.5 rounded disabled:opacity-50 shrink-0">Xoá kết nối</button>
+                      class="pro-btn-ghost text-sm px-3 py-1.5 rounded-lg disabled:opacity-50 shrink-0">Xoá kết nối</button>
             </li>
           </template>
         </ul>
@@ -59,7 +59,7 @@
 
       <!-- 2. Lời mời đã nhận -->
       <section class="glass p-6">
-        <h2 class="text-lg font-semibold mb-3">Lời mời đã nhận</h2>
+        <h2 class="text-lg font-semibold mb-3">Lời mời đã nhận (<span x-text="incoming.length"></span>)</h2>
         <template x-if="!incoming.length">
           <p class="subtle text-sm">Chưa có lời mời nào.</p>
         </template>
@@ -67,7 +67,7 @@
           <template x-for="r in incoming" :key="r.request_id">
             <li class="surface-soft glass-hover flex items-center justify-between gap-3 p-3">
               <a :href="'/profile.html?id=' + r.user_id" class="flex items-center gap-3 min-w-0 hover:underline">
-                <span class="w-10 h-10 rounded-full bg-slate-300 overflow-hidden flex items-center justify-center text-sm font-bold text-slate-600 shrink-0">
+                <span class="avatar-fallback w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
                   <template x-if="r.profile && r.profile.avatar_url">
                     <img :src="r.profile.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
                   </template>
@@ -79,9 +79,9 @@
               </a>
               <span class="flex items-center gap-2 shrink-0">
                 <button @click="accept(r.request_id)" :disabled="busy"
-                        class="pro-btn text-sm text-white px-3 py-1.5 rounded disabled:opacity-50">Chấp nhận</button>
+                        class="pro-btn text-sm text-white px-3 py-1.5 rounded-lg disabled:opacity-50">Chấp nhận</button>
                 <button @click="reject(r.request_id)" :disabled="busy"
-                        class="pro-btn-ghost text-sm px-3 py-1.5 rounded disabled:opacity-50">Từ chối</button>
+                        class="pro-btn-ghost text-sm px-3 py-1.5 rounded-lg disabled:opacity-50">Từ chối</button>
               </span>
             </li>
           </template>
@@ -90,7 +90,7 @@
 
       <!-- 3. Lời mời đã gửi -->
       <section class="glass p-6">
-        <h2 class="text-lg font-semibold mb-3">Lời mời đã gửi</h2>
+        <h2 class="text-lg font-semibold mb-3">Lời mời đã gửi (<span x-text="outgoing.length"></span>)</h2>
         <template x-if="!outgoing.length">
           <p class="subtle text-sm">Bạn chưa gửi lời mời nào.</p>
         </template>
@@ -98,7 +98,7 @@
           <template x-for="r in outgoing" :key="r.request_id">
             <li class="surface-soft glass-hover flex items-center justify-between gap-3 p-3">
               <a :href="'/profile.html?id=' + r.user_id" class="flex items-center gap-3 min-w-0 hover:underline">
-                <span class="w-10 h-10 rounded-full bg-slate-300 overflow-hidden flex items-center justify-center text-sm font-bold text-slate-600 shrink-0">
+                <span class="avatar-fallback w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
                   <template x-if="r.profile && r.profile.avatar_url">
                     <img :src="r.profile.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
                   </template>
@@ -109,7 +109,7 @@
                 <span class="truncate" x-text="name(r.profile)"></span>
               </a>
               <button @click="cancel(r.request_id)" :disabled="busy"
-                      class="pro-btn-ghost text-sm px-3 py-1.5 rounded disabled:opacity-50 shrink-0">Huỷ lời mời</button>
+                      class="pro-btn-ghost text-sm px-3 py-1.5 rounded-lg disabled:opacity-50 shrink-0">Huỷ lời mời</button>
             </li>
           </template>
         </ul>
@@ -117,7 +117,7 @@
 
       <!-- 4. Người bạn có thể biết -->
       <section class="glass p-6">
-        <h2 class="text-lg font-semibold mb-3">Người bạn có thể biết</h2>
+        <h2 class="text-lg font-semibold mb-3">Người bạn có thể biết (<span x-text="suggestions.length"></span>)</h2>
         <template x-if="!suggestions.length">
           <p class="subtle text-sm">Chưa có gợi ý nào.</p>
         </template>
@@ -125,7 +125,7 @@
           <template x-for="s in suggestions" :key="s.user_id">
             <li class="surface-soft glass-hover flex items-center justify-between gap-3 p-3">
               <a :href="'/profile.html?id=' + s.user_id" class="flex items-center gap-3 min-w-0 hover:underline">
-                <span class="w-10 h-10 rounded-full bg-slate-300 overflow-hidden flex items-center justify-center text-sm font-bold text-slate-600 shrink-0">
+                <span class="avatar-fallback w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
                   <template x-if="s.profile && s.profile.avatar_url">
                     <img :src="s.profile.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
                   </template>
@@ -136,7 +136,7 @@
                 <span class="truncate" x-text="name(s.profile)"></span>
               </a>
               <button @click="sendInvite(s.user_id)" :disabled="busy"
-                      class="pro-btn text-sm text-white px-3 py-1.5 rounded disabled:opacity-50 shrink-0">Kết nối</button>
+                      class="pro-btn text-sm text-white px-3 py-1.5 rounded-lg disabled:opacity-50 shrink-0">Kết nối</button>
             </li>
           </template>
         </ul>

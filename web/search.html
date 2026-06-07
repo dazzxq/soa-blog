@@ -6,10 +6,10 @@
   <title>ProConnect — Tìm kiếm</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { theme:{ extend:{ colors:{ navy:{ DEFAULT:'#1e3a8a', dark:'#172f6b', light:'#3b5bbd' } } } } };</script>
-  <script defer src="/assets/app.js?v=glass-2"></script>
+  <script defer src="/assets/app.js?v=glass-3"></script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=glass-2" />
+  <link rel="stylesheet" href="/assets/styles.css?v=glass-3" />
 </head>
 <body class="text-slate-900 min-h-screen">
 
@@ -24,7 +24,7 @@
     <input x-model="q" type="search" placeholder="Tìm người theo tên, chức danh, kỹ năng…"
            class="glass-input flex-1 p-3 text-sm" />
     <button type="submit" :disabled="loading"
-            class="pro-btn text-white px-4 py-3 rounded-xl disabled:opacity-50">Tìm</button>
+            class="pro-btn text-white px-4 py-3 rounded-lg disabled:opacity-50">Tìm</button>
   </form>
 
   <!-- Thông báo lỗi -->
@@ -54,7 +54,7 @@
       <template x-for="u in results" :key="u.id">
         <li class="glass glass-hover p-4 flex items-center justify-between gap-3">
           <a :href="'/profile.html?id=' + u.id" class="flex items-center gap-3 min-w-0 hover:underline">
-            <span class="w-12 h-12 rounded-full bg-slate-300 overflow-hidden flex items-center justify-center text-sm font-bold text-slate-600 shrink-0">
+            <span class="avatar-fallback w-12 h-12 rounded-full overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
               <template x-if="u.avatar_url">
                 <img :src="u.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
               </template>
@@ -72,14 +72,14 @@
           <span class="shrink-0">
             <template x-if="u.connection_status === 'none'">
               <button @click="connect(u)" :disabled="busy"
-                      class="pro-btn text-sm text-white px-3 py-1.5 rounded-xl disabled:opacity-50">Kết nối</button>
+                      class="pro-btn text-sm text-white px-3 py-1.5 rounded-lg disabled:opacity-50">Kết nối</button>
             </template>
             <template x-if="u.connection_status === 'pending_outgoing'">
-              <button disabled class="pro-btn-ghost text-sm px-3 py-1.5 rounded-xl opacity-60 cursor-default">Đã gửi lời mời</button>
+              <button disabled class="pro-btn-ghost text-sm px-3 py-1.5 rounded-lg opacity-60 cursor-default">Đã gửi lời mời</button>
             </template>
             <template x-if="u.connection_status === 'pending_incoming'">
               <a href="/connections.html"
-                 class="pro-btn-ghost text-sm px-3 py-1.5 rounded-xl">Chờ bạn phản hồi</a>
+                 class="pro-btn-ghost text-sm px-3 py-1.5 rounded-lg">Chờ bạn phản hồi</a>
             </template>
             <template x-if="u.connection_status === 'connected'">
               <span class="text-sm text-green-700 px-3 py-1.5"><i class="fa-solid fa-check mr-1" aria-hidden="true"></i>Đã kết nối</span>
@@ -87,8 +87,8 @@
             <template x-if="u.connection_status === 'unknown'">
               <span class="inline-flex flex-col items-end">
                 <button @click="connect(u)" :disabled="busy"
-                        class="pro-btn text-sm text-white px-3 py-1.5 rounded-xl disabled:opacity-50">Kết nối</button>
-                <span class="subtle text-[10px] mt-0.5">Trạng thái chưa rõ</span>
+                        class="pro-btn text-sm text-white px-3 py-1.5 rounded-lg disabled:opacity-50">Kết nối</button>
+                <span class="subtle text-xs mt-0.5">Trạng thái chưa rõ</span>
               </span>
             </template>
           </span>

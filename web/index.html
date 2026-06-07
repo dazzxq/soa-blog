@@ -6,16 +6,16 @@
   <title>ProConnect — Trang chủ</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { theme:{ extend:{ colors:{ navy:{ DEFAULT:'#1e3a8a', dark:'#172f6b', light:'#3b5bbd' } } } } };</script>
-  <script defer src="/assets/app.js?v=glass-2"></script>
+  <script defer src="/assets/app.js?v=glass-3"></script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=glass-2" />
+  <link rel="stylesheet" href="/assets/styles.css?v=glass-3" />
 </head>
 <body class="text-slate-900 min-h-screen">
 
 <div id="pronav"></div>
 
-<main x-data="indexPage()" x-init="load" class="max-w-3xl mx-auto px-4 py-8 fade-in">
+<main x-data="indexPage()" x-init="load()" class="max-w-3xl mx-auto px-4 py-8 fade-in">
 
   <section class="glass p-8 mb-6">
     <h1 class="text-3xl font-bold mb-3 text-navy">Chào mừng tới ProConnect</h1>
@@ -25,8 +25,8 @@
       kết nối chuyên nghiệp.
     </p>
     <div class="flex flex-wrap gap-3">
-      <a href="/login.html" class="pro-btn px-5 py-2.5 rounded-xl text-white font-medium">Bắt đầu ngay</a>
-      <a href="/search.html" class="pro-btn-ghost px-5 py-2.5 rounded-xl font-medium">Khám phá người dùng</a>
+      <a href="/login.html" class="pro-btn px-5 py-2.5 rounded-lg text-white font-medium">Bắt đầu ngay</a>
+      <a href="/search.html" class="pro-btn-ghost px-5 py-2.5 rounded-lg font-medium">Khám phá người dùng</a>
     </div>
   </section>
 
@@ -62,31 +62,34 @@
       <div>
         <p class="subtle mb-3">Bạn chưa đăng nhập.</p>
         <div class="flex gap-3">
-          <a href="/login.html" class="pro-btn px-4 py-2 rounded-xl text-white">Đăng nhập</a>
-          <a href="/register.html" class="pro-btn-ghost px-4 py-2 rounded-xl">Đăng ký</a>
+          <a href="/login.html" class="pro-btn px-4 py-2 rounded-lg text-white">Đăng nhập</a>
+          <a href="/register.html" class="pro-btn-ghost px-4 py-2 rounded-lg">Đăng ký</a>
         </div>
       </div>
     </template>
 
     <template x-if="!loading && !error && isLoggedIn && profile">
       <div>
-        <dl class="surface-soft p-4 space-y-2">
-          <div class="flex gap-2">
-            <dt class="w-32 subtle">ID</dt>
-            <dd x-text="profile.id"></dd>
+        <div class="surface-soft p-4 flex items-center gap-4">
+          <span class="avatar-fallback w-14 h-14 rounded-full overflow-hidden flex items-center justify-center text-xl font-bold shrink-0">
+            <template x-if="profile.avatar_url">
+              <img :src="profile.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
+            </template>
+            <template x-if="!profile.avatar_url">
+              <span x-text="initials()"></span>
+            </template>
+          </span>
+          <div class="min-w-0">
+            <p class="font-semibold text-lg truncate" x-text="profile.display_name || profile.username"></p>
+            <template x-if="profile.headline">
+              <p class="subtle text-sm truncate" x-text="profile.headline"></p>
+            </template>
           </div>
-          <div class="flex gap-2">
-            <dt class="w-32 subtle">Username</dt>
-            <dd x-text="profile.username"></dd>
-          </div>
-          <div class="flex gap-2">
-            <dt class="w-32 subtle">Tên hiển thị</dt>
-            <dd x-text="profile.display_name"></dd>
-          </div>
-        </dl>
-        <div class="flex gap-3 mt-4">
-          <a :href="'/profile.html?id=' + profile.id" class="pro-btn px-4 py-2 rounded-xl text-white">Hồ sơ của tôi</a>
-          <a href="/profile-edit.html" class="pro-btn-ghost px-4 py-2 rounded-xl">Chỉnh sửa hồ sơ</a>
+        </div>
+        <div class="flex flex-wrap gap-3 mt-4">
+          <a href="/feed.html" class="pro-btn px-4 py-2 rounded-lg text-white">Đi tới bảng tin</a>
+          <a :href="'/profile.html?id=' + profile.id" class="pro-btn-ghost px-4 py-2 rounded-lg">Hồ sơ của tôi</a>
+          <a href="/profile-edit.html" class="pro-btn-ghost px-4 py-2 rounded-lg">Chỉnh sửa hồ sơ</a>
         </div>
       </div>
     </template>
@@ -112,6 +115,10 @@ function indexPage() {
       } finally {
         this.loading = false;
       }
+    },
+    initials() {
+      const n = (this.profile && (this.profile.display_name || this.profile.username)) || '?';
+      return n.trim().charAt(0).toUpperCase();
     },
   };
 }

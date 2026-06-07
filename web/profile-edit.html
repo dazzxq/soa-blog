@@ -6,10 +6,10 @@
   <title>ProConnect — Chỉnh sửa hồ sơ</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { theme:{ extend:{ colors:{ navy:{ DEFAULT:'#1e3a8a', dark:'#172f6b', light:'#3b5bbd' } } } } };</script>
-  <script defer src="/assets/app.js?v=glass-2"></script>
+  <script defer src="/assets/app.js?v=glass-3"></script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=glass-2" />
+  <link rel="stylesheet" href="/assets/styles.css?v=glass-3" />
 </head>
 <body class="text-slate-900 min-h-screen">
 
@@ -19,7 +19,7 @@
 
   <div class="flex items-center justify-between">
     <h1 class="text-2xl font-bold">Chỉnh sửa hồ sơ</h1>
-    <a :href="myId ? ('/profile.html?id=' + myId) : '/profile.html'" class="pro-btn-ghost text-sm px-3 py-1.5 rounded">Xem hồ sơ</a>
+    <a :href="myId ? ('/profile.html?id=' + myId) : '/profile.html'" class="pro-btn-ghost text-sm px-3 py-1.5 rounded-lg">Xem hồ sơ</a>
   </div>
 
   <!-- Toast thông báo -->
@@ -62,7 +62,7 @@
             <span class="text-sm subtle">Giới thiệu</span>
             <textarea x-model="basic.about" rows="4" class="glass-input mt-1 w-full px-3 py-2"></textarea>
           </label>
-          <button @click="saveBasic()" class="pro-btn text-white px-4 py-2 rounded">Lưu</button>
+          <button @click="saveBasic()" class="pro-btn text-white px-4 py-2 rounded-lg">Lưu</button>
         </div>
       </section>
 
@@ -80,7 +80,7 @@
                     <p class="text-xs subtle" x-text="(ex.start_date||'') + ' – ' + (ex.end_date || 'Hiện tại')"></p>
                   </div>
                   <div class="flex gap-2 text-sm shrink-0">
-                    <button @click="startEditExp(ex)" class="text-blue-600 hover:underline">Sửa</button>
+                    <button @click="startEditExp(ex)" class="text-navy hover:underline">Sửa</button>
                     <button @click="deleteExp(ex.id)" class="text-red-600 hover:underline">Xoá</button>
                   </div>
                 </div>
@@ -95,15 +95,15 @@
                   </div>
                   <textarea x-model="expForm.description" rows="2" placeholder="Mô tả" class="glass-input w-full px-3 py-2"></textarea>
                   <div class="flex gap-2">
-                    <button @click="saveExp(ex.id)" class="pro-btn text-white px-3 py-1.5 rounded text-sm">Lưu</button>
-                    <button @click="cancelEditExp()" class="pro-btn-ghost px-3 py-1.5 rounded text-sm">Huỷ</button>
+                    <button @click="saveExp(ex.id)" class="pro-btn text-white px-3 py-1.5 rounded-lg text-sm">Lưu</button>
+                    <button @click="cancelEditExp()" class="pro-btn-ghost px-3 py-1.5 rounded-lg text-sm">Huỷ</button>
                   </div>
                 </div>
               </template>
             </li>
           </template>
         </ul>
-        <div class="border-t pt-4 space-y-2">
+        <div class="border-t divider-soft pt-4 space-y-2">
           <p class="text-sm font-medium">Thêm kinh nghiệm</p>
           <input x-model="newExp.company" placeholder="Công ty" class="glass-input w-full px-3 py-2" />
           <input x-model="newExp.title" placeholder="Chức danh" class="glass-input w-full px-3 py-2" />
@@ -112,7 +112,7 @@
             <input x-model="newExp.end_date" type="date" class="glass-input px-3 py-2" />
           </div>
           <textarea x-model="newExp.description" rows="2" placeholder="Mô tả" class="glass-input w-full px-3 py-2"></textarea>
-          <button @click="addExp()" class="pro-btn-ghost px-4 py-2 rounded">Thêm</button>
+          <button @click="addExp()" class="pro-btn-ghost px-4 py-2 rounded-lg">Thêm</button>
         </div>
       </section>
 
@@ -130,7 +130,7 @@
                     <p class="text-xs subtle" x-text="(ed.start_year||'') + ' – ' + (ed.end_year || 'Hiện tại')"></p>
                   </div>
                   <div class="flex gap-2 text-sm shrink-0">
-                    <button @click="startEditEdu(ed)" class="text-blue-600 hover:underline">Sửa</button>
+                    <button @click="startEditEdu(ed)" class="text-navy hover:underline">Sửa</button>
                     <button @click="deleteEdu(ed.id)" class="text-red-600 hover:underline">Xoá</button>
                   </div>
                 </div>
@@ -145,15 +145,15 @@
                     <input x-model="eduForm.end_year" type="number" placeholder="Năm kết thúc" class="glass-input px-3 py-2 w-40" />
                   </div>
                   <div class="flex gap-2">
-                    <button @click="saveEdu(ed.id)" class="pro-btn text-white px-3 py-1.5 rounded text-sm">Lưu</button>
-                    <button @click="cancelEditEdu()" class="pro-btn-ghost px-3 py-1.5 rounded text-sm">Huỷ</button>
+                    <button @click="saveEdu(ed.id)" class="pro-btn text-white px-3 py-1.5 rounded-lg text-sm">Lưu</button>
+                    <button @click="cancelEditEdu()" class="pro-btn-ghost px-3 py-1.5 rounded-lg text-sm">Huỷ</button>
                   </div>
                 </div>
               </template>
             </li>
           </template>
         </ul>
-        <div class="border-t pt-4 space-y-2">
+        <div class="border-t divider-soft pt-4 space-y-2">
           <p class="text-sm font-medium">Thêm học vấn</p>
           <input x-model="newEdu.school" placeholder="Trường" class="glass-input w-full px-3 py-2" />
           <input x-model="newEdu.degree" placeholder="Bằng cấp" class="glass-input w-full px-3 py-2" />
@@ -162,7 +162,7 @@
             <input x-model="newEdu.start_year" type="number" placeholder="Năm bắt đầu" class="glass-input px-3 py-2 w-40" />
             <input x-model="newEdu.end_year" type="number" placeholder="Năm kết thúc" class="glass-input px-3 py-2 w-40" />
           </div>
-          <button @click="addEdu()" class="pro-btn-ghost px-4 py-2 rounded">Thêm</button>
+          <button @click="addEdu()" class="pro-btn-ghost px-4 py-2 rounded-lg">Thêm</button>
         </div>
       </section>
 
@@ -182,7 +182,7 @@
         </div>
         <div class="flex gap-2">
           <input x-model="newSkill" @keydown.enter.prevent="addSkill()" placeholder="Tên kỹ năng" maxlength="80" class="glass-input flex-1 px-3 py-2" />
-          <button @click="addSkill()" class="pro-btn-ghost px-4 py-2 rounded">Thêm</button>
+          <button @click="addSkill()" class="pro-btn-ghost px-4 py-2 rounded-lg">Thêm</button>
         </div>
       </section>
 
