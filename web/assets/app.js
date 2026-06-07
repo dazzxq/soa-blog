@@ -90,11 +90,31 @@
     } catch (_) { return iso; }
   }
 
+  // Relative time, Vietnamese ("Vừa xong / N phút / N giờ / N ngày…"), LinkedIn-style.
+  // DB stores UTC datetimes WITHOUT an offset ("2026-06-07 02:46:59") → treat as UTC
+  // (append Z) so the relative value is correct regardless of the browser timezone.
+  function timeAgo(iso) {
+    if (!iso) return '';
+    var s = String(iso).trim().replace(' ', 'T');
+    if (!/[zZ]|[+\-]\d\d:?\d\d$/.test(s)) s += 'Z';
+    var t = new Date(s);
+    if (isNaN(t.getTime())) return formatDate(iso);
+    var sec = Math.floor((Date.now() - t.getTime()) / 1000);
+    if (sec < 45) return 'Vừa xong';
+    var m = Math.round(sec / 60); if (m < 60) return m + ' phút';
+    var h = Math.round(m / 60);   if (h < 24) return h + ' giờ';
+    var d = Math.round(h / 24);   if (d < 7)  return d + ' ngày';
+    var w = Math.round(d / 7);    if (w < 5)  return w + ' tuần';
+    var mo = Math.round(d / 30);  if (mo < 12) return mo + ' tháng';
+    return Math.round(d / 365) + ' năm';
+  }
+
   // ---------- Expose globally for Alpine x-data="..." expressions ----------
 
   window.api        = api;
   window.auth       = auth;
   window.formatDate = formatDate;
+  window.timeAgo    = timeAgo;
 
   // ---------- Profile loader (Phase-1 endpoints only) ----------
   // Uses /api/me (JWT) to resolve the current account, then /api/profiles/{id}
@@ -191,7 +211,7 @@
   // third-party brand assets (T-06-04). Vietnamese tagline "Kết nối chuyên nghiệp".
   var PRONAV_HTML =
     '<nav class="glass-nav sticky top-0 z-30">' +
-      '<div class="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">' +
+      '<div class="max-w-[1248px] mx-auto px-4 py-2 flex items-center justify-between gap-4">' +
         // LEFT: logo + brand + tagline
         '<a href="/feed.html" class="flex items-center gap-2 shrink-0">' +
           '<svg viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke="#1e3a8a" stroke-width="2" ' +
@@ -214,27 +234,30 @@
           '<div class="flex items-center gap-3 sm:gap-4 text-sm shrink-0 min-w-0">' +
             // "Bảng tin" text link hidden on xs (logo already links to feed) to avoid
             // navbar overflow on small screens (codex impl-review fix).
-            '<a href="/feed.html" class="hidden sm:inline" :class="active===\'feed\' ? \'pro-link-active\' : \'hover:underline\'">Bảng tin</a>' +
-            '<a href="/connections.html" class="relative" :class="active===\'connections\' ? \'pro-link-active\' : \'hover:underline\'">' +
-              'Kết nối' +
+            '<a href="/feed.html" class="hidden sm:flex flex-col items-center leading-tight gap-0.5" :class="active===\'feed\' ? \'text-navy\' : \'subtle hover:text-slate-700\'">' +
+              '<i class="fa-solid fa-house text-base" aria-hidden="true"></i><span class="text-xs">Bảng tin</span>' +
+            '</a>' +
+            '<a href="/connections.html" class="relative flex flex-col items-center leading-tight gap-0.5" :class="active===\'connections\' ? \'text-navy\' : \'subtle hover:text-slate-700\'">' +
+              '<i class="fa-solid fa-user-group text-base" aria-hidden="true"></i><span class="text-xs">Kết nối</span>' +
               '<span x-show="invites>0" x-cloak ' +
-                    'class="pro-badge absolute -top-2 -right-3 text-xs rounded-full min-w-[18px] h-[18px] px-1 inline-flex items-center justify-center" ' +
+                    'class="pro-badge absolute -top-1 right-1 text-[10px] rounded-full min-w-[16px] h-[16px] px-1 inline-flex items-center justify-center" ' +
                     'x-text="invites"></span>' +
             '</a>' +
             // Notification bell — reuse Phase-5 window.notificationBell (initTree
             // initialises this nested x-data too). Markup mirrors feed.html.
             '<div x-data="notificationBell()" x-init="start()" class="relative">' +
-              '<button @click="open = !open" class="relative hover:text-slate-600" title="Thông báo">' +
-                '<i class="fa-regular fa-bell text-lg" aria-hidden="true"></i>' +
+              '<button @click="open = !open" title="Thông báo" ' +
+                      'class="relative flex flex-col items-center leading-tight gap-0.5 subtle hover:text-slate-700">' +
+                '<i class="fa-regular fa-bell text-base" aria-hidden="true"></i><span class="text-xs">Thông báo</span>' +
                 '<span x-show="unread > 0" x-cloak ' +
-                      'class="pro-badge absolute -top-2 -right-2 text-xs rounded-full min-w-[18px] h-[18px] px-1 inline-flex items-center justify-center" ' +
+                      'class="pro-badge absolute -top-1 right-2 text-[10px] rounded-full min-w-[16px] h-[16px] px-1 inline-flex items-center justify-center" ' +
                       'x-text="unread"></span>' +
               '</button>' +
               '<div x-show="open" @click.outside="open = false" x-cloak ' +
                    'class="absolute right-0 mt-2 w-80 glass-strong rounded-2xl z-40 text-left overflow-hidden">' +
-                '<div class="flex items-center justify-between px-3 py-2 border-b">' +
+                '<div class="flex items-center justify-between px-3 py-2 border-b border-slate-200/60">' +
                   '<span class="font-semibold text-sm">Thông báo</span>' +
-                  '<button @click="markAll()" class="text-xs hover:underline" style="color:#1e3a8a">Đánh dấu tất cả đã đọc</button>' +
+                  '<button @click="markAll()" class="text-xs text-navy hover:underline">Đánh dấu tất cả đã đọc</button>' +
                 '</div>' +
                 '<template x-if="!items.length">' +
                   '<p class="subtle text-sm px-3 py-4">Chưa có thông báo nào.</p>' +
@@ -245,7 +268,7 @@
                         ':class="n.read_at ? \'hover:bg-slate-50\' : \'pro-surface hover:bg-slate-100 font-semibold\'" ' +
                         'class="px-3 py-2 cursor-pointer">' +
                       '<p class="text-sm" x-text="message(n)"></p>' +
-                      '<p class="subtle text-xs mt-0.5" x-text="formatDate(n.created_at)"></p>' +
+                      '<p class="subtle text-xs mt-0.5" x-text="timeAgo(n.created_at)"></p>' +
                     '</li>' +
                   '</template>' +
                 '</ul>' +
@@ -253,10 +276,14 @@
             '</div>' +
             // Profile menu — avatar/name → dropdown (Hồ sơ / Chỉnh sửa / Đăng xuất)
             '<div class="relative" x-data="{m:false}">' +
-              '<button @click="m=!m" class="flex items-center gap-1 hover:text-slate-600 min-w-0">' +
-                // truncate long Vietnamese names on small screens (codex impl-review fix)
-                '<span class="max-w-[100px] sm:max-w-none truncate" x-text="me.display_name || me.username"></span>' +
-                '<i class="fa-solid fa-chevron-down text-xs shrink-0" aria-hidden="true"></i>' +
+              '<button @click="m=!m" class="flex items-center gap-2 hover:text-slate-700 min-w-0">' +
+                // avatar + truncated name (truncate guards long Vietnamese names on small screens)
+                '<span class="w-8 h-8 rounded-full bg-navy/10 text-navy overflow-hidden flex items-center justify-center text-xs font-bold shrink-0">' +
+                  '<template x-if="me.avatar_url"><img :src="me.avatar_url" alt="" class="w-full h-full object-cover" /></template>' +
+                  '<template x-if="!me.avatar_url"><span x-text="(me.display_name||me.username||\'?\').trim().charAt(0).toUpperCase()"></span></template>' +
+                '</span>' +
+                '<span class="hidden sm:inline max-w-[120px] truncate text-sm" x-text="me.display_name || me.username"></span>' +
+                '<i class="fa-solid fa-chevron-down text-xs shrink-0 subtle" aria-hidden="true"></i>' +
               '</button>' +
               '<div x-show="m" @click.outside="m=false" x-cloak ' +
                    'class="absolute right-0 mt-2 w-44 glass-strong rounded-2xl z-40 text-left overflow-hidden">' +

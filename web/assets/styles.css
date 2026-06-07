@@ -100,6 +100,22 @@ body {
 }
 .glass-input:focus { outline: none; background: rgba(255, 255, 255, 0.9); border-color: var(--navy-accent); box-shadow: 0 0 0 3px rgba(59, 91, 189, 0.15); }
 
+/* Small button variant — consistent radius/size for compact actions. */
+.pro-btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: 0.6rem; }
+
+/* Avatar initials fallback — branded tint, not a gray placeholder. */
+.avatar-fallback { background: rgba(30, 58, 138, 0.10); color: var(--navy); }
+
+/* Hairline divider on glass (lighter than the Tailwind default border). */
+.divider-soft { border-color: rgba(148, 163, 184, 0.28); }
+
+/* Visible keyboard focus for interactive elements (accessibility). */
+.pro-btn:focus-visible, .pro-btn-ghost:focus-visible, a:focus-visible, button:focus-visible {
+  outline: 2px solid var(--navy-accent);
+  outline-offset: 2px;
+  border-radius: 0.4rem;
+}
+
 /* ---- Brand / utility helpers ----------------------------------------------- */
 .prose-vn p { white-space: pre-wrap; line-height: 1.65; }
 .subtle { color: rgb(71 85 105); }
