@@ -6,29 +6,49 @@
   <title>ProConnect — Trang chủ</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { theme:{ extend:{ colors:{ navy:{ DEFAULT:'#1e3a8a', dark:'#172f6b', light:'#3b5bbd' } } } } };</script>
-  <script defer src="/assets/app.js?v=ph6-01"></script>
+  <script defer src="/assets/app.js?v=glass-1"></script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=ph6-01" />
+  <link rel="stylesheet" href="/assets/styles.css?v=glass-1" />
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
+<body class="text-slate-900 min-h-screen">
 
 <div id="pronav"></div>
 
-<main x-data="indexPage()" x-init="load" class="max-w-3xl mx-auto px-4 py-6">
+<main x-data="indexPage()" x-init="load" class="max-w-3xl mx-auto px-4 py-8 fade-in">
 
-  <section class="bg-white border rounded-lg p-6 mb-6">
-    <h1 class="text-2xl font-bold mb-2" style="color:#1e3a8a">Chào mừng tới ProConnect</h1>
-    <p class="subtle">
+  <section class="glass p-8 mb-6">
+    <h1 class="text-3xl font-bold mb-3 text-navy">Chào mừng tới ProConnect</h1>
+    <p class="subtle text-base leading-relaxed mb-6">
       Mạng xã hội nghề nghiệp giúp bạn xây dựng hồ sơ, kết nối với đồng nghiệp,
       chia sẻ bài viết và tìm kiếm những người cùng lĩnh vực. Đăng nhập để bắt đầu
       kết nối chuyên nghiệp.
     </p>
+    <div class="flex flex-wrap gap-3">
+      <a href="/login.html" class="pro-btn px-5 py-2.5 rounded-xl text-white font-medium">Bắt đầu ngay</a>
+      <a href="/search.html" class="pro-btn-ghost px-5 py-2.5 rounded-xl font-medium">Khám phá người dùng</a>
+    </div>
+  </section>
+
+  <!-- Thẻ tính năng nổi bật -->
+  <section class="grid gap-4 sm:grid-cols-3 mb-6">
+    <a href="/profile-edit.html" class="glass glass-hover p-5 block">
+      <h3 class="font-semibold text-navy mb-1">Hồ sơ nghề nghiệp</h3>
+      <p class="subtle text-sm">Xây dựng hồ sơ chuyên môn nổi bật của bạn.</p>
+    </a>
+    <a href="/search.html" class="glass glass-hover p-5 block">
+      <h3 class="font-semibold text-navy mb-1">Kết nối đồng nghiệp</h3>
+      <p class="subtle text-sm">Tìm và kết nối với người cùng lĩnh vực.</p>
+    </a>
+    <a href="/feed.html" class="glass glass-hover p-5 block">
+      <h3 class="font-semibold text-navy mb-1">Chia sẻ bài viết</h3>
+      <p class="subtle text-sm">Đăng tải và tương tác với nội dung chuyên môn.</p>
+    </a>
   </section>
 
   <!-- Khu vực hồ sơ / xác thực (chỉ dùng endpoint Phase 1: /api/me, /api/profiles/{id}) -->
-  <section class="bg-white border rounded-lg p-6">
-    <h2 class="text-lg font-semibold mb-3">Hồ sơ của bạn</h2>
+  <section class="glass p-6">
+    <h2 class="text-lg font-semibold mb-3 text-navy">Hồ sơ của bạn</h2>
 
     <template x-if="loading">
       <p class="subtle">Đang tải…</p>
@@ -42,15 +62,15 @@
       <div>
         <p class="subtle mb-3">Bạn chưa đăng nhập.</p>
         <div class="flex gap-3">
-          <a href="/login.html" class="pro-btn px-4 py-2 rounded text-white">Đăng nhập</a>
-          <a href="/register.html" class="border px-4 py-2 rounded hover:bg-slate-50">Đăng ký</a>
+          <a href="/login.html" class="pro-btn px-4 py-2 rounded-xl text-white">Đăng nhập</a>
+          <a href="/register.html" class="pro-btn-ghost px-4 py-2 rounded-xl">Đăng ký</a>
         </div>
       </div>
     </template>
 
     <template x-if="!loading && !error && isLoggedIn && profile">
       <div>
-        <dl class="space-y-2">
+        <dl class="surface-soft p-4 space-y-2">
           <div class="flex gap-2">
             <dt class="w-32 subtle">ID</dt>
             <dd x-text="profile.id"></dd>
@@ -65,8 +85,8 @@
           </div>
         </dl>
         <div class="flex gap-3 mt-4">
-          <a :href="'/profile.html?id=' + profile.id" class="pro-btn px-4 py-2 rounded text-white">Hồ sơ của tôi</a>
-          <a href="/profile-edit.html" class="border px-4 py-2 rounded hover:bg-slate-50">Chỉnh sửa hồ sơ</a>
+          <a :href="'/profile.html?id=' + profile.id" class="pro-btn px-4 py-2 rounded-xl text-white">Hồ sơ của tôi</a>
+          <a href="/profile-edit.html" class="pro-btn-ghost px-4 py-2 rounded-xl">Chỉnh sửa hồ sơ</a>
         </div>
       </div>
     </template>

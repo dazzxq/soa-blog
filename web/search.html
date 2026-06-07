@@ -6,25 +6,25 @@
   <title>ProConnect — Tìm kiếm</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { theme:{ extend:{ colors:{ navy:{ DEFAULT:'#1e3a8a', dark:'#172f6b', light:'#3b5bbd' } } } } };</script>
-  <script defer src="/assets/app.js?v=ph6-01"></script>
+  <script defer src="/assets/app.js?v=glass-1"></script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=ph6-01" />
+  <link rel="stylesheet" href="/assets/styles.css?v=glass-1" />
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
+<body class="text-slate-900 min-h-screen">
 
 <div id="pronav"></div>
 
-<main x-data="searchPage()" x-init="init()" class="max-w-3xl mx-auto px-4 py-6">
+<main x-data="searchPage()" x-init="init()" class="max-w-3xl mx-auto px-4 py-8 fade-in">
 
-  <h1 class="text-2xl font-bold mb-4">Tìm kiếm người dùng</h1>
+  <h1 class="text-2xl font-bold mb-4 text-navy">Tìm kiếm người dùng</h1>
 
   <!-- Ô tìm kiếm -->
   <form @submit.prevent="run()" class="mb-6 flex items-center gap-2">
     <input x-model="q" type="search" placeholder="Tìm người theo tên, chức danh, kỹ năng…"
-           class="flex-1 border rounded p-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300" />
+           class="glass-input flex-1 p-3 text-sm" />
     <button type="submit" :disabled="loading"
-            class="pro-btn text-white px-4 py-3 rounded disabled:opacity-50">Tìm</button>
+            class="pro-btn text-white px-4 py-3 rounded-xl disabled:opacity-50">Tìm</button>
   </form>
 
   <!-- Thông báo lỗi -->
@@ -52,7 +52,7 @@
   <template x-if="!loading && results.length">
     <ul class="space-y-3">
       <template x-for="u in results" :key="u.id">
-        <li class="bg-white border rounded-lg p-4 flex items-center justify-between gap-3">
+        <li class="glass glass-hover p-4 flex items-center justify-between gap-3">
           <a :href="'/profile.html?id=' + u.id" class="flex items-center gap-3 min-w-0 hover:underline">
             <span class="w-12 h-12 rounded-full bg-slate-300 overflow-hidden flex items-center justify-center text-sm font-bold text-slate-600 shrink-0">
               <template x-if="u.avatar_url">
@@ -72,14 +72,14 @@
           <span class="shrink-0">
             <template x-if="u.connection_status === 'none'">
               <button @click="connect(u)" :disabled="busy"
-                      class="pro-btn text-sm text-white px-3 py-1.5 rounded disabled:opacity-50">Kết nối</button>
+                      class="pro-btn text-sm text-white px-3 py-1.5 rounded-xl disabled:opacity-50">Kết nối</button>
             </template>
             <template x-if="u.connection_status === 'pending_outgoing'">
-              <button disabled class="text-sm border px-3 py-1.5 rounded opacity-60 cursor-default">Đã gửi lời mời</button>
+              <button disabled class="pro-btn-ghost text-sm px-3 py-1.5 rounded-xl opacity-60 cursor-default">Đã gửi lời mời</button>
             </template>
             <template x-if="u.connection_status === 'pending_incoming'">
               <a href="/connections.html"
-                 class="text-sm border px-3 py-1.5 rounded hover:bg-slate-50">Chờ bạn phản hồi</a>
+                 class="pro-btn-ghost text-sm px-3 py-1.5 rounded-xl">Chờ bạn phản hồi</a>
             </template>
             <template x-if="u.connection_status === 'connected'">
               <span class="text-sm text-green-700 px-3 py-1.5">✓ Đã kết nối</span>
@@ -87,7 +87,7 @@
             <template x-if="u.connection_status === 'unknown'">
               <span class="inline-flex flex-col items-end">
                 <button @click="connect(u)" :disabled="busy"
-                        class="pro-btn text-sm text-white px-3 py-1.5 rounded disabled:opacity-50">Kết nối</button>
+                        class="pro-btn text-sm text-white px-3 py-1.5 rounded-xl disabled:opacity-50">Kết nối</button>
                 <span class="subtle text-[10px] mt-0.5">Trạng thái chưa rõ</span>
               </span>
             </template>
