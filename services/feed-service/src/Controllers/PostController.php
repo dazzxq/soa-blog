@@ -41,7 +41,7 @@ final class PostController
      */
     private static function selectColumns(string $viewerPlaceholder): string
     {
-        return "p.id, p.author_id, p.content, p.image_url, p.repost_of, p.created_at,
+        return "p.id, p.author_id, p.content, p.image_url, p.images, p.repost_of, p.created_at,
                 (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.id)                                  AS reaction_count,
                 (SELECT COUNT(*) FROM comments  c WHERE c.post_id = p.id)                                  AS comment_count,
                 (SELECT r2.type  FROM reactions r2 WHERE r2.post_id = p.id AND r2.user_id = $viewerPlaceholder) AS my_reaction";
@@ -55,6 +55,14 @@ final class PostController
         $row['reaction_count'] = (int) $row['reaction_count'];
         $row['comment_count']  = (int) $row['comment_count'];
         $row['repost_of']      = $row['repost_of'] !== null ? (int) $row['repost_of'] : null;
+        // images: decode the JSON array (null when absent). Always an array|null.
+        $imgs = $row['images'] ?? null;
+        if (is_string($imgs) && $imgs !== '') {
+            $decoded = json_decode($imgs, true);
+            $row['images'] = is_array($decoded) ? array_values($decoded) : null;
+        } else {
+            $row['images'] = null;
+        }
         // my_reaction stays string|null (NOT bool — Pitfall 4 / T-04-12).
         return $row;
     }
@@ -162,14 +170,41 @@ final class PostController
             throw new DomainError(400, 'VALIDATION_FAILED', 'Đường dẫn ảnh tối đa 512 ký tự.');
         }
 
+        // Multiple images (max 9). Accept an `images` array of http(s) URLs; fall back
+        // to the single image_url for older clients. Persist as JSON and mirror the
+        // first URL into image_url for single-image consumers (search/repost preview).
+        $images = [];
+        if (is_array($b['images'] ?? null)) {
+            foreach ($b['images'] as $u) {
+                $u = trim((string) $u);
+                if ($u === '') {
+                    continue;
+                }
+                if (mb_strlen($u) > 512 || !preg_match('#^https?://#i', $u)) {
+                    throw new DomainError(400, 'VALIDATION_FAILED', 'Đường dẫn ảnh không hợp lệ.');
+                }
+                $images[] = $u;
+                if (count($images) >= 9) {
+                    break;
+                }
+            }
+        }
+        if ($images === [] && $imageUrl !== '') {
+            $images = [$imageUrl];
+        }
+        $firstImage = $images[0] ?? null;
+        $imagesJson = $images === [] ? null
+            : json_encode(array_values($images), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
         $stmt = Db::pdo()->prepare(
-            'INSERT INTO posts (author_id, content, image_url, repost_of)
-             VALUES (:a, :c, :img, NULL)'
+            'INSERT INTO posts (author_id, content, image_url, images, repost_of)
+             VALUES (:a, :c, :img, :imgs, NULL)'
         );
         $stmt->execute([
-            ':a'   => $author,
-            ':c'   => $content,
-            ':img' => $imageUrl === '' ? null : $imageUrl,
+            ':a'    => $author,
+            ':c'    => $content,
+            ':img'  => $firstImage,
+            ':imgs' => $imagesJson,
         ]);
 
         $id = (int) Db::pdo()->lastInsertId();

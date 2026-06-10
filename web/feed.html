@@ -79,26 +79,36 @@
           <div class="surface-soft p-3 text-sm prose-rich break-words" x-html="renderRich(draft.content)"></div>
         </div>
       </template>
-      <!-- Phần ẢNH riêng (không chèn trong bài) — tải lên NAS hoặc dán URL -->
+      <!-- Phần ẢNH riêng (tối đa 9) — tải lên NAS hoặc dán URL -->
       <div class="mt-3 surface-soft p-3">
-        <p class="text-sm font-medium mb-2"><i class="fa-regular fa-image mr-1.5"></i>Ảnh (tuỳ chọn)</p>
+        <p class="text-sm font-medium mb-2">
+          <i class="fa-regular fa-image mr-1.5"></i>Ảnh (tối đa 9)
+          <span class="subtle" x-text="'· ' + draft.images.length + '/9'"></span>
+        </p>
         <div class="flex items-center gap-2 flex-wrap">
           <label class="pro-btn-ghost px-3 py-1.5 rounded-lg text-sm cursor-pointer"
-                 :class="uploading ? 'opacity-50 pointer-events-none' : ''">
+                 :class="(uploading || draft.images.length >= 9) ? 'opacity-50 pointer-events-none' : ''">
             <i class="fa-solid fa-arrow-up-from-bracket mr-1"></i>Tải ảnh lên
-            <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden"
-                   @change="uploadImage($event)" :disabled="uploading" />
+            <input type="file" multiple accept="image/png,image/jpeg,image/webp,image/gif" class="hidden"
+                   @change="uploadImage($event)" :disabled="uploading || draft.images.length >= 9" />
           </label>
           <span x-show="uploading" class="subtle text-xs"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Đang tải ảnh…</span>
         </div>
-        <input x-model="draft.image_url" type="url" placeholder="hoặc dán URL ảnh…"
-               class="glass-input w-full p-2 text-sm mt-2" />
-        <template x-if="draft.image_url.trim()">
-          <div class="relative inline-block mt-2">
-            <img :src="draft.image_url" alt="Xem trước ảnh" class="rounded-lg max-h-60 w-auto"
-                 @error="$el.style.display='none'" @load="$el.style.display=''" />
-            <button type="button" @click="draft.image_url=''" title="Bỏ ảnh"
-                    class="absolute top-1 right-1 w-6 h-6 rounded-full bg-slate-900/60 text-white text-xs flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+        <div class="flex items-center gap-2 mt-2">
+          <input x-model="imageUrlInput" type="url" placeholder="hoặc dán URL ảnh…" @keydown.enter.prevent="addImageUrl()"
+                 class="glass-input flex-1 p-2 text-sm" />
+          <button type="button" @click="addImageUrl()" :disabled="draft.images.length >= 9"
+                  class="pro-btn-ghost px-3 py-2 rounded-lg text-sm disabled:opacity-50">Thêm</button>
+        </div>
+        <template x-if="draft.images.length">
+          <div class="grid grid-cols-3 gap-2 mt-3">
+            <template x-for="(img, i) in draft.images" :key="i">
+              <div class="relative aspect-square rounded-lg overflow-hidden bg-slate-100">
+                <img :src="img" alt="Xem trước" class="w-full h-full object-cover" />
+                <button type="button" @click="draft.images.splice(i, 1)" title="Bỏ ảnh"
+                        class="absolute top-1 right-1 w-6 h-6 rounded-full bg-slate-900/60 text-white text-xs flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+            </template>
           </div>
         </template>
       </div>
@@ -178,8 +188,23 @@
             <div class="text-sm leading-relaxed prose-rich break-words mb-3" x-html="renderRich(p.content)"></div>
           </template>
 
-          <!-- Ảnh -->
-          <img :src="p.image_url" x-show="p.image_url" alt="Ảnh bài viết" class="rounded max-h-96 w-auto mb-3" />
+          <!-- Ảnh: 1 ảnh full-width, nhiều ảnh → lưới kiểu Facebook/LinkedIn; bấm để mở -->
+          <template x-if="postImages(p).length === 1">
+            <button type="button" @click="openLightbox(p, 0)" class="block w-full mb-3">
+              <img :src="postImages(p)[0]" alt="Ảnh bài viết" loading="lazy"
+                   class="w-full max-h-[510px] object-contain rounded-lg bg-slate-50 cursor-pointer" />
+            </button>
+          </template>
+          <template x-if="postImages(p).length > 1">
+            <div class="mb-3 grid gap-1 rounded-lg overflow-hidden" :class="gridClass(postImages(p).length)">
+              <template x-for="(img, idx) in postImages(p)" :key="idx">
+                <button type="button" @click="openLightbox(p, idx)" :class="cellClass(postImages(p).length, idx)"
+                        class="block overflow-hidden bg-slate-100">
+                  <img :src="img" alt="Ảnh bài viết" loading="lazy" class="w-full h-full object-cover cursor-pointer" />
+                </button>
+              </template>
+            </div>
+          </template>
 
           <!-- Tóm tắt cảm xúc + bình luận (gom lại kiểu LinkedIn) -->
           <div class="flex items-center gap-3 text-xs subtle mt-3" x-show="p.reaction_count > 0 || p.comment_count > 0">
@@ -200,7 +225,8 @@
               <div class="flex items-center">
                 <button @click="p.my_reaction ? unreact(p.id) : react(p.id, 'like')" :disabled="busy"
                         class="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-slate-100 disabled:opacity-50"
-                        :class="p.my_reaction ? 'text-navy font-semibold' : 'subtle'">
+                        :class="p.my_reaction ? 'font-semibold' : 'subtle'"
+                        :style="p.my_reaction ? ('color:' + reactionColor(p.my_reaction)) : ''">
                   <i class="fa-solid" :class="reactionIcon(p.my_reaction || 'like')"></i>
                   <span x-text="p.my_reaction ? reactionLabel(p.my_reaction) : 'Thích'"></span>
                 </button>
@@ -214,8 +240,8 @@
                    class="flex absolute bottom-full left-0 mb-1 glass-strong rounded-full px-2 py-1 gap-1 z-20">
                 <template x-for="type in reactions" :key="type">
                   <button @click="react(p.id, type); pk = false" :disabled="busy" :title="reactionLabel(type)"
-                          class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-navy disabled:opacity-50">
-                    <i class="fa-solid" :class="reactionIcon(type)"></i>
+                          class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center disabled:opacity-50 text-lg">
+                    <i class="fa-solid" :class="reactionIcon(type)" :style="'color:' + reactionColor(type)"></i>
                   </button>
                 </template>
               </div>
@@ -328,6 +354,51 @@
   </aside>
 
   </div><!-- /grid 3 cột -->
+
+  <!-- Lightbox xem ảnh: ảnh bên trái + caption bài viết bên phải (kiểu FB/LinkedIn) -->
+  <div x-show="lightbox.open" x-cloak
+       @keydown.escape.window="closeLightbox()"
+       @keydown.arrow-left.window="lbPrev()" @keydown.arrow-right.window="lbNext()"
+       class="fixed inset-0 z-[60] bg-black/85 flex flex-col lg:flex-row">
+    <!-- Ảnh -->
+    <div class="relative flex-1 flex items-center justify-center min-h-0 p-4">
+      <button @click="closeLightbox()" title="Đóng"
+              class="absolute top-3 left-3 z-10 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
+      <template x-if="lbImages().length > 1">
+        <button @click="lbPrev()" aria-label="Ảnh trước"
+                class="absolute left-3 top-0 bottom-0 my-auto h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center"><i class="fa-solid fa-chevron-left"></i></button>
+      </template>
+      <img :src="lbImages()[lightbox.index]" alt="Ảnh bài viết" class="max-h-[88vh] max-w-full object-contain select-none" />
+      <template x-if="lbImages().length > 1">
+        <button @click="lbNext()" aria-label="Ảnh kế"
+                class="absolute right-3 top-0 bottom-0 my-auto h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center"><i class="fa-solid fa-chevron-right"></i></button>
+      </template>
+      <template x-if="lbImages().length > 1">
+        <span class="absolute bottom-3 left-0 right-0 mx-auto w-max text-white text-xs bg-black/50 px-2 py-0.5 rounded-full"
+              x-text="(lightbox.index + 1) + '/' + lbImages().length"></span>
+      </template>
+    </div>
+    <!-- Caption bài viết -->
+    <aside class="w-full lg:w-[360px] bg-white lg:h-full overflow-y-auto p-4 shrink-0">
+      <template x-if="lightbox.post">
+        <div>
+          <div class="flex items-center gap-3 mb-3">
+            <span class="w-10 h-10 rounded-full avatar-fallback overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
+              <template x-if="lightbox.post.author?.avatar_url"><img :src="lightbox.post.author.avatar_url" alt="" class="w-full h-full object-cover" /></template>
+              <template x-if="!lightbox.post.author?.avatar_url"><span x-text="(lightbox.post.author?.display_name||lightbox.post.author?.username||'?').trim().charAt(0).toUpperCase()"></span></template>
+            </span>
+            <div class="min-w-0">
+              <div class="font-semibold truncate" x-text="lightbox.post.author?.display_name || lightbox.post.author?.username || 'Người dùng'"></div>
+              <div class="subtle text-xs" x-text="timeAgo(lightbox.post.created_at)"></div>
+            </div>
+          </div>
+          <div class="text-sm leading-relaxed prose-rich break-words" x-html="renderRich(lightbox.post.content)"></div>
+          <div class="subtle text-xs mt-3 pt-3 border-t divider-soft"
+               x-text="(lightbox.post.reaction_count || 0) + ' cảm xúc · ' + (lightbox.post.comment_count || 0) + ' bình luận'"></div>
+        </div>
+      </template>
+    </aside>
+  </div>
 </main>
 
 <script>
@@ -340,7 +411,9 @@ function feedPage() {
     degraded: false,
     me: null,
     suggestions: [],
-    draft: { content: '', image_url: '' },
+    draft: { content: '', images: [] },
+    imageUrlInput: '',
+    lightbox: { open: false, post: null, index: 0 },
     openComments: {},
     commentDraft: {},
     comments: {},
@@ -359,6 +432,39 @@ function feedPage() {
         wow: 'fa-face-surprise', sad: 'fa-face-sad-tear', angry: 'fa-face-angry',
       };
       return m[type] || 'fa-thumbs-up';
+    },
+
+    // Each reaction its own colour (Facebook-style).
+    reactionColor(type) {
+      const m = { like: '#2563eb', love: '#e0245e', haha: '#f59e0b', wow: '#eab308', sad: '#f59e0b', angry: '#f97316' };
+      return m[type] || '#2563eb';
+    },
+
+    // ---- images: post-render grid + lightbox -------------------------------
+    postImages(p) {
+      if (p && Array.isArray(p.images) && p.images.length) return p.images;
+      return (p && p.image_url) ? [p.image_url] : [];
+    },
+    gridClass(n) { return (n === 2 || n === 3 || n === 4) ? 'grid-cols-2' : 'grid-cols-3'; },
+    cellClass(n, i) {
+      if (n === 3 && i === 0) return 'col-span-2 aspect-[16/9]';
+      if (n === 2) return 'aspect-[4/3]';
+      return 'aspect-square';
+    },
+    openLightbox(p, i) { this.lightbox = { open: true, post: p, index: i }; },
+    closeLightbox() { this.lightbox.open = false; },
+    lbImages() { return this.lightbox.post ? this.postImages(this.lightbox.post) : []; },
+    lbPrev() { const n = this.lbImages().length; if (n) this.lightbox.index = (this.lightbox.index - 1 + n) % n; },
+    lbNext() { const n = this.lbImages().length; if (n) this.lightbox.index = (this.lightbox.index + 1) % n; },
+
+    // Append a pasted image URL (http/https) to the draft, max 9.
+    addImageUrl() {
+      const u = (this.imageUrlInput || '').trim();
+      if (!u) return;
+      if (!/^https?:\/\//i.test(u)) { this.error = 'URL ảnh phải bắt đầu bằng http(s)://'; return; }
+      if (this.draft.images.length >= 9) { this.error = 'Tối đa 9 ảnh.'; return; }
+      this.draft.images.push(u);
+      this.imageUrlInput = '';
     },
 
     openCompose() {
@@ -383,27 +489,30 @@ function feedPage() {
       this.$nextTick(() => { ta.focus(); ta.selectionStart = ta.selectionEnd = s + 3; });
     },
 
-    // Upload one image to the NAS object store via the gateway; on success set
-    // draft.image_url to the returned permanent public URL (shown in the preview).
+    // Upload one or more images to the NAS object store via the gateway; append each
+    // returned permanent public URL to draft.images (max 9).
     async uploadImage(ev) {
-      const file = ev.target && ev.target.files && ev.target.files[0];
+      const files = ev.target ? Array.from(ev.target.files || []) : [];
       if (ev.target) ev.target.value = '';
-      if (!file) return;
-      if (!/^image\/(png|jpe?g|webp|gif)$/.test(file.type)) { this.error = 'Chỉ hỗ trợ ảnh PNG, JPG, WEBP, GIF.'; return; }
-      if (file.size > 5 * 1024 * 1024) { this.error = 'Ảnh tối đa 5MB.'; return; }
-      this.uploading = true; this.error = '';
-      try {
-        const fd = new FormData(); fd.append('file', file);
-        const res = await fetch('/api/uploads', { method: 'POST', headers: { 'Authorization': 'Bearer ' + auth.token() }, body: fd });
-        if (res.status === 401) { auth.logout(); window.location.href = '/login.html'; return; }
-        const j = await res.json().catch(() => null);
-        if (!res.ok) throw new Error((j && j.error && j.error.message) || ('HTTP ' + res.status));
-        this.draft.image_url = (j && j.data && j.data.url) || '';
-      } catch (e) {
-        this.error = 'Tải ảnh không thành công: ' + e.message;
-      } finally {
-        this.uploading = false;
+      if (!files.length) return;
+      this.error = '';
+      for (const file of files) {
+        if (this.draft.images.length >= 9) { this.error = 'Tối đa 9 ảnh.'; break; }
+        if (!/^image\/(png|jpe?g|webp|gif)$/.test(file.type)) { this.error = 'Chỉ hỗ trợ ảnh PNG, JPG, WEBP, GIF.'; continue; }
+        if (file.size > 5 * 1024 * 1024) { this.error = 'Mỗi ảnh tối đa 5MB.'; continue; }
+        this.uploading = true;
+        try {
+          const fd = new FormData(); fd.append('file', file);
+          const res = await fetch('/api/uploads', { method: 'POST', headers: { 'Authorization': 'Bearer ' + auth.token() }, body: fd });
+          if (res.status === 401) { auth.logout(); window.location.href = '/login.html'; return; }
+          const j = await res.json().catch(() => null);
+          if (!res.ok) throw new Error((j && j.error && j.error.message) || ('HTTP ' + res.status));
+          if (j && j.data && j.data.url) this.draft.images.push(j.data.url);
+        } catch (e) {
+          this.error = 'Tải ảnh không thành công: ' + e.message;
+        }
       }
+      this.uploading = false;
     },
 
     async load() {
@@ -431,9 +540,10 @@ function feedPage() {
       try {
         await api.post('/posts', {
           content: this.draft.content,
-          image_url: this.draft.image_url || undefined,
+          images: this.draft.images,
         });
-        this.draft = { content: '', image_url: '' };
+        this.draft = { content: '', images: [] };
+        this.imageUrlInput = '';
         this.composeOpen = false;
         await this.load();
       } catch (e) {

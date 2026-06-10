@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS posts (
   author_id BIGINT UNSIGNED NOT NULL,
   content TEXT NOT NULL,
   image_url VARCHAR(512) NULL,
+  images JSON NULL,                 -- up to 9 image URLs (multi-image posts); image_url mirrors images[0]
   repost_of BIGINT UNSIGNED NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_posts_author_created (author_id, created_at),

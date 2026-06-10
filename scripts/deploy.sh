@@ -164,6 +164,13 @@ echo "[deploy] applying db/05-migrate-phase5.sql (additive)"
 docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" < db/05-migrate-phase5.sql
 echo "[deploy] phase-5 additive migration applied"
 
+# 7e2) MULTI-IMAGE MIGRATION (idempotent; ADD COLUMN IF NOT EXISTS posts.images).
+# BLOCKING: feed-service SELECTs p.images, so the column must exist before the
+# full-topology up restarts feed-service with the new code.
+echo "[deploy] applying db/07-migrate-multi-image.sql (additive)"
+docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" < db/07-migrate-multi-image.sql
+echo "[deploy] multi-image migration applied"
+
 # 7f) DEMO CONTENT SEED (idempotent INSERT IGNORE; rich English fake content) --
 # Extra demo users + posts + reactions/comments + connections so the feed/search/
 # profiles look alive. Spans 3 DBs via USE blocks (no DB arg). Non-destructive +
