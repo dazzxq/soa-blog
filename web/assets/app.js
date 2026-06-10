@@ -109,12 +109,45 @@
     return Math.round(d / 365) + ' năm';
   }
 
+  // ---------- Basic rich text (FB/LinkedIn-style: bold/italic/underline/H2) ----
+  // SAFE BY CONSTRUCTION: the input is HTML-escaped FIRST, then a tiny whitelist of
+  // markers is turned into a FIXED set of tags (strong/em/u/h2/p/br). No user input
+  // can ever inject markup, so binding the result with x-html is XSS-safe.
+  // Storage syntax: **bold**  *italic*  __underline__  and a line starting "## " → H2.
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function renderRich(text) {
+    if (text == null || text === '') return '';
+    var fmt = function (s) {
+      return s
+        .replace(/\*\*([^\n]+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/__([^\n]+?)__/g, '<u>$1</u>')
+        .replace(/\*([^\n*]+?)\*/g, '<em>$1</em>');
+    };
+    var esc = escapeHtml(String(text));
+    var html = '', para = [];
+    var flush = function () { if (para.length) { html += '<p>' + para.join('<br>') + '</p>'; para = []; } };
+    esc.split('\n').forEach(function (ln) {
+      var h = ln.match(/^##\s+(.+)$/);
+      if (h) { flush(); html += '<h2 class="text-lg font-semibold my-1">' + fmt(h[1]) + '</h2>'; }
+      else if (ln.trim() === '') { flush(); }
+      else { para.push(fmt(ln)); }
+    });
+    flush();
+    return html;
+  }
+
   // ---------- Expose globally for Alpine x-data="..." expressions ----------
 
   window.api        = api;
   window.auth       = auth;
   window.formatDate = formatDate;
   window.timeAgo    = timeAgo;
+  window.escapeHtml = escapeHtml;
+  window.renderRich = renderRich;
 
   // ---------- Profile loader (Phase-1 endpoints only) ----------
   // Uses /api/me (JWT) to resolve the current account, then /api/profiles/{id}

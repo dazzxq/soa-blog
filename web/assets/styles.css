@@ -118,6 +118,14 @@ body {
 
 /* ---- Brand / utility helpers ----------------------------------------------- */
 .prose-vn p { white-space: pre-wrap; line-height: 1.65; }
+/* Rendered basic-rich-text (renderRich output: p / br / strong / em / u / h2). */
+.prose-rich { line-height: 1.6; }
+.prose-rich p { margin: 0 0 0.5rem; }
+.prose-rich p:last-child { margin-bottom: 0; }
+.prose-rich h2 { line-height: 1.3; }
+.prose-rich strong { font-weight: 700; }
+.prose-rich em { font-style: italic; }
+.prose-rich u { text-decoration: underline; }
 .subtle { color: rgb(71 85 105); }
 .pro-link-active { color: var(--navy); font-weight: 600; }
 .pro-badge { background: #dc2626; color: #fff; }

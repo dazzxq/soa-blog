@@ -8,10 +8,10 @@
   <script>
     tailwind.config = { theme: { extend: { colors: { navy: { DEFAULT: '#1e3a8a', dark: '#172f6b', light: '#3b5bbd' } } } } };
   </script>
-  <script defer src="/assets/app.js?v=glass-3"></script>
+  <script defer src="/assets/app.js?v=glass-4"></script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=glass-3" />
+  <link rel="stylesheet" href="/assets/styles.css?v=glass-4" />
 </head>
 <body class="text-slate-900 min-h-screen">
 
@@ -46,17 +46,57 @@
 
   <h1 class="text-2xl font-bold mb-4">Bảng tin</h1>
 
-  <!-- Ô soạn bài -->
-  <section class="glass p-6 mb-6">
-    <textarea x-model="draft.content" rows="3" placeholder="Bạn đang nghĩ gì?"
-              class="glass-input w-full p-3 text-sm resize-y"></textarea>
-    <input x-model="draft.image_url" type="text" placeholder="URL ảnh (tuỳ chọn)"
-           class="glass-input w-full p-2 text-sm mt-3" />
-    <div class="flex justify-end mt-3">
-      <button @click="submit()" :disabled="busy || !draft.content.trim()"
-              class="pro-btn px-4 py-2 rounded-lg disabled:opacity-50">Đăng</button>
-    </div>
+  <!-- Ô soạn bài: bấm để mở modal (kiểu Facebook) -->
+  <section class="glass p-3 mb-6 flex items-center gap-3">
+    <span class="w-10 h-10 rounded-full avatar-fallback overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
+      <template x-if="me?.avatar_url"><img :src="me.avatar_url" alt="" class="w-full h-full object-cover" /></template>
+      <template x-if="!me?.avatar_url"><span x-text="(me?.display_name||me?.username||'?').trim().charAt(0).toUpperCase()"></span></template>
+    </span>
+    <button @click="openCompose()" class="flex-1 text-left glass-input px-4 py-2.5 text-sm subtle">Bạn đang nghĩ gì?</button>
   </section>
+
+  <!-- Modal soạn bài: rich text cơ bản (B/I/U/H2) + ảnh ở phần riêng -->
+  <div x-show="composeOpen" x-cloak @keydown.escape.window="composeOpen=false"
+       class="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 bg-slate-900/40 overflow-y-auto">
+    <div @click.outside="composeOpen=false" class="glass-strong w-full max-w-xl my-8 p-5 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-semibold">Tạo bài viết</h2>
+        <button @click="composeOpen=false" class="subtle hover:text-slate-700 px-2" title="Đóng"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <!-- Thanh định dạng cơ bản -->
+      <div class="flex items-center gap-1 mb-2">
+        <button type="button" @click="wrapSel('**','**')" title="In đậm" class="pro-btn-ghost w-9 h-9 rounded-lg flex items-center justify-center"><i class="fa-solid fa-bold"></i></button>
+        <button type="button" @click="wrapSel('*','*')" title="In nghiêng" class="pro-btn-ghost w-9 h-9 rounded-lg flex items-center justify-center"><i class="fa-solid fa-italic"></i></button>
+        <button type="button" @click="wrapSel('__','__')" title="Gạch chân" class="pro-btn-ghost w-9 h-9 rounded-lg flex items-center justify-center"><i class="fa-solid fa-underline"></i></button>
+        <button type="button" @click="headingSel()" title="Tiêu đề (H2)" class="pro-btn-ghost w-9 h-9 rounded-lg flex items-center justify-center"><i class="fa-solid fa-heading"></i></button>
+      </div>
+      <textarea x-ref="composeText" x-model="draft.content" rows="5" placeholder="Bạn đang nghĩ gì?"
+                class="glass-input w-full p-3 text-sm resize-y"></textarea>
+      <!-- Xem trước (render an toàn) -->
+      <template x-if="draft.content.trim()">
+        <div class="mt-3">
+          <p class="subtle text-xs mb-1">Xem trước</p>
+          <div class="surface-soft p-3 text-sm prose-rich break-words" x-html="renderRich(draft.content)"></div>
+        </div>
+      </template>
+      <!-- Phần ẢNH riêng (không chèn trong bài) -->
+      <div class="mt-3 surface-soft p-3">
+        <p class="text-sm font-medium mb-2"><i class="fa-regular fa-image mr-1.5"></i>Ảnh (tuỳ chọn)</p>
+        <input x-model="draft.image_url" type="url" placeholder="Dán URL ảnh…"
+               class="glass-input w-full p-2 text-sm" />
+        <p class="subtle text-xs mt-1">Tải ảnh lên từ máy: sắp có (đang chờ cấu hình lưu trữ NAS).</p>
+        <template x-if="draft.image_url.trim()">
+          <img :src="draft.image_url" alt="Xem trước ảnh" class="mt-2 rounded-lg max-h-60 w-auto"
+               @error="$el.style.display='none'" @load="$el.style.display=''" />
+        </template>
+      </div>
+      <div class="flex justify-end gap-2 mt-4">
+        <button @click="composeOpen=false" class="pro-btn-ghost px-4 py-2 rounded-lg text-sm">Huỷ</button>
+        <button @click="submit()" :disabled="busy || !draft.content.trim()"
+                class="pro-btn px-4 py-2 rounded-lg text-sm disabled:opacity-50">Đăng</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Banner suy giảm -->
   <template x-if="degraded">
@@ -107,7 +147,7 @@
               <template x-if="p.original">
                 <div class="surface-soft border-l-4 border-slate-200 p-3">
                   <div class="font-medium text-sm mb-1" x-text="p.original.author?.display_name || p.original.author?.username || 'Người dùng'"></div>
-                  <p class="text-sm whitespace-pre-wrap break-words" x-text="p.original.content"></p>
+                  <div class="text-sm prose-rich break-words" x-html="renderRich(p.original.content)"></div>
                   <template x-if="p.original.image_url">
                     <img :src="p.original.image_url" alt="Ảnh bài viết gốc" class="mt-2 rounded max-h-80 w-auto" />
                   </template>
@@ -123,7 +163,7 @@
 
           <!-- Nội dung -->
           <template x-if="p.content">
-            <p class="text-sm leading-relaxed whitespace-pre-wrap break-words mb-3" x-text="p.content"></p>
+            <div class="text-sm leading-relaxed prose-rich break-words mb-3" x-html="renderRich(p.content)"></div>
           </template>
 
           <!-- Ảnh -->
@@ -292,6 +332,7 @@ function feedPage() {
     openComments: {},
     commentDraft: {},
     comments: {},
+    composeOpen: false,
     reactions: ['like', 'love', 'haha', 'wow', 'sad', 'angry'],
 
     reactionLabel(type) {
@@ -305,6 +346,28 @@ function feedPage() {
         wow: 'fa-face-surprise', sad: 'fa-face-sad-tear', angry: 'fa-face-angry',
       };
       return m[type] || 'fa-thumbs-up';
+    },
+
+    openCompose() {
+      this.composeOpen = true;
+      this.$nextTick(() => { if (this.$refs.composeText) this.$refs.composeText.focus(); });
+    },
+    // Wrap the textarea selection with markers (bold/italic/underline).
+    wrapSel(pre, post) {
+      const ta = this.$refs.composeText; if (!ta) return;
+      const s = ta.selectionStart, e = ta.selectionEnd, v = this.draft.content;
+      const sel = v.slice(s, e) || 'văn bản';
+      this.draft.content = v.slice(0, s) + pre + sel + post + v.slice(e);
+      this.$nextTick(() => { ta.focus(); ta.selectionStart = s + pre.length; ta.selectionEnd = s + pre.length + sel.length; });
+    },
+    // Prefix the current line with "## " (H2).
+    headingSel() {
+      const ta = this.$refs.composeText; if (!ta) return;
+      const v = this.draft.content, s = ta.selectionStart;
+      const ls = v.lastIndexOf('\n', s - 1) + 1;
+      if (v.slice(ls, ls + 3) === '## ') return;
+      this.draft.content = v.slice(0, ls) + '## ' + v.slice(ls);
+      this.$nextTick(() => { ta.focus(); ta.selectionStart = ta.selectionEnd = s + 3; });
     },
 
     async load() {
@@ -335,6 +398,7 @@ function feedPage() {
           image_url: this.draft.image_url || undefined,
         });
         this.draft = { content: '', image_url: '' };
+        this.composeOpen = false;
         await this.load();
       } catch (e) {
         this.error = 'Đăng bài không thành công: ' + e.message;
