@@ -166,8 +166,8 @@ final class PostController
         }
 
         $imageUrl = trim((string) ($b['image_url'] ?? ''));
-        if ($imageUrl !== '' && mb_strlen($imageUrl) > 512) {
-            throw new DomainError(400, 'VALIDATION_FAILED', 'Đường dẫn ảnh tối đa 512 ký tự.');
+        if ($imageUrl !== '' && (mb_strlen($imageUrl) > 512 || !preg_match('#^https?://#i', $imageUrl))) {
+            throw new DomainError(400, 'VALIDATION_FAILED', 'Đường dẫn ảnh không hợp lệ (chỉ http/https, tối đa 512 ký tự).');
         }
 
         // Multiple images (max 9). Accept an `images` array of http(s) URLs; fall back
