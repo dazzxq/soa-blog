@@ -6,6 +6,7 @@ use App\Controllers\AuthController;
 use App\Controllers\ConnectionsController;
 use App\Controllers\FeedController;
 use App\Controllers\HealthController;
+use App\Controllers\MediaController;
 use App\Controllers\NotificationsController;
 use App\Controllers\ProfilesController;
 use App\Controllers\SearchController;
@@ -74,6 +75,9 @@ return static function (App $app): void {
         $g->delete('/posts/{id:[0-9]+}',           [FeedController::class, 'deletePost'])->add($jwtMw);
         $g->get   ('/posts/{id:[0-9]+}',           [FeedController::class, 'showPost'])->add($optMw);
         $g->delete('/comments/{id:[0-9]+}',        [FeedController::class, 'deleteComment'])->add($jwtMw);
+
+        // Media upload (JWT): one image → NAS object store, returns its public URL.
+        $g->post  ('/uploads',                     [MediaController::class, 'upload'])->add($jwtMw);
 
         // Search (SEARCH-01/02, JWT REQUIRED). search() composes each hit with the
         // viewer's connection_status; reindex() rebuilds the index from profile-service.

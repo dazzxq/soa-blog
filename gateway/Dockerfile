@@ -8,6 +8,9 @@ RUN apk add --no-cache nginx supervisor wget oniguruma \
     && docker-php-ext-install pdo pdo_mysql opcache mbstring \
     && apk del --no-network .build-deps
 
+# Allow image uploads up to ~6MB (php defaults: upload 2M / post 8M).
+RUN printf 'upload_max_filesize=6M\npost_max_size=8M\n' > /usr/local/etc/php/conf.d/uploads.ini
+
 WORKDIR /app
 
 # Composer install — copy lockfile so versions are reproducible across builds.

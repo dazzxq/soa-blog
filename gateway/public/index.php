@@ -8,6 +8,7 @@ use App\Controllers\AuthController;
 use App\Controllers\ConnectionsController;
 use App\Controllers\FeedController;
 use App\Controllers\HealthController;
+use App\Controllers\MediaController;
 use App\Controllers\NotificationsController;
 use App\Controllers\ProfilesController;
 use App\Controllers\SearchController;
@@ -22,6 +23,7 @@ use App\Services\ConnectionClient;
 use App\Services\FeedClient;
 use App\Services\NotificationClient;
 use App\Services\ProfileClient;
+use App\Services\S3Uploader;
 use App\Services\SearchClient;
 use DI\Container;
 use Slim\Factory\AppFactory;
@@ -45,6 +47,14 @@ $container->set(ConnectionClient::class,   fn() => new ConnectionClient());
 $container->set(FeedClient::class,         fn() => new FeedClient());
 $container->set(SearchClient::class,       fn() => new SearchClient());
 $container->set(NotificationClient::class, fn() => new NotificationClient());
+$container->set(S3Uploader::class, fn() => new S3Uploader(
+    getenv('S3_ENDPOINT')    ?: 'https://s3.duyet.vn',
+    getenv('S3_PUBLIC_BASE') ?: 'https://public-s3.duyet.vn',
+    getenv('S3_REGION')      ?: 'garage',
+    getenv('S3_BUCKET')      ?: '',
+    getenv('S3_ACCESS_KEY')  ?: '',
+    getenv('S3_SECRET_KEY')  ?: '',
+));
 
 $container->set(AuthController::class, fn(Container $c) => new AuthController(
     $c->get(ProfileClient::class),
@@ -58,6 +68,7 @@ $container->set(HealthController::class, fn(Container $c) => new HealthControlle
     $c->get(NotificationClient::class),
 ));
 $container->set(ProfilesController::class, fn(Container $c) => new ProfilesController($c->get(ProfileClient::class)));
+$container->set(MediaController::class, fn(Container $c) => new MediaController($c->get(S3Uploader::class)));
 $container->set(AggregateController::class, fn(Container $c) => new AggregateController(
     $c->get(ProfileClient::class),
     $c->get(ConnectionClient::class),
