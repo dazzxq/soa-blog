@@ -60,6 +60,21 @@ final class MediaController
             throw new DomainError(415, 'UNSUPPORTED_TYPE', 'Chỉ hỗ trợ ảnh JPG, PNG, WEBP, GIF.');
         }
 
+        // Defense-in-depth: a valid magic-byte PREFIX is not enough (a polyglot could
+        // carry arbitrary trailing bytes). Require the payload to actually PARSE as an
+        // image whose detected type matches the sniffed mime, with sane dimensions.
+        $info = @getimagesizefromstring($bytes);
+        $byType = [
+            IMAGETYPE_JPEG => 'image/jpeg', IMAGETYPE_PNG => 'image/png',
+            IMAGETYPE_GIF  => 'image/gif',  IMAGETYPE_WEBP => 'image/webp',
+        ];
+        if ($info === false || !isset($byType[$info[2]]) || $byType[$info[2]] !== $mime) {
+            throw new DomainError(415, 'UNSUPPORTED_TYPE', 'Tệp không phải ảnh hợp lệ.');
+        }
+        if ($info[0] < 1 || $info[1] < 1 || $info[0] > 10000 || $info[1] > 10000) {
+            throw new DomainError(422, 'INVALID_IMAGE', 'Kích thước ảnh không hợp lệ.');
+        }
+
         $key = 'posts/' . $userId . '/' . Uuid::uuid4()->toString() . '.' . self::ALLOWED[$mime];
 
         if (!$this->s3->put($key, $bytes, $mime)) {
