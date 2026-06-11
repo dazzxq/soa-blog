@@ -243,7 +243,7 @@
   // Chain-link logo (two interlocking navy rings) — self-designed inline SVG, no
   // third-party brand assets (T-06-04). Vietnamese tagline "Kết nối chuyên nghiệp".
   var PRONAV_HTML =
-    '<nav class="glass-nav sticky top-0 z-30">' +
+    '<nav class="glass-nav z-30">' +
       '<div class="max-w-[1248px] mx-auto px-4 py-2 flex items-center justify-between gap-4">' +
         // LEFT: logo + brand + tagline
         '<a href="/feed.html" class="flex items-center gap-2 shrink-0">' +
@@ -369,6 +369,13 @@
     el.setAttribute('x-data', 'proNavData("' + (active || '') + '")');
     el.setAttribute('x-init', 'init()');
     el.innerHTML = PRONAV_HTML; // STATIC markup — no user data interpolated (T-06-01/02)
+    // Make the #pronav wrapper itself the sticky element (it has NO backdrop-filter).
+    // Putting position:sticky on the glass <nav> directly mis-behaves in some browsers
+    // (sticky + backdrop-filter on the same element), so the filtered nav stays static
+    // inside this sticky, unfiltered wrapper. Inline styles avoid CDN class-purge gaps.
+    el.style.position = 'sticky';
+    el.style.top = '0';
+    el.style.zIndex = '40';
     // Reactivity contract (T-06-19): set-attribute + innerHTML alone does NOT make
     // an after-init subtree reactive. Alpine.initTree(el) does — safe in BOTH cases:
     //   - proNav AFTER Alpine init → we initialise this subtree here.
