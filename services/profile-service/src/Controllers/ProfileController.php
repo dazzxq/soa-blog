@@ -31,9 +31,27 @@ final class ProfileController
         return $callerId;
     }
 
-    private function validDate(string $v): bool
+    /**
+     * Chuẩn hoá ngày về ISO YYYY-MM-DD. Chấp nhận cả định dạng người dùng quen
+     * (dd/mm/yyyy hoặc dd-mm-yyyy) lẫn ISO sẵn có; trả null nếu không phải ngày hợp lệ.
+     */
+    private function normalizeDate(string $v): ?string
     {
-        return preg_match('/^\d{4}-\d{2}-\d{2}$/', $v) === 1;
+        $v = trim($v);
+        if ($v === '') {
+            return null;
+        }
+        // Đã là ISO YYYY-MM-DD
+        if (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/', $v, $m)) {
+            $y = (int) $m[1]; $mo = (int) $m[2]; $d = (int) $m[3];
+            return checkdate($mo, $d, $y) ? sprintf('%04d-%02d-%02d', $y, $mo, $d) : null;
+        }
+        // dd/mm/yyyy hoặc dd-mm-yyyy (định dạng FE/locale VN) → đổi sang ISO
+        if (preg_match('#^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$#', $v, $m)) {
+            $d = (int) $m[1]; $mo = (int) $m[2]; $y = (int) $m[3];
+            return checkdate($mo, $d, $y) ? sprintf('%04d-%02d-%02d', $y, $mo, $d) : null;
+        }
+        return null;
     }
 
     // ------------------------------------------------------------------ EXPERIENCE (PROF-03)
@@ -52,15 +70,15 @@ final class ProfileController
             throw new DomainError(400, 'VALIDATION_FAILED', 'Chức danh từ 1-160 ký tự.');
         }
 
-        $startDate = trim((string) ($b['start_date'] ?? ''));
-        if (!$this->validDate($startDate)) {
-            throw new DomainError(400, 'VALIDATION_FAILED', 'Ngày bắt đầu phải dạng YYYY-MM-DD.');
+        $startDate = $this->normalizeDate((string) ($b['start_date'] ?? ''));
+        if ($startDate === null) {
+            throw new DomainError(400, 'VALIDATION_FAILED', 'Ngày bắt đầu không hợp lệ (dd/mm/yyyy hoặc YYYY-MM-DD).');
         }
 
         $endRaw  = $b['end_date'] ?? null;
-        $endDate = ($endRaw === null || trim((string) $endRaw) === '') ? null : trim((string) $endRaw);
-        if ($endDate !== null && !$this->validDate($endDate)) {
-            throw new DomainError(400, 'VALIDATION_FAILED', 'Ngày kết thúc phải dạng YYYY-MM-DD.');
+        $endDate = ($endRaw === null || trim((string) $endRaw) === '') ? null : $this->normalizeDate((string) $endRaw);
+        if ($endRaw !== null && trim((string) $endRaw) !== '' && $endDate === null) {
+            throw new DomainError(400, 'VALIDATION_FAILED', 'Ngày kết thúc không hợp lệ (dd/mm/yyyy hoặc YYYY-MM-DD).');
         }
 
         $descRaw = $b['description'] ?? null;
@@ -112,18 +130,18 @@ final class ProfileController
             $params[':t'] = $title;
         }
         if (array_key_exists('start_date', $b)) {
-            $startDate = trim((string) $b['start_date']);
-            if (!$this->validDate($startDate)) {
-                throw new DomainError(400, 'VALIDATION_FAILED', 'Ngày bắt đầu phải dạng YYYY-MM-DD.');
+            $startDate = $this->normalizeDate((string) $b['start_date']);
+            if ($startDate === null) {
+                throw new DomainError(400, 'VALIDATION_FAILED', 'Ngày bắt đầu không hợp lệ (dd/mm/yyyy hoặc YYYY-MM-DD).');
             }
             $sets[] = 'start_date = :sd';
             $params[':sd'] = $startDate;
         }
         if (array_key_exists('end_date', $b)) {
             $endRaw  = $b['end_date'];
-            $endDate = ($endRaw === null || trim((string) $endRaw) === '') ? null : trim((string) $endRaw);
-            if ($endDate !== null && !$this->validDate($endDate)) {
-                throw new DomainError(400, 'VALIDATION_FAILED', 'Ngày kết thúc phải dạng YYYY-MM-DD.');
+            $endDate = ($endRaw === null || trim((string) $endRaw) === '') ? null : $this->normalizeDate((string) $endRaw);
+            if ($endRaw !== null && trim((string) $endRaw) !== '' && $endDate === null) {
+                throw new DomainError(400, 'VALIDATION_FAILED', 'Ngày kết thúc không hợp lệ (dd/mm/yyyy hoặc YYYY-MM-DD).');
             }
             $sets[] = 'end_date = :ed';
             $params[':ed'] = $endDate;
