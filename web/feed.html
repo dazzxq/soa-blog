@@ -8,7 +8,7 @@
   <script>
     tailwind.config = { theme: { extend: { colors: { navy: { DEFAULT: '#1e3a8a', dark: '#172f6b', light: '#3b5bbd' } } } } };
   </script>
-  <script defer src="/assets/app.js"></script>
+  <script>document.write('<script defer src="/assets/app.js?v=' + Date.now() + '"><\/script>');</script>
 
   <!-- Trix WYSIWYG (soạn thảo style trực tiếp). Load TRƯỚC Alpine.
        SRI sha384 + crossorigin: nếu file CDN bị sửa đổi, trình duyệt từ chối thực thi. -->
@@ -17,7 +17,7 @@
   <script src="https://unpkg.com/trix@2.1.4/dist/trix.umd.min.js"
           integrity="sha384-vqeujwCjD2Xk8PPQfKQvvZ0/cEQQBE3LyrKwFbeI1BAZbPo/wP59Cer6HO7hF+ay" crossorigin="anonymous"></script>
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css" />
+  <script>document.write('<link rel="stylesheet" href="/assets/styles.css?v=' + Date.now() + '">');</script>
   <style>
     /* Tắt nút đính file của Trix — ảnh chỉ qua uploader riêng (/api/uploads). */
     trix-toolbar .trix-button-group--file-tools { display: none; }

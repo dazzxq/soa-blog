@@ -6,10 +6,10 @@
   <title>ProConnect — Trang chủ</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { theme:{ extend:{ colors:{ navy:{ DEFAULT:'#1e3a8a', dark:'#172f6b', light:'#3b5bbd' } } } } };</script>
-  <script defer src="/assets/app.js"></script>
+  <script>document.write('<script defer src="/assets/app.js?v=' + Date.now() + '"><\/script>');</script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css" />
+  <script>document.write('<link rel="stylesheet" href="/assets/styles.css?v=' + Date.now() + '">');</script>
 </head>
 <body class="text-slate-900 min-h-screen">
 
