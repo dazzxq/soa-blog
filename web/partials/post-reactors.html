@@ -1,0 +1,27 @@
+<div x-show="reactorsModal.open" x-cloak @keydown.escape.window="closeReactors()"
+     class="fixed inset-0 z-[60] flex items-start sm:items-center justify-center p-4 bg-slate-900/40 overflow-y-auto">
+  <div @click.outside="closeReactors()" class="glass-strong w-full max-w-sm my-8 max-h-[80vh] overflow-y-auto rounded-2xl">
+    <div class="flex items-center justify-between px-4 py-3 border-b divider-soft">
+      <h3 class="font-semibold">Cảm xúc</h3>
+      <button @click="closeReactors()" class="subtle hover:text-slate-700 px-2" title="Đóng"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="p-2">
+      <template x-if="reactorsModal.loading"><p class="subtle text-sm px-2 py-3">Đang tải…</p></template>
+      <template x-if="reactorsModal.error"><p class="text-red-600 text-sm px-2 py-3" x-text="reactorsModal.error"></p></template>
+      <template x-if="!reactorsModal.loading && !reactorsModal.error && !reactorsModal.items.length"><p class="subtle text-sm px-2 py-3">Chưa có cảm xúc nào.</p></template>
+      <template x-for="r in reactorsModal.items" :key="r.user_id">
+        <a :href="'/profile/' + r.user_id" class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-slate-100">
+          <span class="w-9 h-9 rounded-full avatar-fallback overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
+            <template x-if="r.user?.avatar_url"><img :src="r.user.avatar_url" alt="" class="w-full h-full object-cover" /></template>
+            <template x-if="!r.user?.avatar_url"><span x-text="(r.user?.display_name || r.user?.username || '?').trim().charAt(0).toUpperCase()"></span></template>
+          </span>
+          <span class="flex-1 truncate text-sm" x-text="r.user?.display_name || r.user?.username || 'Người dùng'"></span>
+          <i class="fa-solid" :class="reactionIcon(r.type)" :style="'color:' + reactionColor(r.type)"></i>
+        </a>
+      </template>
+      <template x-if="!reactorsModal.loading && reactorsModal.total > reactorsModal.items.length">
+        <p class="subtle text-xs px-2 py-2" x-text="'… và ' + (reactorsModal.total - reactorsModal.items.length) + ' người khác'"></p>
+      </template>
+    </div>
+  </div>
+</div>

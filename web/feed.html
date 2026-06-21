@@ -28,7 +28,7 @@
 
 <div id="pronav"></div>
 
-<main x-data="feedPage()" x-init="injectPostCards(); load()" class="max-w-[1248px] mx-auto px-4 py-6 fade-in">
+<main x-data="feedPage()" x-init="load()" class="max-w-[1248px] mx-auto px-4 py-6 fade-in">
 
   <div class="grid grid-cols-1 lg:grid-cols-[260px_640px_300px] gap-6">
 
@@ -163,7 +163,7 @@
   <!-- Dòng thời gian -->
   <template x-if="!loading">
     <div class="space-y-4">
-      <template x-for="p in posts" :key="p.id" data-postcard></template>
+      <template x-for="p in posts" :key="p.id"><!--# include virtual="/partials/post-card.html" --></template>
     </div>
   </template>
 
@@ -210,10 +210,10 @@
   </div><!-- /grid 3 cột -->
 
   <!-- Lightbox xem ảnh: ảnh bên trái + caption bài viết bên phải (kiểu FB/LinkedIn) -->
-  <div data-lightbox-host></div>
+  <!--# include virtual="/partials/post-lightbox.html" -->
 
   <!-- Modal: ai đã bày tỏ cảm xúc -->
-  <div data-reactors-host></div>
+  <!--# include virtual="/partials/post-reactors.html" -->
 </main>
 
 <script>

@@ -15,7 +15,7 @@
 
 <div id="pronav"></div>
 
-<main x-data="profilePage()" x-init="injectPostCards(); load()" class="max-w-3xl mx-auto px-4 py-6 fade-in">
+<main x-data="profilePage()" x-init="load()" class="max-w-3xl mx-auto px-4 py-6 fade-in">
 
   <template x-if="loading">
     <p class="subtle">Đang tải hồ sơ…</p>
@@ -190,7 +190,7 @@
         <template x-if="postsLoading"><p class="subtle text-sm">Đang tải bài viết…</p></template>
         <template x-if="!postsLoading && !posts.length"><p class="subtle text-sm">Chưa có bài viết nào.</p></template>
         <div class="space-y-4">
-          <template x-for="p in posts" :key="p.id" data-postcard></template>
+          <template x-for="p in posts" :key="p.id"><!--# include virtual="/partials/post-card.html" --></template>
         </div>
       </section>
 
@@ -198,10 +198,10 @@
   </template>
 
   <!-- Lightbox xem ảnh -->
-  <div data-lightbox-host></div>
+  <!--# include virtual="/partials/post-lightbox.html" -->
 
   <!-- Modal: ai đã bày tỏ cảm xúc -->
-  <div data-reactors-host></div>
+  <!--# include virtual="/partials/post-reactors.html" -->
 </main>
 
 <script>
