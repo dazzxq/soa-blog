@@ -520,8 +520,16 @@
       timer: null,
       init() {
         if (!this.isLoggedIn) return;
+        this.refreshMe();   // localStorage user có thể cũ (đổi avatar/tên) → lấy /me tươi
         this.loadInvites();
         this.timer = setInterval(() => this.loadInvites(), 15000); // D-06 ~15s
+      },
+      // Cập nhật avatar/tên header từ /me (vì auth.user() trong localStorage chỉ set lúc đăng nhập).
+      async refreshMe() {
+        try {
+          const m = (await api.get('/me')).data;
+          if (m) { this.me = m; auth.save(m, auth.token()); } // đồng bộ lại localStorage
+        } catch (e) { /* giữ localStorage nếu lỗi/timeout */ }
       },
       async loadInvites() {
         try {

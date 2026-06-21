@@ -55,8 +55,15 @@
   <!-- ===== Cột giữa: compose + timeline (NGUYÊN BẢN) ===== -->
   <div class="order-1 lg:order-2">
 
-  <!-- Ô soạn bài: bấm để mở modal (kiểu Facebook) -->
-  <section class="glass p-3 mb-6 flex items-center gap-3">
+  <!-- Xem 1 bài (permalink): link về bảng tin -->
+  <template x-if="singlePost">
+    <a href="/feed" class="inline-flex items-center gap-2 text-sm subtle hover:text-slate-700 mb-4">
+      <i class="fa-solid fa-arrow-left"></i><span>Về bảng tin</span>
+    </a>
+  </template>
+
+  <!-- Ô soạn bài: bấm để mở modal (kiểu Facebook) — ẩn khi xem 1 bài -->
+  <section x-show="!singlePost" class="glass p-3 mb-6 flex items-center gap-3">
     <span class="w-10 h-10 rounded-full avatar-fallback overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
       <template x-if="me?.avatar_url"><img :src="me.avatar_url" alt="" class="w-full h-full object-cover" /></template>
       <template x-if="!me?.avatar_url"><span x-text="(me?.display_name||me?.username||'?').trim().charAt(0).toUpperCase()"></span></template>
@@ -468,6 +475,7 @@ function feedPage() {
     composeOpen: false,
     uploading: false,
     didFocusPostParam: false,
+    singlePost: false,
 
     // ---- Trix WYSIWYG: nạp HTML vào editor (editor có sau khi Trix init) ----
     setTrix(html) {
@@ -528,6 +536,23 @@ function feedPage() {
     async load() {
       if (!auth.isLoggedIn()) { window.location.href = '/login'; return; }
       this.error = '';
+      // ----- Chế độ XEM 1 BÀI (permalink /post/<id>) -----
+      const m = location.pathname.match(/^\/post\/(\d+)/);
+      if (m) {
+        this.singlePost = true;
+        try {
+          const r = await api.get('/posts/' + encodeURIComponent(m[1]));
+          this.posts = r.data ? [r.data] : [];
+          if (!r.data) this.error = 'Bài viết không tồn tại.';
+        } catch (e) {
+          if (e.status === 401) { auth.logout(); window.location.href = '/login'; return; }
+          this.error = e.status === 404 ? 'Bài viết không còn nữa hoặc bạn không có quyền xem.' : ('Không tải được bài viết: ' + e.message);
+        } finally { this.loading = false; }
+        try { this.me = (await api.get('/me')).data; } catch (e) { /* degrade an toàn */ }
+        if (this.posts.length) { try { await this.loadComments(this.posts[0].id); } catch (e) { /* best-effort */ } }
+        return;
+      }
+      // ----- Chế độ BẢNG TIN -----
       try {
         const r = await api.get('/feed?limit=20');
         this.posts = r.data || [];

@@ -50,9 +50,26 @@ else
   WEB_TOUCHED=1
 fi
 
+# Detect whether any BUILT-image code changed (service/gateway/Dockerfile/compose).
+# Đổi CHỈ web/ (FE tĩnh, bind-mount) hoặc db/scripts/docs → KHÔNG cần rebuild image
+# → tránh "bão build" 6 image trên VPS nhỏ (gây 504 cho production lúc deploy).
+if git rev-parse 'HEAD@{1}' >/dev/null 2>&1; then
+  if git diff --name-only 'HEAD@{1}' HEAD | grep -qE '^(services/|gateway/|docker-compose)'; then
+    CODE_TOUCHED=1
+  else
+    CODE_TOUCHED=0
+  fi
+else
+  CODE_TOUCHED=1   # unknown range → build cho an toàn
+fi
+
 # 4) BUILD ---------------------------------------------------------------------
-echo "[deploy] docker compose build"
-docker compose build --pull
+if [[ $CODE_TOUCHED -eq 1 ]]; then
+  echo "[deploy] docker compose build (service/gateway code changed)"
+  docker compose build --pull
+else
+  echo "[deploy] chỉ web/ hoặc db/docs đổi — bỏ qua build image (tránh bão tải)"
+fi
 
 # 5) MARIADB-FIRST BOOT (ISSUE-3 step 1) ---------------------------------------
 # Bring up ONLY mariadb and wait for healthy BEFORE migrating, so the
