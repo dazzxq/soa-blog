@@ -31,10 +31,11 @@ final class NotificationClient
     // is the only blog-net caller (notification-service trusts the body, D-07).
     // Reads/marks scope to the recipient via the gateway-trusted X-User-Id header.
 
-    public function create(int $recipient, int $actor, string $type, ?int $refId): ResponseInterface
+    public function create(int $recipient, int $actor, string $type, int|string|null $refId): ResponseInterface
     {
+        // ref_id có thể là post snowflake (string) hoặc connection request id (int) → gửi STRING.
         return $this->http->request('POST', '/notifications', [
-            'json'    => ['user_id' => $recipient, 'actor_id' => $actor, 'type' => $type, 'ref_id' => $refId],
+            'json'    => ['user_id' => $recipient, 'actor_id' => $actor, 'type' => $type, 'ref_id' => $refId === null ? null : (string) $refId],
             'headers' => ['Content-Type' => 'application/json'],
         ]);
     }

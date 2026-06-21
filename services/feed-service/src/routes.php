@@ -13,7 +13,7 @@ use Slim\App;
  * collection comes first, and the SUFFIXED `/posts/{id}/...` routes are
  * registered BEFORE the bare `/posts/{id}` GET/DELETE so FastRoute matches the
  * more specific literals (reactions/comments/repost) first. Numeric
- * `{id:[0-9]+}` constraints keep `/posts/{id}/comments` and `/comments/{id}`
+ * `{id:[0-9]{1,20}}` constraints keep `/posts/{id}/comments` and `/comments/{id}`
  * from ever colliding.
  */
 return static function (App $app): void {
@@ -23,17 +23,17 @@ return static function (App $app): void {
     $app->post('/posts', [PostController::class, 'create']);                         // {content,image_url?} author=X-User-Id
 
     // Suffixed literals BEFORE the bare /posts/{id} routes.
-    $app->post('/posts/{id:[0-9]+}/repost',    [PostController::class, 'repost']);
-    $app->get('/posts/{id:[0-9]+}/reactions',  [PostController::class, 'reactions']); // list who reacted (paginated)
-    $app->post('/posts/{id:[0-9]+}/reactions', [PostController::class, 'react']);    // upsert {type}
-    $app->delete('/posts/{id:[0-9]+}/reactions', [PostController::class, 'unreact']); // remove caller's
-    $app->get('/posts/{id:[0-9]+}/comments',  [CommentController::class, 'index']);
-    $app->post('/posts/{id:[0-9]+}/comments', [CommentController::class, 'create']);
+    $app->post('/posts/{id:[0-9]{1,20}}/repost',    [PostController::class, 'repost']);
+    $app->get('/posts/{id:[0-9]{1,20}}/reactions',  [PostController::class, 'reactions']); // list who reacted (paginated)
+    $app->post('/posts/{id:[0-9]{1,20}}/reactions', [PostController::class, 'react']);    // upsert {type}
+    $app->delete('/posts/{id:[0-9]{1,20}}/reactions', [PostController::class, 'unreact']); // remove caller's
+    $app->get('/posts/{id:[0-9]{1,20}}/comments',  [CommentController::class, 'index']);
+    $app->post('/posts/{id:[0-9]{1,20}}/comments', [CommentController::class, 'create']);
 
-    $app->get('/posts/{id:[0-9]+}',    [PostController::class, 'show']);             // single post + counts (?viewer=)
-    $app->patch('/posts/{id:[0-9]+}',  [PostController::class, 'update']);           // owner only — edit content (HTML sanitized)
-    $app->delete('/posts/{id:[0-9]+}', [PostController::class, 'delete']);           // owner only (cascade)
+    $app->get('/posts/{id:[0-9]{1,20}}',    [PostController::class, 'show']);             // single post + counts (?viewer=)
+    $app->patch('/posts/{id:[0-9]{1,20}}',  [PostController::class, 'update']);           // owner only — edit content (HTML sanitized)
+    $app->delete('/posts/{id:[0-9]{1,20}}', [PostController::class, 'delete']);           // owner only (cascade)
 
-    $app->patch('/comments/{id:[0-9]+}',  [CommentController::class, 'update']);     // owner only — edit body
-    $app->delete('/comments/{id:[0-9]+}', [CommentController::class, 'delete']);     // owner only
+    $app->patch('/comments/{id:[0-9]{1,20}}',  [CommentController::class, 'update']);     // owner only — edit body
+    $app->delete('/comments/{id:[0-9]{1,20}}', [CommentController::class, 'delete']);     // owner only
 };

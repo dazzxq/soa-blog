@@ -9,7 +9,8 @@
 USE proconnect_feed;
 
 CREATE TABLE IF NOT EXISTS posts (
-  id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,            -- PK NỘI BỘ (không lộ ra ngoài)
+  post_id BIGINT UNSIGNED NULL UNIQUE,                      -- Snowflake — định danh CÔNG KHAI (app set khi tạo; db/09 backfill)
   author_id BIGINT UNSIGNED NOT NULL,
   content TEXT NOT NULL,
   image_url VARCHAR(512) NULL,

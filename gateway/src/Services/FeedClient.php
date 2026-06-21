@@ -60,19 +60,19 @@ final class FeedClient
         return $this->http->requestAsync('GET', '/posts', ['query' => ['ids' => implode(',', $ids)]]);
     }
 
-    /** Single post + counts (viewer-relative my_reaction; 0 = anonymous). */
-    public function getPost(int $id, int $viewer = 0): ResponseInterface
+    /** Single post + counts (viewer-relative my_reaction; 0 = anonymous). $id = snowflake. */
+    public function getPost(string $id, int $viewer = 0): ResponseInterface
     {
         return $this->http->request('GET', '/posts/' . $id, ['query' => ['viewer' => $viewer]]);
     }
 
-    public function listComments(int $id): ResponseInterface
+    public function listComments(string $id): ResponseInterface
     {
         return $this->http->request('GET', '/posts/' . $id . '/comments');
     }
 
-    /** List who reacted (paginated). */
-    public function listReactions(int $id, int $page = 1, int $perPage = 100): ResponseInterface
+    /** List who reacted (paginated). $id = snowflake. */
+    public function listReactions(string $id, int $page = 1, int $perPage = 100): ResponseInterface
     {
         return $this->http->request('GET', '/posts/' . $id . '/reactions', [
             'query' => ['page' => $page, 'per_page' => $perPage],
@@ -89,7 +89,7 @@ final class FeedClient
         ]);
     }
 
-    public function updatePost(int $caller, int $id, array $body): ResponseInterface
+    public function updatePost(int $caller, string $id, array $body): ResponseInterface
     {
         return $this->http->request('PATCH', '/posts/' . $id, [
             'json'    => $body,
@@ -97,21 +97,21 @@ final class FeedClient
         ]);
     }
 
-    public function deletePost(int $caller, int $id): ResponseInterface
+    public function deletePost(int $caller, string $id): ResponseInterface
     {
         return $this->http->request('DELETE', '/posts/' . $id, [
             'headers' => ['X-User-Id' => (string) $caller],
         ]);
     }
 
-    public function repost(int $caller, int $id): ResponseInterface
+    public function repost(int $caller, string $id): ResponseInterface
     {
         return $this->http->request('POST', '/posts/' . $id . '/repost', [
             'headers' => ['X-User-Id' => (string) $caller],
         ]);
     }
 
-    public function react(int $caller, int $id, string $type): ResponseInterface
+    public function react(int $caller, string $id, string $type): ResponseInterface
     {
         return $this->http->request('POST', '/posts/' . $id . '/reactions', [
             'json'    => ['type' => $type],
@@ -119,14 +119,14 @@ final class FeedClient
         ]);
     }
 
-    public function unreact(int $caller, int $id): ResponseInterface
+    public function unreact(int $caller, string $id): ResponseInterface
     {
         return $this->http->request('DELETE', '/posts/' . $id . '/reactions', [
             'headers' => ['X-User-Id' => (string) $caller],
         ]);
     }
 
-    public function addComment(int $caller, int $id, string $body): ResponseInterface
+    public function addComment(int $caller, string $id, string $body): ResponseInterface
     {
         return $this->http->request('POST', '/posts/' . $id . '/comments', [
             'json'    => ['body' => $body],

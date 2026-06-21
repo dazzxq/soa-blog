@@ -132,8 +132,8 @@ final class FeedController
 
         $originalIds = [];
         foreach ($posts as $p) {
-            $rid = (int) ($p['repost_of'] ?? 0);
-            if ($rid > 0) {
+            $rid = (string) ($p['repost_of'] ?? '');   // repost_of = snowflake STRING
+            if ($rid !== '') {
                 $originalIds[] = $rid;
             }
         }
@@ -144,7 +144,7 @@ final class FeedController
                 $oRes = $this->feed->getPosts($originalIds);
                 if ($oRes->getStatusCode() === 200) {
                     foreach ((array) ($this->decode($oRes)['data'] ?? []) as $orow) {
-                        $originalsById[(int) ($orow['id'] ?? 0)] = $orow;
+                        $originalsById[(string) ($orow['id'] ?? '')] = $orow;
                     }
                 } else {
                     $degraded[] = 'reposts';
@@ -182,13 +182,17 @@ final class FeedController
         $out = [];
         foreach ($posts as $p) {
             $p['author'] = $cardsById[(int) ($p['author_id'] ?? 0)] ?? null;
-            $rid = (int) ($p['repost_of'] ?? 0);
-            if ($rid > 0 && isset($originalsById[$rid])) {
-                $orow = $originalsById[$rid];
-                $orow['author'] = $cardsById[(int) ($orow['author_id'] ?? 0)] ?? null;
-                $p['original'] = $orow;
-            } elseif ($rid > 0) {
-                $p['original'] = null;
+            // is_repost (marker tin cậy) quyết định gắn `original`; repost_of (snowflake)
+            // có thể NULL khi bài gốc đã xoá → original = null (FE hiện "đã bị xoá").
+            if (!empty($p['is_repost'])) {
+                $rid = (string) ($p['repost_of'] ?? '');
+                if ($rid !== '' && isset($originalsById[$rid])) {
+                    $orow = $originalsById[$rid];
+                    $orow['author'] = $cardsById[(int) ($orow['author_id'] ?? 0)] ?? null;
+                    $p['original'] = $orow;
+                } else {
+                    $p['original'] = null;
+                }
             }
             $out[] = $p;
         }
@@ -209,21 +213,21 @@ final class FeedController
     public function updatePost(Request $req, Response $res, array $args): Response
     {
         $me = $this->me($req);
-        $up = $this->feed->updatePost($me, (int) $args['id'], (array) ($req->getParsedBody() ?? []));
+        $up = $this->feed->updatePost($me, (string) $args['id'], (array) ($req->getParsedBody() ?? []));
         return Json::raw($res, $this->decode($up), $up->getStatusCode());
     }
 
     public function deletePost(Request $req, Response $res, array $args): Response
     {
         $me = $this->me($req);
-        $up = $this->feed->deletePost($me, (int) $args['id']);
+        $up = $this->feed->deletePost($me, (string) $args['id']);
         return Json::raw($res, $this->decode($up), $up->getStatusCode());
     }
 
     public function repost(Request $req, Response $res, array $args): Response
     {
         $me = $this->me($req);
-        $up = $this->feed->repost($me, (int) $args['id']);
+        $up = $this->feed->repost($me, (string) $args['id']);
         return Json::raw($res, $this->decode($up), $up->getStatusCode());
     }
 
@@ -234,11 +238,12 @@ final class FeedController
         if ($type === '') {
             $type = 'like';
         }
-        $up   = $this->feed->react($me, (int) $args['id'], $type);
+        $sid  = (string) $args['id'];
+        $up   = $this->feed->react($me, $sid, $type);
         $code = $up->getStatusCode();
         // Best-effort notify the POST author (D-05) — only on a 2xx write.
         if ($code === 200 || $code === 201) {
-            $this->notifyPostAuthor((int) $args['id'], $me, 'reaction');
+            $this->notifyPostAuthor($sid, $me, 'reaction');
         }
         return Json::raw($res, $this->decode($up), $code);
     }
@@ -246,7 +251,7 @@ final class FeedController
     public function unreact(Request $req, Response $res, array $args): Response
     {
         $me = $this->me($req);
-        $up = $this->feed->unreact($me, (int) $args['id']);
+        $up = $this->feed->unreact($me, (string) $args['id']);
         return Json::raw($res, $this->decode($up), $up->getStatusCode());
     }
 
@@ -254,11 +259,12 @@ final class FeedController
     {
         $me   = $this->me($req);
         $body = (string) (((array) ($req->getParsedBody() ?? []))['body'] ?? '');
-        $up   = $this->feed->addComment($me, (int) $args['id'], $body);
+        $sid  = (string) $args['id'];
+        $up   = $this->feed->addComment($me, $sid, $body);
         $code = $up->getStatusCode();
         // Best-effort notify the POST author (D-05) — only on a 2xx write.
         if ($code === 200 || $code === 201) {
-            $this->notifyPostAuthor((int) $args['id'], $me, 'comment');
+            $this->notifyPostAuthor($sid, $me, 'comment');
         }
         return Json::raw($res, $this->decode($up), $code);
     }
@@ -272,7 +278,7 @@ final class FeedController
      * inside one swallowing try/catch: a notify/getPost failure NEVER changes the
      * react/comment outcome (which already returned 2xx, T-05-16).
      */
-    private function notifyPostAuthor(int $postId, int $actor, string $type): void
+    private function notifyPostAuthor(string $postId, int $actor, string $type): void
     {
         try {
             $pr = $this->feed->getPost($postId, 0);
@@ -283,7 +289,7 @@ final class FeedController
             if ($authorId <= 0 || $authorId === $actor) {
                 return;   // skip self / invalid (D-05, Pitfall 2)
             }
-            $this->notifications->create($authorId, $actor, $type, $postId);   // ref_id = postId
+            $this->notifications->create($authorId, $actor, $type, $postId);   // ref_id = post snowflake (STRING)
         } catch (GuzzleException $e) {
             // swallow — best-effort (D-05); the react/comment already returned 2xx.
         }
@@ -307,7 +313,7 @@ final class FeedController
     /** GET /api/posts/{id}/comments — enriched comment authors (email allowlist). */
     public function listComments(Request $req, Response $res, array $args): Response
     {
-        $up = $this->feed->listComments((int) $args['id']);
+        $up = $this->feed->listComments((string) $args['id']);
         if ($up->getStatusCode() !== 200) {
             return Json::raw($res, $this->decode($up), $up->getStatusCode());
         }
@@ -354,7 +360,7 @@ final class FeedController
         $page    = max(1, (int) ($q['page'] ?? 1));
         $perPage = min(100, max(1, (int) ($q['per_page'] ?? 100)));
 
-        $up = $this->feed->listReactions((int) $args['id'], $page, $perPage);
+        $up = $this->feed->listReactions((string) $args['id'], $page, $perPage);
         if ($up->getStatusCode() !== 200) {
             return Json::raw($res, $this->decode($up), $up->getStatusCode());
         }
@@ -405,23 +411,25 @@ final class FeedController
     public function showPost(Request $req, Response $res, array $args): Response
     {
         $viewer = (int) ($req->getAttribute('user_id') ?? 0);   // optional-auth: 0 = anon
-        $up     = $this->feed->getPost((int) $args['id'], $viewer);
+        $up     = $this->feed->getPost((string) $args['id'], $viewer);
         if ($up->getStatusCode() !== 200) {
             return Json::raw($res, $this->decode($up), $up->getStatusCode());
         }
         $post = (array) ($this->decode($up)['data'] ?? []);
         $degraded = [];
 
-        // Resolve the original (single-row repost case).
+        // Resolve the original (single-row repost case). is_repost = marker tin cậy;
+        // repost_of (snowflake) NULL khi gốc đã xoá → original null.
         $original = null;
-        $rid = (int) ($post['repost_of'] ?? 0);
-        if ($rid > 0) {
+        $isRepost = !empty($post['is_repost']);
+        $rid = (string) ($post['repost_of'] ?? '');   // snowflake STRING
+        if ($isRepost && $rid !== '') {
             try {
                 $oRes = $this->feed->getPosts([$rid]);
                 if ($oRes->getStatusCode() === 200) {
                     $orows = (array) ($this->decode($oRes)['data'] ?? []);
                     foreach ($orows as $orow) {
-                        if ((int) ($orow['id'] ?? 0) === $rid) {
+                        if ((string) ($orow['id'] ?? '') === $rid) {
                             $original = $orow;
                             break;
                         }
@@ -458,10 +466,10 @@ final class FeedController
         }
 
         $post['author'] = $cardsById[(int) ($post['author_id'] ?? 0)] ?? null;
-        if ($rid > 0 && $original !== null) {
+        if ($isRepost && $original !== null) {
             $original['author'] = $cardsById[(int) ($original['author_id'] ?? 0)] ?? null;
             $post['original'] = $original;
-        } elseif ($rid > 0) {
+        } elseif ($isRepost) {
             $post['original'] = null;   // deleted original (Pitfall 5)
         }
 

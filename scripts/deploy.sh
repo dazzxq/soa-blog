@@ -205,12 +205,39 @@ echo "[deploy] applying db/06-seed-demo-data.sql (demo content seed)"
 docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" < db/06-seed-demo-data.sql || echo "[deploy] WARN: demo seed non-fatal issue (continuing)"
 echo "[deploy] demo content seed applied"
 
+# 7e4) SNOWFLAKE post_id MIGRATION (idempotent; ADD COLUMN IF NOT EXISTS + backfill).
+# Bước migration CUỐI — SAU seed db/06, TRƯỚC full-topology up. BLOCKING: feed-service
+# code mới đọc/ghi posts.post_id, comments/reactions join qua nó. Two-phase: GIỮ
+# NULLABLE đợt này (KHÔNG ép NOT NULL → tránh vỡ INSERT của feed-service CŨ trong cửa
+# sổ build). File tự `USE proconnect_feed;` + cross-DB backfill ref_id (no DB arg).
+echo "[deploy] applying db/09-migrate-snowflake-postid.sql (additive)"
+docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" < db/09-migrate-snowflake-postid.sql
+echo "[deploy] snowflake post_id migration applied"
+
 # 8) FULL-TOPOLOGY UP (ISSUE-3 step 4) -----------------------------------------
 # NOW bring up the rest of the 8-container stack — the proconnect_* DBs/users
 # exist, so the 5 PHP services can boot healthy. --remove-orphans drops the
 # retired post/comment containers.
 echo "[deploy] docker compose up -d --remove-orphans (full topology)"
 docker compose up -d --remove-orphans
+
+# 8b) POST-UP RE-BACKFILL (lưới an toàn ISSUE-10): bài lỡ tạo bởi feed-service CŨ
+# trong cửa sổ build có thể còn post_id NULL → chạy lại db/09 (idempotent) để lấp.
+# Non-blocking: lưới an toàn, không chặn deploy nếu hiếm gặp trục trặc.
+echo "[deploy] re-applying db/09 backfill (catch build-window NULLs)"
+docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" < db/09-migrate-snowflake-postid.sql || echo "[deploy] WARN: re-backfill non-fatal issue (continuing)"
+
+# 8c) ENFORCE post_id NOT NULL SAU CUTOVER (security review #2 + plan ISSUE-8).
+# Lúc này feed-service CŨ đã bị thay (chỉ writer MỚI — luôn set post_id) nên ép
+# NOT NULL an toàn (không vỡ INSERT cũ). Guard BLOCKING: còn NULL → dừng deploy.
+NULLN=$(docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" -N -e \
+  "SELECT COUNT(*) FROM proconnect_feed.posts WHERE post_id IS NULL" | tr -d '[:space:]')
+if [[ "$NULLN" != "0" ]]; then
+  echo "[deploy] FATAL: $NULLN bài còn post_id NULL sau backfill — dừng deploy" >&2
+  exit 3
+fi
+docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" < db/10-enforce-postid-notnull.sql
+echo "[deploy] post_id enforced NOT NULL via db/10 (0 NULL rows)"
 
 # Web container uses bind-mounted static files. New file content from git
 # pull won't be visible until the container restarts (it tracks the old

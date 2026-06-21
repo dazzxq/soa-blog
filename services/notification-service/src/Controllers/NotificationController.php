@@ -52,7 +52,11 @@ final class NotificationController
         $userId  = (int) ($b['user_id'] ?? 0);
         $actorId = (int) ($b['actor_id'] ?? 0);
         $type    = (string) ($b['type'] ?? '');
-        $refId   = isset($b['ref_id']) && $b['ref_id'] !== null ? (int) $b['ref_id'] : null;
+        // ref_id giữ STRING (post snowflake có thể > 2^53 → tránh mất chính xác ở JS).
+        $refId   = isset($b['ref_id']) && $b['ref_id'] !== null && $b['ref_id'] !== '' ? (string) $b['ref_id'] : null;
+        if ($refId !== null && !ctype_digit($refId)) {
+            $refId = null;   // chỉ chấp nhận id dạng số
+        }
 
         if ($userId <= 0 || $actorId <= 0) {
             throw new DomainError(400, 'VALIDATION_FAILED', 'Thiếu user_id hoặc actor_id.');
@@ -68,7 +72,7 @@ final class NotificationController
         $stmt->bindValue(':u', $userId, PDO::PARAM_INT);
         $stmt->bindValue(':t', $type);
         $stmt->bindValue(':a', $actorId, PDO::PARAM_INT);
-        $stmt->bindValue(':r', $refId, $refId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $stmt->bindValue(':r', $refId, $refId === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stmt->execute();
 
         return Json::ok($res, ['id' => (int) $pdo->lastInsertId()], 201);
@@ -185,7 +189,7 @@ final class NotificationController
         $row['id']       = (int) $row['id'];
         $row['user_id']  = (int) $row['user_id'];
         $row['actor_id'] = (int) $row['actor_id'];
-        $row['ref_id']   = $row['ref_id'] === null ? null : (int) $row['ref_id'];
+        $row['ref_id']   = $row['ref_id'] === null ? null : (string) $row['ref_id'];   // STRING (post snowflake an toàn cho JS)
         return $row;
     }
 }

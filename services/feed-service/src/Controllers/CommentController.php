@@ -14,22 +14,25 @@ use Psr\Http\Message\ServerRequestInterface as Request;
  * feed-service Comments domain — cloned from the brownfield comment-service and
  * re-homed into proconnect_feed. Because feed-service now owns BOTH the posts
  * and comments tables, the "comment requires an existing post" invariant is a
- * LOCAL `SELECT 1 FROM posts` check (T-04-11) — no cross-service hop.
+ * LOCAL `SELECT id FROM posts` check (T-04-11) — no cross-service hop.
+ *
+ * IDENTIFIER MODEL: route `/posts/{id}/comments` mang post_id SNOWFLAKE. Bảng
+ * comments lưu post_id NỘI BỘ (= posts.id); ta join posts để (a) lọc theo
+ * snowflake và (b) trả `post_id` ra ngoài dưới dạng snowflake STRING (không lộ id
+ * nội bộ, không mất chính xác ở JS). Comment id giữ auto-increment nhỏ (JS-safe).
  *
  * Doctrine: author = X-User-Id header (never the body, D-07/T-04-07); owner-only
  * delete → 403; uniform 404 for a missing post/comment.
- *
- * The post id arrives via the route path (`/posts/{id}/comments`), NOT a body
- * or query param, so it can never be spoofed independently of the URL.
  */
 final class CommentController
 {
-    /** GET /posts/{id}/comments — list a post's comments (oldest first). */
+    /** GET /posts/{id}/comments — list a post's comments (oldest first). {id}=snowflake. */
     public function index(Request $req, Response $res, array $args): Response
     {
-        $postId = (int) $args['id'];
-        if ($postId <= 0) {
-            throw new DomainError(400, 'VALIDATION_FAILED', 'post_id không hợp lệ.');
+        $sid = (string) $args['id'];
+        // 404 nhất quán cho bài không tồn tại (thay vì 200 + danh sách rỗng).
+        if ($this->resolvePostId($sid) === null) {
+            throw new DomainError(404, 'POST_NOT_FOUND', 'Bài viết không tồn tại.');
         }
 
         $q       = $req->getQueryParams();
@@ -39,31 +42,35 @@ final class CommentController
 
         $pdo = Db::pdo();
 
-        $countStmt = $pdo->prepare('SELECT COUNT(*) FROM comments WHERE post_id = :p');
-        $countStmt->execute([':p' => $postId]);
+        $countStmt = $pdo->prepare(
+            'SELECT COUNT(*) FROM comments c JOIN posts p ON p.id = c.post_id WHERE p.post_id = :sid'
+        );
+        $countStmt->bindValue(':sid', $sid, PDO::PARAM_STR);
+        $countStmt->execute();
         $total = (int) $countStmt->fetchColumn();
 
         $stmt = $pdo->prepare(
-            'SELECT id, post_id, author_id, body, created_at, updated_at
-               FROM comments WHERE post_id = :p
-              ORDER BY created_at ASC, id ASC
+            'SELECT c.id, p.post_id AS post_sid, c.author_id, c.body, c.created_at, c.updated_at
+               FROM comments c JOIN posts p ON p.id = c.post_id
+              WHERE p.post_id = :sid
+              ORDER BY c.created_at ASC, c.id ASC
               LIMIT :lim OFFSET :off'
         );
-        $stmt->bindValue(':p',   $postId,  PDO::PARAM_INT);
+        $stmt->bindValue(':sid', $sid,     PDO::PARAM_STR);
         $stmt->bindValue(':lim', $perPage, PDO::PARAM_INT);
         $stmt->bindValue(':off', $offset,  PDO::PARAM_INT);
         $stmt->execute();
 
         $rows = array_map([self::class, 'shape'], $stmt->fetchAll());
         return Json::list($res, $rows, [
-            'post_id'  => $postId,
+            'post_id'  => $sid,
             'page'     => $page,
             'per_page' => $perPage,
             'total'    => $total,
         ]);
     }
 
-    /** POST /posts/{id}/comments — add a comment (local post-existence invariant). */
+    /** POST /posts/{id}/comments — add a comment (local post-existence invariant). {id}=snowflake. */
     public function create(Request $req, Response $res, array $args): Response
     {
         $author = (int) ($req->getHeaderLine('X-User-Id') ?: 0);
@@ -71,9 +78,10 @@ final class CommentController
             throw new DomainError(401, 'UNAUTHORIZED', 'Thiếu thông tin người dùng (X-User-Id).');
         }
 
-        $postId = (int) $args['id'];
+        $sid = (string) $args['id'];
         // LOCAL invariant — feed owns both tables, no cross-service call (T-04-11).
-        if (!$this->postExists($postId)) {
+        $postId = $this->resolvePostId($sid);
+        if ($postId === null) {
             throw new DomainError(404, 'POST_NOT_FOUND', 'Bài viết không tồn tại.');
         }
 
@@ -92,7 +100,7 @@ final class CommentController
         return Json::ok($res, $this->find($id), 201);
     }
 
-    /** DELETE /comments/{id} — owner-only (T-04-06). */
+    /** DELETE /comments/{id} — owner-only (T-04-06). {id}=comment id nội bộ (nhỏ). */
     public function delete(Request $req, Response $res, array $args): Response
     {
         $caller = (int) ($req->getHeaderLine('X-User-Id') ?: 0);
@@ -143,28 +151,30 @@ final class CommentController
     private function find(int $id): ?array
     {
         $stmt = Db::pdo()->prepare(
-            'SELECT id, post_id, author_id, body, created_at, updated_at
-               FROM comments WHERE id = :id LIMIT 1'
+            'SELECT c.id, p.post_id AS post_sid, c.author_id, c.body, c.created_at, c.updated_at
+               FROM comments c JOIN posts p ON p.id = c.post_id
+              WHERE c.id = :id LIMIT 1'
         );
         $stmt->execute([':id' => $id]);
         $row = $stmt->fetch();
         return $row === false ? null : self::shape($row);
     }
 
-    private function postExists(int $id): bool
+    /** Resolve post_id snowflake → id nội bộ; null nếu không tồn tại. */
+    private function resolvePostId(string $sid): ?int
     {
-        if ($id <= 0) {
-            return false;
-        }
-        $stmt = Db::pdo()->prepare('SELECT 1 FROM posts WHERE id = :p LIMIT 1');
-        $stmt->execute([':p' => $id]);
-        return $stmt->fetchColumn() !== false;
+        $stmt = Db::pdo()->prepare('SELECT id FROM posts WHERE post_id = :sid LIMIT 1');
+        $stmt->bindValue(':sid', $sid, PDO::PARAM_STR);
+        $stmt->execute();
+        $id = $stmt->fetchColumn();
+        return $id === false ? null : (int) $id;
     }
 
     private static function shape(array $row): array
     {
         $row['id']        = (int) $row['id'];
-        $row['post_id']   = (int) $row['post_id'];
+        $row['post_id']   = (string) $row['post_sid']; // snowflake công khai (STRING)
+        unset($row['post_sid']);
         $row['author_id'] = (int) $row['author_id'];
         return $row;
     }

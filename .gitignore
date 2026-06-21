@@ -24,3 +24,10 @@ deploy/certs/*.key
 # Local override
 docker-compose.override.yml
 .codex-review/
+
+# Python caches (report generator)
+__pycache__/
+*.pyc
+
+# Báo cáo đồ án — GIỮ LOCAL, không commit lên GitHub công khai (tránh đạo văn)
+report/

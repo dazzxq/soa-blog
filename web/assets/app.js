@@ -297,6 +297,288 @@
     };
   };
 
+  // ---------- Post-card: MỘT template duy nhất, context-aware (kiểu WordPress loop) ----------
+  // Markup thẻ bài + lightbox + modal "ai đã react" sống Ở ĐÂY (một nguồn sự thật).
+  // Mỗi trang (feed/single/profile) chỉ đặt host rỗng + khai báo `ctx` để component
+  // biết đang ở context nào. Inject ở 'alpine:init' (sau mọi script defer, trước khi
+  // Alpine duyệt DOM) nên x-for/x-html bind reactivity bình thường.
+  // Quyền sở hữu (nút Sửa/Xoá) bám auth.user()?.id → đồng nhất ở mọi trang.
+
+  window.POST_CARD_HTML = `
+        <article :id="'post-' + p.id" :data-ctx="ctx.page" class="glass glass-hover p-5 transition-shadow">
+
+          <!-- Tác giả + thời gian -->
+          <div class="flex items-center gap-3 mb-3">
+            <a :href="'/profile/' + p.author_id" class="w-10 h-10 rounded-full avatar-fallback overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
+              <template x-if="p.author?.avatar_url">
+                <img :src="p.author.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
+              </template>
+              <template x-if="!p.author?.avatar_url">
+                <span x-text="(p.author?.display_name || p.author?.username || '?').trim().charAt(0).toUpperCase()"></span>
+              </template>
+            </a>
+            <div class="min-w-0">
+              <a :href="'/profile/' + p.author_id" class="font-semibold truncate hover:underline block" x-text="p.author?.display_name || p.author?.username || 'Người dùng'"></a>
+              <div class="subtle text-xs truncate" x-show="p.author?.headline" x-text="p.author?.headline"></div>
+              <a :href="'/post/' + p.id" class="subtle text-xs block hover:underline" title="Xem chi tiết bài viết"><span x-text="timeAgo(p.created_at)"></span><span x-show="p.updated_at"> · đã chỉnh sửa</span></a>
+            </div>
+          </div>
+
+          <!-- Banner chia sẻ lại -->
+          <template x-if="p.is_repost">
+            <div class="mb-3">
+              <p class="subtle text-xs mb-2">đã chia sẻ một bài viết</p>
+              <template x-if="p.original">
+                <div class="surface-soft border-l-4 border-slate-200 p-3">
+                  <a :href="'/profile/' + p.original.author_id" class="font-medium text-sm mb-1 hover:underline block" x-text="p.original.author?.display_name || p.original.author?.username || 'Người dùng'"></a>
+                  <div class="text-sm prose-rich break-words" x-html="renderContent(p.original)"></div>
+                  <template x-if="p.original.image_url">
+                    <img :src="p.original.image_url" alt="Ảnh bài viết gốc" class="mt-2 rounded max-h-80 w-auto" />
+                  </template>
+                </div>
+              </template>
+              <template x-if="!p.original">
+                <div class="surface-soft border-l-4 border-slate-200 p-3 subtle text-sm">
+                  Bài viết gốc đã bị xoá
+                </div>
+              </template>
+            </div>
+          </template>
+
+          <!-- Nội dung -->
+          <template x-if="p.content">
+            <div class="text-sm leading-relaxed prose-rich break-words mb-3" x-html="renderContent(p)"></div>
+          </template>
+
+          <!-- Ảnh: 1 ảnh full-width, nhiều ảnh → lưới kiểu Facebook/LinkedIn; bấm để mở -->
+          <template x-if="postImages(p).length === 1">
+            <button type="button" @click="openLightbox(p, 0)" class="block w-full mb-3">
+              <img :src="postImages(p)[0]" alt="Ảnh bài viết" loading="lazy"
+                   class="w-full max-h-[510px] object-contain rounded-lg bg-slate-50 cursor-pointer" />
+            </button>
+          </template>
+          <template x-if="postImages(p).length > 1">
+            <div class="mb-3 grid gap-1 rounded-lg overflow-hidden" :class="gridClass(postImages(p).length)">
+              <template x-for="(img, idx) in postImages(p)" :key="idx">
+                <button type="button" @click="openLightbox(p, idx)" :class="cellClass(postImages(p).length, idx)"
+                        class="block overflow-hidden bg-slate-100">
+                  <img :src="img" alt="Ảnh bài viết" loading="lazy" class="w-full h-full object-cover cursor-pointer" />
+                </button>
+              </template>
+            </div>
+          </template>
+
+          <!-- Tóm tắt cảm xúc + bình luận (gom lại kiểu LinkedIn) -->
+          <div class="flex items-center gap-3 text-xs subtle mt-3" x-show="p.reaction_count > 0 || p.comment_count > 0">
+            <button x-show="p.reaction_count > 0" @click="openReactors(p.id)" class="flex items-center gap-1.5 hover:underline" title="Xem ai đã bày tỏ cảm xúc">
+              <span class="inline-flex items-center justify-center w-4 h-4 rounded-full" style="background:var(--navy)">
+                <i class="fa-solid fa-thumbs-up text-white" style="font-size:9px"></i>
+              </span>
+              <span x-text="p.reaction_count"></span>
+            </button>
+            <button x-show="p.comment_count > 0" @click="loadComments(p.id)" class="hover:underline"
+                    x-text="p.comment_count + ' bình luận'"></button>
+          </div>
+
+          <!-- Hàng hành động: Thích (bộ chọn cảm xúc hiện khi hover) · Bình luận · Chia sẻ -->
+          <div class="flex items-center gap-1 border-t divider-soft mt-2 pt-1 text-sm">
+            <div class="relative flex-1" x-data="{ pk: false, t: null }"
+                 @mouseenter="clearTimeout(t); pk = true" @mouseleave="t = setTimeout(() => pk = false, 160)">
+              <div class="flex items-center">
+                <button @click="p.my_reaction ? unreact(p.id) : react(p.id, 'like')" :disabled="busy"
+                        class="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-slate-100 disabled:opacity-50"
+                        :class="p.my_reaction ? 'font-semibold' : 'subtle'"
+                        :style="p.my_reaction ? ('color:' + reactionColor(p.my_reaction)) : ''">
+                  <i class="fa-solid" :class="reactionIcon(p.my_reaction || 'like')"></i>
+                  <span x-text="p.my_reaction ? reactionLabel(p.my_reaction) : 'Thích'"></span>
+                </button>
+                <button @click="pk = !pk" :disabled="busy" title="Chọn cảm xúc" aria-label="Chọn cảm xúc"
+                        class="px-2 py-2 rounded-lg hover:bg-slate-100 subtle">
+                  <i class="fa-solid fa-chevron-up text-xs"></i>
+                </button>
+              </div>
+              <div x-show="pk" x-cloak @click.outside="pk = false"
+                   class="absolute bottom-full left-0 pb-2 z-20">
+                <div class="flex glass-strong rounded-full px-2 py-1 gap-1 shadow-lg">
+                  <template x-for="type in reactions" :key="type">
+                    <button @click="react(p.id, type); pk = false" :disabled="busy" :title="reactionLabel(type)"
+                            class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center disabled:opacity-50 text-lg">
+                      <i class="fa-solid" :class="reactionIcon(type)" :style="'color:' + reactionColor(type)"></i>
+                    </button>
+                  </template>
+                </div>
+              </div>
+            </div>
+            <button @click="loadComments(p.id)"
+                    class="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-slate-100 subtle">
+              <i class="fa-regular fa-comment"></i><span>Bình luận</span>
+            </button>
+            <button @click="repost(p.id)" :disabled="busy"
+                    class="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-slate-100 subtle disabled:opacity-50">
+              <i class="fa-solid fa-retweet"></i><span>Chia sẻ</span>
+            </button>
+            <template x-if="p.author_id === auth.user()?.id">
+              <div class="flex items-center">
+                <template x-if="!p.is_repost">
+                  <button @click="editPost(p)" :disabled="busy" title="Sửa bài viết"
+                          class="px-3 py-2 rounded-lg hover:bg-slate-100 subtle disabled:opacity-50">
+                    <i class="fa-regular fa-pen-to-square"></i>
+                  </button>
+                </template>
+                <button @click="removePost(p.id)" :disabled="busy" title="Xoá bài viết"
+                        class="px-3 py-2 rounded-lg hover:bg-slate-100 text-red-600 disabled:opacity-50">
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
+              </div>
+            </template>
+          </div>
+
+          <!-- Khu vực bình luận -->
+          <template x-if="openComments[p.id]">
+            <div class="mt-4 border-t divider-soft pt-3 space-y-3">
+              <template x-if="!(comments[p.id] && comments[p.id].length)">
+                <p class="subtle text-xs">Chưa có bình luận nào.</p>
+              </template>
+              <template x-for="c in (comments[p.id] || [])" :key="c.id">
+                <div class="flex items-start gap-3">
+                  <a :href="'/profile/' + c.author_id" class="w-8 h-8 rounded-full avatar-fallback overflow-hidden flex items-center justify-center text-xs font-bold shrink-0">
+                    <template x-if="c.author?.avatar_url">
+                      <img :src="c.author.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
+                    </template>
+                    <template x-if="!c.author?.avatar_url">
+                      <span x-text="(c.author?.display_name || c.author?.username || '?').trim().charAt(0).toUpperCase()"></span>
+                    </template>
+                  </a>
+                  <div class="flex items-start justify-between gap-3 flex-1 min-w-0">
+                    <div class="min-w-0 flex-1">
+                      <a :href="'/profile/' + c.author_id" class="font-medium text-sm hover:underline" x-text="c.author?.display_name || c.author?.username || 'Người dùng'"></a>
+                      <span x-show="c.created_at" class="subtle text-xs" x-text="' · ' + timeAgo(c.created_at)"></span>
+                      <template x-if="editCommentId === c.id">
+                        <div class="flex items-center gap-2 mt-1">
+                          <input x-model="editCommentBody" @keydown.enter="saveComment(p.id, c.id)"
+                                 class="glass-input flex-1 p-1.5 text-sm" />
+                          <button @click="saveComment(p.id, c.id)" :disabled="busy || !editCommentBody.trim()"
+                                  class="text-xs pro-btn px-2 py-1 rounded disabled:opacity-50">Lưu</button>
+                          <button @click="editCommentId=null" class="text-xs subtle hover:underline">Huỷ</button>
+                        </div>
+                      </template>
+                      <template x-if="editCommentId !== c.id">
+                        <p class="text-sm whitespace-pre-wrap break-words"><span x-text="c.body"></span><span x-show="c.updated_at" class="subtle text-xs"> · đã chỉnh sửa</span></p>
+                      </template>
+                    </div>
+                    <template x-if="c.author_id === auth.user()?.id && editCommentId !== c.id">
+                      <div class="flex items-center gap-2 shrink-0 text-xs">
+                        <button @click="startEditComment(c)" :disabled="busy"
+                                class="text-navy hover:underline disabled:opacity-50">Sửa</button>
+                        <button @click="deleteComment(p.id, c.id)" :disabled="busy"
+                                class="text-red-600 hover:underline disabled:opacity-50">Xoá</button>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+              <div class="flex items-center gap-3">
+                <span class="w-8 h-8 rounded-full avatar-fallback overflow-hidden flex items-center justify-center text-xs font-bold shrink-0">
+                  <template x-if="me?.avatar_url">
+                    <img :src="me.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
+                  </template>
+                  <template x-if="!me?.avatar_url">
+                    <span x-text="(me?.display_name || me?.username || '?').trim().charAt(0).toUpperCase()"></span>
+                  </template>
+                </span>
+                <input x-model="commentDraft[p.id]" type="text" placeholder="Viết bình luận…"
+                       @keydown.enter="addComment(p.id)"
+                       class="glass-input flex-1 p-2 text-sm" />
+                <button @click="addComment(p.id)" :disabled="busy || !(commentDraft[p.id] || '').trim()"
+                        class="text-sm pro-btn px-3 py-1.5 rounded-lg disabled:opacity-50">Gửi</button>
+              </div>
+            </div>
+          </template>
+
+        </article>`;
+
+  window.LIGHTBOX_HTML = `
+  <div x-show="lightbox.open" x-cloak
+       @keydown.escape.window="closeLightbox()"
+       @keydown.arrow-left.window="lbPrev()" @keydown.arrow-right.window="lbNext()"
+       class="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4">
+    <div @click.outside="closeLightbox()"
+         class="relative w-[80vw] h-[80vh] max-w-[1200px] bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col lg:flex-row">
+      <button @click="closeLightbox()" title="Đóng"
+              class="absolute top-3 right-3 z-20 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
+      <div class="relative flex-1 flex items-center justify-center min-h-0 bg-black">
+        <template x-if="lbImages().length > 1">
+          <button @click="lbPrev()" aria-label="Ảnh trước"
+                  class="absolute left-3 top-0 bottom-0 my-auto z-10 h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center"><i class="fa-solid fa-chevron-left"></i></button>
+        </template>
+        <img :src="lbImages()[lightbox.index]" alt="Ảnh bài viết" class="max-h-full max-w-full object-contain select-none" />
+        <template x-if="lbImages().length > 1">
+          <button @click="lbNext()" aria-label="Ảnh kế"
+                  class="absolute right-3 top-0 bottom-0 my-auto z-10 h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center"><i class="fa-solid fa-chevron-right"></i></button>
+        </template>
+        <template x-if="lbImages().length > 1">
+          <span class="absolute bottom-3 left-0 right-0 mx-auto w-max text-white text-xs bg-black/50 px-2 py-0.5 rounded-full"
+                x-text="(lightbox.index + 1) + '/' + lbImages().length"></span>
+        </template>
+      </div>
+      <aside class="w-full lg:w-[340px] bg-white lg:h-full overflow-y-auto p-4 shrink-0 border-t lg:border-t-0 lg:border-l divider-soft">
+        <template x-if="lightbox.post">
+        <div>
+          <div class="flex items-center gap-3 mb-3">
+            <span class="w-10 h-10 rounded-full avatar-fallback overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
+              <template x-if="lightbox.post.author?.avatar_url"><img :src="lightbox.post.author.avatar_url" alt="" class="w-full h-full object-cover" /></template>
+              <template x-if="!lightbox.post.author?.avatar_url"><span x-text="(lightbox.post.author?.display_name||lightbox.post.author?.username||'?').trim().charAt(0).toUpperCase()"></span></template>
+            </span>
+            <div class="min-w-0">
+              <div class="font-semibold truncate" x-text="lightbox.post.author?.display_name || lightbox.post.author?.username || 'Người dùng'"></div>
+              <div class="subtle text-xs" x-text="timeAgo(lightbox.post.created_at)"></div>
+            </div>
+          </div>
+          <div class="text-sm leading-relaxed prose-rich break-words" x-html="renderContent(lightbox.post)"></div>
+          <div class="subtle text-xs mt-3 pt-3 border-t divider-soft"
+               x-text="(lightbox.post.reaction_count || 0) + ' cảm xúc · ' + (lightbox.post.comment_count || 0) + ' bình luận'"></div>
+        </div>
+      </template>
+      </aside>
+    </div>
+  </div>`;
+
+  window.REACTORS_HTML = `
+  <div x-show="reactorsModal.open" x-cloak @keydown.escape.window="closeReactors()"
+       class="fixed inset-0 z-[60] flex items-start sm:items-center justify-center p-4 bg-slate-900/40 overflow-y-auto">
+    <div @click.outside="closeReactors()" class="glass-strong w-full max-w-sm my-8 max-h-[80vh] overflow-y-auto rounded-2xl">
+      <div class="flex items-center justify-between px-4 py-3 border-b divider-soft">
+        <h3 class="font-semibold">Cảm xúc</h3>
+        <button @click="closeReactors()" class="subtle hover:text-slate-700 px-2" title="Đóng"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-2">
+        <template x-if="reactorsModal.loading"><p class="subtle text-sm px-2 py-3">Đang tải…</p></template>
+        <template x-if="reactorsModal.error"><p class="text-red-600 text-sm px-2 py-3" x-text="reactorsModal.error"></p></template>
+        <template x-if="!reactorsModal.loading && !reactorsModal.error && !reactorsModal.items.length"><p class="subtle text-sm px-2 py-3">Chưa có cảm xúc nào.</p></template>
+        <template x-for="r in reactorsModal.items" :key="r.user_id">
+          <a :href="'/profile/' + r.user_id" class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-slate-100">
+            <span class="w-9 h-9 rounded-full avatar-fallback overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
+              <template x-if="r.user?.avatar_url"><img :src="r.user.avatar_url" alt="" class="w-full h-full object-cover" /></template>
+              <template x-if="!r.user?.avatar_url"><span x-text="(r.user?.display_name || r.user?.username || '?').trim().charAt(0).toUpperCase()"></span></template>
+            </span>
+            <span class="flex-1 truncate text-sm" x-text="r.user?.display_name || r.user?.username || 'Người dùng'"></span>
+            <i class="fa-solid" :class="reactionIcon(r.type)" :style="'color:' + reactionColor(r.type)"></i>
+          </a>
+        </template>
+        <template x-if="!reactorsModal.loading && reactorsModal.total > reactorsModal.items.length">
+          <p class="subtle text-xs px-2 py-2" x-text="'… và ' + (reactorsModal.total - reactorsModal.items.length) + ' người khác'"></p>
+        </template>
+      </div>
+    </div>
+  </div>`;
+
+  // Inject markup dùng chung vào các host trên mỗi trang — chạy TRƯỚC khi Alpine duyệt DOM.
+  document.addEventListener('alpine:init', function () {
+    document.querySelectorAll('template[data-postcard]').forEach(function (t) { t.innerHTML = window.POST_CARD_HTML; });
+    document.querySelectorAll('[data-lightbox-host]').forEach(function (h) { h.innerHTML = window.LIGHTBOX_HTML; });
+    document.querySelectorAll('[data-reactors-host]').forEach(function (h) { h.innerHTML = window.REACTORS_HTML; });
+  });
+
   // Danh sách chức danh phổ biến (dùng chung cho autocomplete headline + experience).
   window.COMMON_TITLES = [
     'Sinh viên', 'Thực tập sinh', 'Kỹ sư phần mềm', 'Lập trình viên', 'Lập trình viên Frontend',
