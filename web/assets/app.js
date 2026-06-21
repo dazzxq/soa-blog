@@ -572,12 +572,14 @@
     </div>
   </div>`;
 
-  // Inject markup dùng chung vào các host trên mỗi trang — chạy TRƯỚC khi Alpine duyệt DOM.
-  document.addEventListener('alpine:init', function () {
-    document.querySelectorAll('template[data-postcard]').forEach(function (t) { t.innerHTML = window.POST_CARD_HTML; });
-    document.querySelectorAll('[data-lightbox-host]').forEach(function (h) { h.innerHTML = window.LIGHTBOX_HTML; });
-    document.querySelectorAll('[data-reactors-host]').forEach(function (h) { h.innerHTML = window.REACTORS_HTML; });
-  });
+  // Inject markup dùng chung vào host. GỌI TỪ x-init của trang: Alpine chạy x-init khi
+  // khởi tạo component CHA, TRƯỚC khi duyệt các con (template x-for) → nội dung có đúng
+  // lúc, KHÔNG phụ thuộc thứ tự nạp script (app.js vs Alpine). Idempotent (chỉ điền khi rỗng).
+  window.injectPostCards = function () {
+    document.querySelectorAll('template[data-postcard]').forEach(function (t) { if (!t.innerHTML.trim()) t.innerHTML = window.POST_CARD_HTML; });
+    document.querySelectorAll('[data-lightbox-host]').forEach(function (h) { if (!h.innerHTML.trim()) h.innerHTML = window.LIGHTBOX_HTML; });
+    document.querySelectorAll('[data-reactors-host]').forEach(function (h) { if (!h.innerHTML.trim()) h.innerHTML = window.REACTORS_HTML; });
+  };
 
   // Danh sách chức danh phổ biến (dùng chung cho autocomplete headline + experience).
   window.COMMON_TITLES = [

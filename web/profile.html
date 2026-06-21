@@ -15,7 +15,7 @@
 
 <div id="pronav"></div>
 
-<main x-data="profilePage()" x-init="load()" class="max-w-3xl mx-auto px-4 py-6 fade-in">
+<main x-data="profilePage()" x-init="injectPostCards(); load()" class="max-w-3xl mx-auto px-4 py-6 fade-in">
 
   <template x-if="loading">
     <p class="subtle">Đang tải hồ sơ…</p>
