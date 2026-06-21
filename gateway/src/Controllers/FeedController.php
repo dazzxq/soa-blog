@@ -347,6 +347,56 @@ final class FeedController
         return Json::list($res, $out, $degraded ? ['degraded' => true, 'parts' => ['profiles']] : []);
     }
 
+    /** GET /api/posts/{id}/reactions — ai đã react, enrich user (allowlist) + phân trang passthrough. */
+    public function postReactions(Request $req, Response $res, array $args): Response
+    {
+        $q       = $req->getQueryParams();
+        $page    = max(1, (int) ($q['page'] ?? 1));
+        $perPage = min(100, max(1, (int) ($q['per_page'] ?? 100)));
+
+        $up = $this->feed->listReactions((int) $args['id'], $page, $perPage);
+        if ($up->getStatusCode() !== 200) {
+            return Json::raw($res, $this->decode($up), $up->getStatusCode());
+        }
+        $decoded = $this->decode($up);
+        $rows    = (array) ($decoded['data'] ?? []);
+        $meta    = (array) ($decoded['meta'] ?? []);
+
+        $ids = [];
+        foreach ($rows as $r) {
+            $uid = (int) ($r['user_id'] ?? 0);
+            if ($uid > 0) {
+                $ids[] = $uid;
+            }
+        }
+        $ids = array_values(array_unique($ids));
+
+        $cardsById = [];
+        if ($ids !== []) {
+            try {
+                $pRes = $this->profiles->batch($ids);
+                if ($pRes->getStatusCode() === 200) {
+                    foreach ((array) ($this->decode($pRes)['data'] ?? []) as $u) {
+                        $cardsById[(int) ($u['id'] ?? 0)] = $this->allowlist($u);
+                    }
+                } else {
+                    $meta['degraded'] = true;
+                    $meta['parts']    = ['profiles'];
+                }
+            } catch (GuzzleException $e) {
+                $meta['degraded'] = true;
+                $meta['parts']    = ['profiles'];
+            }
+        }
+
+        $out = array_map(function (array $r) use ($cardsById): array {
+            $r['user'] = $cardsById[(int) ($r['user_id'] ?? 0)] ?? null;
+            return $r;
+        }, $rows);
+
+        return Json::list($res, $out, $meta);
+    }
+
     /**
      * GET /api/posts/{id} — single-post composition (optional-auth viewer).
      * Single-row variant of the feed assembly: resolve the original (if any),

@@ -6,10 +6,10 @@
   <title>ProConnect — Trang chủ</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { theme:{ extend:{ colors:{ navy:{ DEFAULT:'#1e3a8a', dark:'#172f6b', light:'#3b5bbd' } } } } };</script>
-  <script defer src="/assets/app.js?v=glass-5"></script>
+  <script defer src="/assets/app.js"></script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=glass-5" />
+  <link rel="stylesheet" href="/assets/styles.css" />
 </head>
 <body class="text-slate-900 min-h-screen">
 
@@ -25,22 +25,22 @@
       kết nối chuyên nghiệp.
     </p>
     <div class="flex flex-wrap gap-3">
-      <a href="/login.html" class="pro-btn px-5 py-2.5 rounded-lg text-white font-medium">Bắt đầu ngay</a>
-      <a href="/search.html" class="pro-btn-ghost px-5 py-2.5 rounded-lg font-medium">Khám phá người dùng</a>
+      <a href="/login" class="pro-btn px-5 py-2.5 rounded-lg text-white font-medium">Bắt đầu ngay</a>
+      <a href="/search" class="pro-btn-ghost px-5 py-2.5 rounded-lg font-medium">Khám phá người dùng</a>
     </div>
   </section>
 
   <!-- Thẻ tính năng nổi bật -->
   <section class="grid gap-4 sm:grid-cols-3 mb-6">
-    <a href="/profile-edit.html" class="glass glass-hover p-5 block">
+    <a href="/profile-edit" class="glass glass-hover p-5 block">
       <h3 class="font-semibold text-navy mb-1">Hồ sơ nghề nghiệp</h3>
       <p class="subtle text-sm">Xây dựng hồ sơ chuyên môn nổi bật của bạn.</p>
     </a>
-    <a href="/search.html" class="glass glass-hover p-5 block">
+    <a href="/search" class="glass glass-hover p-5 block">
       <h3 class="font-semibold text-navy mb-1">Kết nối đồng nghiệp</h3>
       <p class="subtle text-sm">Tìm và kết nối với người cùng lĩnh vực.</p>
     </a>
-    <a href="/feed.html" class="glass glass-hover p-5 block">
+    <a href="/feed" class="glass glass-hover p-5 block">
       <h3 class="font-semibold text-navy mb-1">Chia sẻ bài viết</h3>
       <p class="subtle text-sm">Đăng tải và tương tác với nội dung chuyên môn.</p>
     </a>
@@ -62,8 +62,8 @@
       <div>
         <p class="subtle mb-3">Bạn chưa đăng nhập.</p>
         <div class="flex gap-3">
-          <a href="/login.html" class="pro-btn px-4 py-2 rounded-lg text-white">Đăng nhập</a>
-          <a href="/register.html" class="pro-btn-ghost px-4 py-2 rounded-lg">Đăng ký</a>
+          <a href="/login" class="pro-btn px-4 py-2 rounded-lg text-white">Đăng nhập</a>
+          <a href="/register" class="pro-btn-ghost px-4 py-2 rounded-lg">Đăng ký</a>
         </div>
       </div>
     </template>
@@ -87,9 +87,9 @@
           </div>
         </div>
         <div class="flex flex-wrap gap-3 mt-4">
-          <a href="/feed.html" class="pro-btn px-4 py-2 rounded-lg text-white">Đi tới bảng tin</a>
-          <a :href="'/profile.html?id=' + profile.id" class="pro-btn-ghost px-4 py-2 rounded-lg">Hồ sơ của tôi</a>
-          <a href="/profile-edit.html" class="pro-btn-ghost px-4 py-2 rounded-lg">Chỉnh sửa hồ sơ</a>
+          <a href="/feed" class="pro-btn px-4 py-2 rounded-lg text-white">Đi tới bảng tin</a>
+          <a :href="'/profile/' + profile.id" class="pro-btn-ghost px-4 py-2 rounded-lg">Hồ sơ của tôi</a>
+          <a href="/profile-edit" class="pro-btn-ghost px-4 py-2 rounded-lg">Chỉnh sửa hồ sơ</a>
         </div>
       </div>
     </template>

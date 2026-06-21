@@ -289,6 +289,49 @@ final class PostController
         return Json::ok($res, ['post_id' => $postId, 'removed' => $stmt->rowCount() > 0]);
     }
 
+    /** GET /posts/{id}/reactions — danh sách user đã react (mới nhất trước, có phân trang). */
+    public function reactions(Request $req, Response $res, array $args): Response
+    {
+        $postId = (int) $args['id'];
+        if ($postId <= 0) {
+            throw new DomainError(400, 'VALIDATION_FAILED', 'post_id không hợp lệ.');
+        }
+
+        $q       = $req->getQueryParams();
+        // Cap page (chặn OFFSET scan đắt khi page lớn — CWE-770). FE chỉ lấy trang đầu.
+        $page    = min(100, max(1, (int) ($q['page'] ?? 1)));
+        $perPage = min(100, max(1, (int) ($q['per_page'] ?? 50)));
+        $offset  = ($page - 1) * $perPage;
+
+        $pdo = Db::pdo();
+        $countStmt = $pdo->prepare('SELECT COUNT(*) FROM reactions WHERE post_id = :p');
+        $countStmt->execute([':p' => $postId]);
+        $total = (int) $countStmt->fetchColumn();
+
+        $stmt = $pdo->prepare(
+            'SELECT user_id, type, created_at
+               FROM reactions WHERE post_id = :p
+              ORDER BY created_at DESC, id DESC
+              LIMIT :lim OFFSET :off'
+        );
+        $stmt->bindValue(':p',   $postId,  PDO::PARAM_INT);
+        $stmt->bindValue(':lim', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':off', $offset,  PDO::PARAM_INT);
+        $stmt->execute();
+
+        $rows = array_map(static function (array $r): array {
+            $r['user_id'] = (int) $r['user_id'];
+            return $r;
+        }, $stmt->fetchAll());
+
+        return Json::list($res, $rows, [
+            'post_id'  => $postId,
+            'page'     => $page,
+            'per_page' => $perPage,
+            'total'    => $total,
+        ]);
+    }
+
     /** POST /posts/{id}/repost — repost an existing post (D-04 collapse). */
     public function repost(Request $req, Response $res, array $args): Response
     {

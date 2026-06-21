@@ -8,7 +8,7 @@
   <script>
     tailwind.config = { theme: { extend: { colors: { navy: { DEFAULT: '#1e3a8a', dark: '#172f6b', light: '#3b5bbd' } } } } };
   </script>
-  <script defer src="/assets/app.js?v=glass-5"></script>
+  <script defer src="/assets/app.js"></script>
 
   <!-- Trix WYSIWYG (soạn thảo style trực tiếp). Load TRƯỚC Alpine.
        SRI sha384 + crossorigin: nếu file CDN bị sửa đổi, trình duyệt từ chối thực thi. -->
@@ -17,7 +17,7 @@
   <script src="https://unpkg.com/trix@2.1.4/dist/trix.umd.min.js"
           integrity="sha384-vqeujwCjD2Xk8PPQfKQvvZ0/cEQQBE3LyrKwFbeI1BAZbPo/wP59Cer6HO7hF+ay" crossorigin="anonymous"></script>
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=glass-5" />
+  <link rel="stylesheet" href="/assets/styles.css" />
   <style>
     /* Tắt nút đính file của Trix — ảnh chỉ qua uploader riêng (/api/uploads). */
     trix-toolbar .trix-button-group--file-tools { display: none; }
@@ -47,7 +47,7 @@
         </span>
         <p class="font-semibold mt-2 truncate" x-text="me?.display_name || me?.username || ''"></p>
         <p class="subtle text-sm truncate" x-text="me?.headline || ''"></p>
-        <a :href="'/profile.html?id=' + (me?.id || '')" class="pro-btn-ghost block mt-3 text-sm text-center rounded-lg py-1.5">Xem hồ sơ</a>
+        <a :href="me?.id ? ('/profile/' + me.id) : '/profile'" class="pro-btn-ghost block mt-3 text-sm text-center rounded-lg py-1.5">Xem hồ sơ</a>
       </div>
     </div>
   </aside>
@@ -140,16 +140,16 @@
 
           <!-- Tác giả + thời gian -->
           <div class="flex items-center gap-3 mb-3">
-            <span class="w-10 h-10 rounded-full avatar-fallback overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
+            <a :href="'/profile/' + p.author_id" class="w-10 h-10 rounded-full avatar-fallback overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
               <template x-if="p.author?.avatar_url">
                 <img :src="p.author.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
               </template>
               <template x-if="!p.author?.avatar_url">
                 <span x-text="(p.author?.display_name || p.author?.username || '?').trim().charAt(0).toUpperCase()"></span>
               </template>
-            </span>
+            </a>
             <div class="min-w-0">
-              <div class="font-semibold truncate" x-text="p.author?.display_name || p.author?.username || 'Người dùng'"></div>
+              <a :href="'/profile/' + p.author_id" class="font-semibold truncate hover:underline block" x-text="p.author?.display_name || p.author?.username || 'Người dùng'"></a>
               <div class="subtle text-xs truncate" x-show="p.author?.headline" x-text="p.author?.headline"></div>
               <div class="subtle text-xs"><span x-text="timeAgo(p.created_at)"></span><span x-show="p.updated_at"> · đã chỉnh sửa</span></div>
             </div>
@@ -161,7 +161,7 @@
               <p class="subtle text-xs mb-2">đã chia sẻ một bài viết</p>
               <template x-if="p.original">
                 <div class="surface-soft border-l-4 border-slate-200 p-3">
-                  <div class="font-medium text-sm mb-1" x-text="p.original.author?.display_name || p.original.author?.username || 'Người dùng'"></div>
+                  <a :href="'/profile/' + p.original.author_id" class="font-medium text-sm mb-1 hover:underline block" x-text="p.original.author?.display_name || p.original.author?.username || 'Người dùng'"></a>
                   <div class="text-sm prose-rich break-words" x-html="renderContent(p.original)"></div>
                   <template x-if="p.original.image_url">
                     <img :src="p.original.image_url" alt="Ảnh bài viết gốc" class="mt-2 rounded max-h-80 w-auto" />
@@ -201,12 +201,12 @@
 
           <!-- Tóm tắt cảm xúc + bình luận (gom lại kiểu LinkedIn) -->
           <div class="flex items-center gap-3 text-xs subtle mt-3" x-show="p.reaction_count > 0 || p.comment_count > 0">
-            <span x-show="p.reaction_count > 0" class="flex items-center gap-1.5">
+            <button x-show="p.reaction_count > 0" @click="openReactors(p.id)" class="flex items-center gap-1.5 hover:underline" title="Xem ai đã bày tỏ cảm xúc">
               <span class="inline-flex items-center justify-center w-4 h-4 rounded-full" style="background:var(--navy)">
                 <i class="fa-solid fa-thumbs-up text-white" style="font-size:9px"></i>
               </span>
               <span x-text="p.reaction_count"></span>
-            </span>
+            </button>
             <button x-show="p.comment_count > 0" @click="loadComments(p.id)" class="hover:underline"
                     x-text="p.comment_count + ' bình luận'"></button>
           </div>
@@ -347,7 +347,7 @@
       <ul class="space-y-3">
         <template x-for="s in suggestions" :key="s.user_id">
           <li class="flex items-center justify-between gap-2">
-            <a :href="'/profile.html?id=' + s.user_id" class="glass-hover flex items-center gap-2 min-w-0 rounded-lg p-1 -m-1">
+            <a :href="'/profile/' + s.user_id" class="glass-hover flex items-center gap-2 min-w-0 rounded-lg p-1 -m-1">
               <span class="w-9 h-9 rounded-full avatar-fallback overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
                 <template x-if="s.profile?.avatar_url">
                   <img :src="s.profile.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover rounded-full" />
@@ -422,66 +422,52 @@
       </aside>
     </div><!-- /hộp lightbox 80% -->
   </div>
+
+  <!-- Modal: ai đã bày tỏ cảm xúc -->
+  <div x-show="reactorsModal.open" x-cloak @keydown.escape.window="closeReactors()"
+       class="fixed inset-0 z-[60] flex items-start sm:items-center justify-center p-4 bg-slate-900/40 overflow-y-auto">
+    <div @click.outside="closeReactors()" class="glass-strong w-full max-w-sm my-8 max-h-[80vh] overflow-y-auto rounded-2xl">
+      <div class="flex items-center justify-between px-4 py-3 border-b divider-soft">
+        <h3 class="font-semibold">Cảm xúc</h3>
+        <button @click="closeReactors()" class="subtle hover:text-slate-700 px-2" title="Đóng"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-2">
+        <template x-if="reactorsModal.loading"><p class="subtle text-sm px-2 py-3">Đang tải…</p></template>
+        <template x-if="reactorsModal.error"><p class="text-red-600 text-sm px-2 py-3" x-text="reactorsModal.error"></p></template>
+        <template x-if="!reactorsModal.loading && !reactorsModal.error && !reactorsModal.items.length"><p class="subtle text-sm px-2 py-3">Chưa có cảm xúc nào.</p></template>
+        <template x-for="r in reactorsModal.items" :key="r.user_id">
+          <a :href="'/profile/' + r.user_id" class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-slate-100">
+            <span class="w-9 h-9 rounded-full avatar-fallback overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
+              <template x-if="r.user?.avatar_url"><img :src="r.user.avatar_url" alt="" class="w-full h-full object-cover" /></template>
+              <template x-if="!r.user?.avatar_url"><span x-text="(r.user?.display_name || r.user?.username || '?').trim().charAt(0).toUpperCase()"></span></template>
+            </span>
+            <span class="flex-1 truncate text-sm" x-text="r.user?.display_name || r.user?.username || 'Người dùng'"></span>
+            <i class="fa-solid" :class="reactionIcon(r.type)" :style="'color:' + reactionColor(r.type)"></i>
+          </a>
+        </template>
+        <template x-if="!reactorsModal.loading && reactorsModal.total > reactorsModal.items.length">
+          <p class="subtle text-xs px-2 py-2" x-text="'… và ' + (reactorsModal.total - reactorsModal.items.length) + ' người khác'"></p>
+        </template>
+      </div>
+    </div>
+  </div>
 </main>
 
 <script>
 function feedPage() {
   return {
+    ...window.postCardMixin(),   // react/comment/lightbox/reactors/helpers dùng chung
     posts: [],
     loading: true,
     error: '',
-    busy: false,
     degraded: false,
     me: null,
     suggestions: [],
     draft: { content: '', images: [] },
     editId: null,
-    editCommentId: null,
-    editCommentBody: '',
-    lightbox: { open: false, post: null, index: 0 },
-    openComments: {},
-    commentDraft: {},
-    comments: {},
     composeOpen: false,
     uploading: false,
     didFocusPostParam: false,
-    reactions: ['like', 'love', 'haha', 'wow', 'sad', 'angry'],
-
-    reactionLabel(type) {
-      const m = { like: 'Thích', love: 'Yêu thích', haha: 'Haha', wow: 'Wow', sad: 'Buồn', angry: 'Phẫn nộ' };
-      return m[type] || type;
-    },
-
-    reactionIcon(type) {
-      const m = {
-        like: 'fa-thumbs-up', love: 'fa-heart', haha: 'fa-face-laugh-squint',
-        wow: 'fa-face-surprise', sad: 'fa-face-sad-tear', angry: 'fa-face-angry',
-      };
-      return m[type] || 'fa-thumbs-up';
-    },
-
-    // Each reaction its own colour (Facebook-style).
-    reactionColor(type) {
-      const m = { like: '#2563eb', love: '#e0245e', haha: '#f59e0b', wow: '#eab308', sad: '#f59e0b', angry: '#f97316' };
-      return m[type] || '#2563eb';
-    },
-
-    // ---- images: post-render grid + lightbox -------------------------------
-    postImages(p) {
-      if (p && Array.isArray(p.images) && p.images.length) return p.images;
-      return (p && p.image_url) ? [p.image_url] : [];
-    },
-    gridClass(n) { return (n === 2 || n === 3 || n === 4) ? 'grid-cols-2' : 'grid-cols-3'; },
-    cellClass(n, i) {
-      if (n === 3 && i === 0) return 'col-span-2 aspect-[16/9]';
-      if (n === 2) return 'aspect-[4/3]';
-      return 'aspect-square';
-    },
-    openLightbox(p, i) { this.lightbox = { open: true, post: p, index: i }; },
-    closeLightbox() { this.lightbox.open = false; },
-    lbImages() { return this.lightbox.post ? this.postImages(this.lightbox.post) : []; },
-    lbPrev() { const n = this.lbImages().length; if (n) this.lightbox.index = (this.lightbox.index - 1 + n) % n; },
-    lbNext() { const n = this.lbImages().length; if (n) this.lightbox.index = (this.lightbox.index + 1) % n; },
 
     // ---- Trix WYSIWYG: nạp HTML vào editor (editor có sau khi Trix init) ----
     setTrix(html) {
@@ -528,7 +514,7 @@ function feedPage() {
         try {
           const fd = new FormData(); fd.append('file', file);
           const res = await fetch('/api/uploads', { method: 'POST', headers: { 'Authorization': 'Bearer ' + auth.token() }, body: fd });
-          if (res.status === 401) { auth.logout(); window.location.href = '/login.html'; return; }
+          if (res.status === 401) { auth.logout(); window.location.href = '/login'; return; }
           const j = await res.json().catch(() => null);
           if (!res.ok) throw new Error((j && j.error && j.error.message) || ('HTTP ' + res.status));
           if (j && j.data && j.data.url) this.draft.images.push(j.data.url);
@@ -540,14 +526,14 @@ function feedPage() {
     },
 
     async load() {
-      if (!auth.isLoggedIn()) { window.location.href = '/login.html'; return; }
+      if (!auth.isLoggedIn()) { window.location.href = '/login'; return; }
       this.error = '';
       try {
         const r = await api.get('/feed?limit=20');
         this.posts = r.data || [];
         this.degraded = !!(r.meta && r.meta.degraded);
       } catch (e) {
-        if (e.status === 401) { auth.logout(); window.location.href = '/login.html'; return; }
+        if (e.status === 401) { auth.logout(); window.location.href = '/login'; return; }
         this.error = 'Không tải được bảng tin: ' + e.message;
       } finally {
         this.loading = false;
@@ -559,13 +545,15 @@ function feedPage() {
       if (!this.didFocusPostParam) { this.didFocusPostParam = true; await this.focusPostParam(); }
     },
 
-    // Deep-link từ thông báo: /feed.html?post=<id> → cuộn tới đúng bài, highlight.
+    // Deep-link từ thông báo: /feed?post=<id> → cuộn tới đúng bài, highlight.
     // Giữ id dạng chuỗi số (BIGINT-safe); nếu bài không có trong feed thì fetch lẻ; 404/403 → báo nhẹ.
     async focusPostParam() {
-      const id = new URLSearchParams(location.search).get('post');
+      // Ưu tiên path đẹp /post/<id>; fallback ?post= (back-compat).
+      const m = location.pathname.match(/^\/post\/(\d+)/);
+      const id = m ? m[1] : new URLSearchParams(location.search).get('post');
       if (!id || !/^[1-9]\d*$/.test(id)) return;
-      // Xoá ?post khỏi URL để reload thủ công không lặp lại deep-link.
-      try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
+      // Chỉ xoá ?post= cũ khỏi URL (giữ permalink /post/<id> nếu là path).
+      if (!m) { try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ } }
       if (!this.posts.some(p => String(p.id) === id)) {
         try {
           const r = await api.get('/posts/' + encodeURIComponent(id));
@@ -607,94 +595,11 @@ function feedPage() {
       }
     },
 
-    react(id, type)   { return this._act(() => api.post('/posts/' + id + '/reactions', { type })); },
-    unreact(id)       { return this._act(() => api.delete('/posts/' + id + '/reactions')); },
-    repost(id)        { return this._act(() => api.post('/posts/' + id + '/repost')); },
-    async removePost(id) {
-      if (!await proConfirm({ title: 'Xoá bài viết', message: 'Xoá bài viết này? Hành động không thể hoàn tác.', danger: true })) return;
-      return this._act(() => api.delete('/posts/' + id));
-    },
     async invite(id) {
       if (!await proConfirm({ title: 'Gửi lời mời kết nối', message: 'Gửi lời mời kết nối tới người này?', okText: 'Kết nối' })) return;
       return this._act(() => api.post('/connections/requests', { target_id: id }));
     },
 
-    async loadComments(id) {
-      try {
-        const r = await api.get('/posts/' + id + '/comments');
-        this.comments[id] = r.data || [];
-        this.openComments[id] = true;
-      } catch (e) {
-        this.error = 'Không tải được bình luận: ' + e.message;
-      }
-    },
-
-    async addComment(id) {
-      const b = (this.commentDraft[id] || '').trim();
-      if (!b || this.busy) return;
-      this.busy = true;
-      this.error = '';
-      try {
-        await api.post('/posts/' + id + '/comments', { body: b });
-        this.commentDraft[id] = '';
-        await this.loadComments(id);
-        await this.load();
-      } catch (e) {
-        this.error = 'Gửi bình luận không thành công: ' + e.message;
-      } finally {
-        this.busy = false;
-      }
-    },
-
-    startEditComment(c) {
-      this.editCommentId = c.id;
-      this.editCommentBody = c.body || '';
-    },
-    async saveComment(pid, cid) {
-      const b = (this.editCommentBody || '').trim();
-      if (!b || this.busy) return;
-      this.busy = true;
-      this.error = '';
-      try {
-        await api.patch('/comments/' + cid, { body: b });
-        this.editCommentId = null;
-        await this.loadComments(pid);
-      } catch (e) {
-        this.error = 'Sửa bình luận không thành công: ' + e.message;
-      } finally {
-        this.busy = false;
-      }
-    },
-
-    async deleteComment(pid, cid) {
-      if (this.busy) return;
-      if (!await proConfirm({ title: 'Xoá bình luận', message: 'Xoá bình luận này?', danger: true })) return;
-      this.busy = true;
-      this.error = '';
-      try {
-        await api.delete('/comments/' + cid);
-        await this.loadComments(pid);
-        await this.load();
-      } catch (e) {
-        this.error = 'Xoá bình luận không thành công: ' + e.message;
-      } finally {
-        this.busy = false;
-      }
-    },
-
-    async _act(fn) {
-      if (this.busy) return;
-      this.busy = true;
-      this.error = '';
-      try {
-        await fn();
-        await this.load();
-      } catch (e) {
-        this.error = 'Thao tác không thành công: ' + e.message;
-      } finally {
-        this.busy = false;
-      }
-    },
   };
 }
 </script>

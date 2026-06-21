@@ -24,6 +24,7 @@ return static function (App $app): void {
 
     // Suffixed literals BEFORE the bare /posts/{id} routes.
     $app->post('/posts/{id:[0-9]+}/repost',    [PostController::class, 'repost']);
+    $app->get('/posts/{id:[0-9]+}/reactions',  [PostController::class, 'reactions']); // list who reacted (paginated)
     $app->post('/posts/{id:[0-9]+}/reactions', [PostController::class, 'react']);    // upsert {type}
     $app->delete('/posts/{id:[0-9]+}/reactions', [PostController::class, 'unreact']); // remove caller's
     $app->get('/posts/{id:[0-9]+}/comments',  [CommentController::class, 'index']);

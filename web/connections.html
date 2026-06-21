@@ -6,10 +6,10 @@
   <title>ProConnect — Kết nối</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { theme:{ extend:{ colors:{ navy:{ DEFAULT:'#1e3a8a', dark:'#172f6b', light:'#3b5bbd' } } } } };</script>
-  <script defer src="/assets/app.js?v=glass-5"></script>
+  <script defer src="/assets/app.js"></script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=glass-5" />
+  <link rel="stylesheet" href="/assets/styles.css" />
 </head>
 <body class="text-slate-900 min-h-screen">
 
@@ -39,7 +39,7 @@
         <ul class="space-y-3">
           <template x-for="c in conns" :key="c.user_id">
             <li class="surface-soft glass-hover flex items-center justify-between gap-3 p-3">
-              <a :href="'/profile.html?id=' + c.user_id" class="flex items-center gap-3 min-w-0 hover:underline">
+              <a :href="'/profile/' + c.user_id" class="flex items-center gap-3 min-w-0 hover:underline">
                 <span class="avatar-fallback w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
                   <template x-if="c.profile && c.profile.avatar_url">
                     <img :src="c.profile.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
@@ -66,7 +66,7 @@
         <ul class="space-y-3">
           <template x-for="r in incoming" :key="r.request_id">
             <li class="surface-soft glass-hover flex items-center justify-between gap-3 p-3">
-              <a :href="'/profile.html?id=' + r.user_id" class="flex items-center gap-3 min-w-0 hover:underline">
+              <a :href="'/profile/' + r.user_id" class="flex items-center gap-3 min-w-0 hover:underline">
                 <span class="avatar-fallback w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
                   <template x-if="r.profile && r.profile.avatar_url">
                     <img :src="r.profile.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
@@ -97,7 +97,7 @@
         <ul class="space-y-3">
           <template x-for="r in outgoing" :key="r.request_id">
             <li class="surface-soft glass-hover flex items-center justify-between gap-3 p-3">
-              <a :href="'/profile.html?id=' + r.user_id" class="flex items-center gap-3 min-w-0 hover:underline">
+              <a :href="'/profile/' + r.user_id" class="flex items-center gap-3 min-w-0 hover:underline">
                 <span class="avatar-fallback w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
                   <template x-if="r.profile && r.profile.avatar_url">
                     <img :src="r.profile.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
@@ -124,7 +124,7 @@
         <ul class="space-y-3">
           <template x-for="s in suggestions" :key="s.user_id">
             <li class="surface-soft glass-hover flex items-center justify-between gap-3 p-3">
-              <a :href="'/profile.html?id=' + s.user_id" class="flex items-center gap-3 min-w-0 hover:underline">
+              <a :href="'/profile/' + s.user_id" class="flex items-center gap-3 min-w-0 hover:underline">
                 <span class="avatar-fallback w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
                   <template x-if="s.profile && s.profile.avatar_url">
                     <img :src="s.profile.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
@@ -158,7 +158,7 @@ function connectionsPage() {
     suggestions: [],
 
     async load() {
-      if (!auth.isLoggedIn()) { window.location.href = '/login.html'; return; }
+      if (!auth.isLoggedIn()) { window.location.href = '/login'; return; }
       this.error = '';
       try {
         const [c, inc, out, sug] = await Promise.all([
@@ -172,7 +172,7 @@ function connectionsPage() {
         this.outgoing = out.data || [];
         this.suggestions = sug.data || [];
       } catch (e) {
-        if (e.status === 401) { auth.logout(); window.location.href = '/login.html'; return; }
+        if (e.status === 401) { auth.logout(); window.location.href = '/login'; return; }
         this.error = 'Không tải được danh sách kết nối: ' + e.message;
       } finally {
         this.loading = false;

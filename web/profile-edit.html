@@ -6,10 +6,10 @@
   <title>ProConnect — Chỉnh sửa hồ sơ</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { theme:{ extend:{ colors:{ navy:{ DEFAULT:'#1e3a8a', dark:'#172f6b', light:'#3b5bbd' } } } } };</script>
-  <script defer src="/assets/app.js?v=glass-5"></script>
+  <script defer src="/assets/app.js"></script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=glass-5" />
+  <link rel="stylesheet" href="/assets/styles.css" />
 </head>
 <body class="text-slate-900 min-h-screen">
 
@@ -19,7 +19,7 @@
 
   <div class="flex items-center justify-between">
     <h1 class="text-2xl font-bold">Chỉnh sửa hồ sơ</h1>
-    <a :href="myId ? ('/profile.html?id=' + myId) : '/profile.html'" class="pro-btn-ghost text-sm px-3 py-1.5 rounded-lg">Xem hồ sơ</a>
+    <a :href="myId ? ('/profile/' + myId) : '/profile'" class="pro-btn-ghost text-sm px-3 py-1.5 rounded-lg">Xem hồ sơ</a>
   </div>
 
   <!-- Toast thông báo -->
@@ -44,11 +44,17 @@
           </label>
           <label class="block">
             <span class="text-sm subtle">Chức danh (headline)</span>
-            <input x-model="basic.headline" type="text" maxlength="160" list="titlePresets" autocomplete="off"
-                   placeholder="VD: Kỹ sư phần mềm" class="glass-input mt-1 w-full px-3 py-2" />
-            <datalist id="titlePresets">
-              <template x-for="t in commonTitles" :key="t"><option :value="t"></option></template>
-            </datalist>
+            <div class="relative mt-1" x-data="{ open:false, items(){ const s=(basic.headline||'').toLowerCase(); return window.COMMON_TITLES.filter(t=>t.toLowerCase().includes(s)).slice(0,8); }, pick(t){ basic.headline=t; this.open=false; } }">
+              <input x-model="basic.headline" type="text" maxlength="160" autocomplete="off" placeholder="VD: Kỹ sư phần mềm"
+                     @focus="open=true" @input="open=true" @click.outside="open=false"
+                     class="glass-input w-full px-3 py-2" />
+              <div x-show="open && items().length" x-cloak
+                   class="absolute left-0 right-0 top-full mt-1 z-30 glass-strong rounded-lg max-h-56 overflow-auto shadow-lg">
+                <template x-for="t in items()" :key="t">
+                  <button type="button" @click="pick(t)" class="block w-full text-left px-3 py-2 text-sm hover:bg-slate-100" x-text="t"></button>
+                </template>
+              </div>
+            </div>
           </label>
           <label class="block">
             <span class="text-sm subtle">Địa điểm</span>
@@ -111,7 +117,12 @@
               <template x-if="editExpId === ex.id">
                 <div class="space-y-2">
                   <input x-model="expForm.company" placeholder="Công ty" class="glass-input w-full px-3 py-2" />
-                  <input x-model="expForm.title" placeholder="Chức danh" class="glass-input w-full px-3 py-2" />
+                  <div class="relative" x-data="{ open:false, items(){ const s=(expForm.title||'').toLowerCase(); return window.COMMON_TITLES.filter(t=>t.toLowerCase().includes(s)).slice(0,8); }, pick(t){ expForm.title=t; this.open=false; } }">
+                    <input x-model="expForm.title" autocomplete="off" placeholder="Chức danh" @focus="open=true" @input="open=true" @click.outside="open=false" class="glass-input w-full px-3 py-2" />
+                    <div x-show="open && items().length" x-cloak class="absolute left-0 right-0 top-full mt-1 z-30 glass-strong rounded-lg max-h-56 overflow-auto shadow-lg">
+                      <template x-for="t in items()" :key="t"><button type="button" @click="pick(t)" class="block w-full text-left px-3 py-2 text-sm hover:bg-slate-100" x-text="t"></button></template>
+                    </div>
+                  </div>
                   <div class="space-y-2">
                     <p class="text-xs subtle">Bắt đầu</p>
                     <div class="flex gap-2">
@@ -154,7 +165,12 @@
         <div class="border-t divider-soft pt-4 space-y-2">
           <p class="text-sm font-medium">Thêm kinh nghiệm</p>
           <input x-model="newExp.company" placeholder="Công ty" class="glass-input w-full px-3 py-2" />
-          <input x-model="newExp.title" placeholder="Chức danh" class="glass-input w-full px-3 py-2" />
+          <div class="relative" x-data="{ open:false, items(){ const s=(newExp.title||'').toLowerCase(); return window.COMMON_TITLES.filter(t=>t.toLowerCase().includes(s)).slice(0,8); }, pick(t){ newExp.title=t; this.open=false; } }">
+            <input x-model="newExp.title" autocomplete="off" placeholder="Chức danh" @focus="open=true" @input="open=true" @click.outside="open=false" class="glass-input w-full px-3 py-2" />
+            <div x-show="open && items().length" x-cloak class="absolute left-0 right-0 top-full mt-1 z-30 glass-strong rounded-lg max-h-56 overflow-auto shadow-lg">
+              <template x-for="t in items()" :key="t"><button type="button" @click="pick(t)" class="block w-full text-left px-3 py-2 text-sm hover:bg-slate-100" x-text="t"></button></template>
+            </div>
+          </div>
           <div class="space-y-2">
             <p class="text-xs subtle">Bắt đầu</p>
             <div class="flex gap-2">
@@ -299,12 +315,12 @@ function profileEditPage() {
 
     async init() {
       // Bắt buộc đăng nhập.
-      if (!auth.isLoggedIn()) { window.location.href = '/login.html'; return; }
+      if (!auth.isLoggedIn()) { window.location.href = '/login'; return; }
       try {
         this.myId = (await api.get('/me')).data.id;
         await this.reload();
       } catch (e) {
-        if (e.status === 401) { auth.logout(); window.location.href = '/login.html'; return; }
+        if (e.status === 401) { auth.logout(); window.location.href = '/login'; return; }
         this.toast('Không tải được hồ sơ: ' + e.message, false);
       } finally {
         this.loading = false;
@@ -350,7 +366,7 @@ function profileEditPage() {
       try {
         const fd = new FormData(); fd.append('file', file);
         const res = await fetch('/api/uploads', { method: 'POST', headers: { 'Authorization': 'Bearer ' + auth.token() }, body: fd });
-        if (res.status === 401) { auth.logout(); window.location.href = '/login.html'; return; }
+        if (res.status === 401) { auth.logout(); window.location.href = '/login'; return; }
         const j = await res.json().catch(() => null);
         if (!res.ok) throw new Error((j && j.error && j.error.message) || ('HTTP ' + res.status));
         if (j && j.data && j.data.url) { this.basic[field] = j.data.url; this.toast('Đã tải ảnh lên. Bấm "Lưu" để áp dụng.', true); }

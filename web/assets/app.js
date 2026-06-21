@@ -208,6 +208,109 @@
     });
   };
 
+  // ---------- Shared post-card logic (feed + profile dùng chung) ----------
+  // Spread vào component: return { ...postCardMixin(), <state/method riêng>, load() }.
+  // Page-specific GHI ĐÈ mixin (đặt SAU). Mỗi trang PHẢI có error + load() riêng
+  // (mixin gọi this.load để refresh sau thao tác). KHÔNG chứa compose/Trix.
+  window.postCardMixin = function () {
+    return {
+      busy: false,
+      comments: {},
+      openComments: {},
+      commentDraft: {},
+      editCommentId: null,
+      editCommentBody: '',
+      reactions: ['like', 'love', 'haha', 'wow', 'sad', 'angry'],
+      lightbox: { open: false, post: null, index: 0 },
+      reactorsModal: { open: false, loading: false, items: [], total: 0, error: '' },
+
+      reactionLabel(t) { return ({ like: 'Thích', love: 'Yêu thích', haha: 'Haha', wow: 'Wow', sad: 'Buồn', angry: 'Phẫn nộ' })[t] || t; },
+      reactionIcon(t) { return ({ like: 'fa-thumbs-up', love: 'fa-heart', haha: 'fa-face-laugh-squint', wow: 'fa-face-surprise', sad: 'fa-face-sad-tear', angry: 'fa-face-angry' })[t] || 'fa-thumbs-up'; },
+      reactionColor(t) { return ({ like: '#2563eb', love: '#e0245e', haha: '#f59e0b', wow: '#eab308', sad: '#f59e0b', angry: '#f97316' })[t] || '#2563eb'; },
+
+      postImages(p) { if (p && Array.isArray(p.images) && p.images.length) return p.images; return (p && p.image_url) ? [p.image_url] : []; },
+      gridClass(n) { return (n === 2 || n === 3 || n === 4) ? 'grid-cols-2' : 'grid-cols-3'; },
+      cellClass(n, i) { if (n === 3 && i === 0) return 'col-span-2 aspect-[16/9]'; if (n === 2) return 'aspect-[4/3]'; return 'aspect-square'; },
+      openLightbox(p, i) { this.lightbox = { open: true, post: p, index: i }; },
+      closeLightbox() { this.lightbox.open = false; },
+      lbImages() { return this.lightbox.post ? this.postImages(this.lightbox.post) : []; },
+      lbPrev() { const n = this.lbImages().length; if (n) this.lightbox.index = (this.lightbox.index - 1 + n) % n; },
+      lbNext() { const n = this.lbImages().length; if (n) this.lightbox.index = (this.lightbox.index + 1) % n; },
+
+      react(id, type) { return this._act(() => api.post('/posts/' + id + '/reactions', { type })); },
+      unreact(id) { return this._act(() => api.delete('/posts/' + id + '/reactions')); },
+      repost(id) { return this._act(() => api.post('/posts/' + id + '/repost')); },
+      async removePost(id) {
+        if (!await proConfirm({ title: 'Xoá bài viết', message: 'Xoá bài viết này? Hành động không thể hoàn tác.', danger: true })) return;
+        return this._act(() => api.delete('/posts/' + id));
+      },
+
+      async loadComments(id) {
+        try { const r = await api.get('/posts/' + id + '/comments'); this.comments[id] = r.data || []; this.openComments[id] = true; }
+        catch (e) { this.error = 'Không tải được bình luận: ' + e.message; }
+      },
+      async addComment(id) {
+        const b = (this.commentDraft[id] || '').trim();
+        if (!b || this.busy) return;
+        this.busy = true; this.error = '';
+        try { await api.post('/posts/' + id + '/comments', { body: b }); this.commentDraft[id] = ''; await this.loadComments(id); await this.load(); }
+        catch (e) { this.error = 'Gửi bình luận không thành công: ' + e.message; }
+        finally { this.busy = false; }
+      },
+      startEditComment(c) { this.editCommentId = c.id; this.editCommentBody = c.body || ''; },
+      async saveComment(pid, cid) {
+        const b = (this.editCommentBody || '').trim();
+        if (!b || this.busy) return;
+        this.busy = true; this.error = '';
+        try { await api.patch('/comments/' + cid, { body: b }); this.editCommentId = null; await this.loadComments(pid); }
+        catch (e) { this.error = 'Sửa bình luận không thành công: ' + e.message; }
+        finally { this.busy = false; }
+      },
+      async deleteComment(pid, cid) {
+        if (this.busy) return;
+        if (!await proConfirm({ title: 'Xoá bình luận', message: 'Xoá bình luận này?', danger: true })) return;
+        this.busy = true; this.error = '';
+        try { await api.delete('/comments/' + cid); await this.loadComments(pid); await this.load(); }
+        catch (e) { this.error = 'Xoá bình luận không thành công: ' + e.message; }
+        finally { this.busy = false; }
+      },
+
+      // Ai đã react — modal (lấy 100 đầu; nếu total lớn hơn thì hiện "và N người khác").
+      async openReactors(id) {
+        this.reactorsModal = { open: true, loading: true, items: [], total: 0, error: '' };
+        try {
+          const r = await api.get('/posts/' + id + '/reactions?per_page=100');
+          this.reactorsModal.items = r.data || [];
+          this.reactorsModal.total = (r.meta && r.meta.total) || (r.data || []).length;
+        } catch (e) { this.reactorsModal.error = 'Không tải được danh sách cảm xúc.'; }
+        finally { this.reactorsModal.loading = false; }
+      },
+      closeReactors() { this.reactorsModal.open = false; },
+
+      async _act(fn) {
+        if (this.busy) return;
+        this.busy = true; this.error = '';
+        try { await fn(); await this.load(); }
+        catch (e) { this.error = 'Thao tác không thành công: ' + e.message; }
+        finally { this.busy = false; }
+      },
+    };
+  };
+
+  // Danh sách chức danh phổ biến (dùng chung cho autocomplete headline + experience).
+  window.COMMON_TITLES = [
+    'Sinh viên', 'Thực tập sinh', 'Kỹ sư phần mềm', 'Lập trình viên', 'Lập trình viên Frontend',
+    'Lập trình viên Backend', 'Lập trình viên Full-stack', 'Kỹ sư DevOps', 'Kỹ sư dữ liệu',
+    'Nhà khoa học dữ liệu', 'Kỹ sư AI/Machine Learning', 'Kỹ sư QA/Kiểm thử', 'Quản trị hệ thống',
+    'Kỹ sư bảo mật', 'Chuyên viên phân tích nghiệp vụ', 'Quản lý dự án', 'Product Manager',
+    'Product Owner', 'Scrum Master', 'Thiết kế UI/UX', 'Thiết kế đồ hoạ', 'Kiến trúc sư phần mềm',
+    'Trưởng nhóm kỹ thuật', 'Giám đốc công nghệ (CTO)', 'Chuyên viên Marketing', 'Chuyên viên nhân sự',
+    'Kế toán', 'Chuyên viên kinh doanh', 'Giảng viên', 'Nghiên cứu sinh',
+  ];
+
+  // (Autocomplete chức danh dùng x-data inline bind thẳng vào model cha — xem
+  // profile-edit.html — nên không cần factory ở đây; chỉ cần window.COMMON_TITLES.)
+
   // ---------- Profile loader (Phase-1 endpoints only) ----------
   // Uses /api/me (JWT) to resolve the current account, then /api/profiles/{id}
   // for the public basic profile {id, username, display_name}. The retired blog
@@ -279,9 +382,9 @@
         // Giữ ID dạng chuỗi số (BIGINT-safe, không để Number() làm tròn ID 64-bit).
         var rid = String(n.ref_id == null ? '' : n.ref_id);
         if ((n.type === 'reaction' || n.type === 'comment') && /^[1-9]\d*$/.test(rid)) {
-          window.location.href = '/feed.html?post=' + encodeURIComponent(rid);
+          window.location.href = '/post/' + encodeURIComponent(rid);
         } else if (n.type === 'invite') {
-          window.location.href = '/connections.html';
+          window.location.href = '/connections';
         }
       },
       message(n) {
@@ -317,7 +420,7 @@
     '<nav class="glass-nav z-30">' +
       '<div class="max-w-[1248px] mx-auto px-4 py-2 flex items-center justify-between gap-4">' +
         // LEFT: logo + brand + tagline
-        '<a href="/feed.html" class="flex items-center gap-2 shrink-0">' +
+        '<a href="/feed" class="flex items-center gap-2 shrink-0">' +
           '<svg viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke="#1e3a8a" stroke-width="2" ' +
                'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
             '<rect x="2" y="8" width="13" height="8" rx="4"></rect>' +
@@ -327,7 +430,7 @@
         '</a>' +
         // MIDDLE: search (logged-in only) → /search.html?q=
         '<template x-if="isLoggedIn">' +
-          '<form @submit.prevent="location.href=\'/search.html?q=\'+encodeURIComponent($refs.nq.value)" class="hidden sm:block flex-1 max-w-xs">' +
+          '<form @submit.prevent="location.href=\'/search?q=\'+encodeURIComponent($refs.nq.value)" class="hidden sm:block flex-1 max-w-xs">' +
             '<input x-ref="nq" type="search" placeholder="Tìm người, kỹ năng…" ' +
                    'class="glass-input px-3 py-1.5 text-sm w-full" />' +
           '</form>' +
@@ -337,10 +440,10 @@
           '<div class="flex items-center gap-3 sm:gap-4 text-sm shrink-0 min-w-0">' +
             // "Bảng tin" text link hidden on xs (logo already links to feed) to avoid
             // navbar overflow on small screens (codex impl-review fix).
-            '<a href="/feed.html" class="hidden sm:flex flex-col items-center leading-tight gap-0.5" :class="active===\'feed\' ? \'text-navy\' : \'subtle hover:text-slate-700\'">' +
+            '<a href="/feed" class="hidden sm:flex flex-col items-center leading-tight gap-0.5" :class="active===\'feed\' ? \'text-navy\' : \'subtle hover:text-slate-700\'">' +
               '<i class="fa-solid fa-house text-base" aria-hidden="true"></i><span class="text-xs">Bảng tin</span>' +
             '</a>' +
-            '<a href="/connections.html" class="relative flex flex-col items-center leading-tight gap-0.5" :class="active===\'connections\' ? \'text-navy\' : \'subtle hover:text-slate-700\'">' +
+            '<a href="/connections" class="relative flex flex-col items-center leading-tight gap-0.5" :class="active===\'connections\' ? \'text-navy\' : \'subtle hover:text-slate-700\'">' +
               '<i class="fa-solid fa-user-group text-base" aria-hidden="true"></i><span class="text-xs">Kết nối</span>' +
               '<span x-show="invites>0" x-cloak ' +
                     'class="pro-badge absolute -top-1 right-1 text-[10px] rounded-full min-w-[16px] h-[16px] px-1 inline-flex items-center justify-center" ' +
@@ -390,8 +493,8 @@
               '</button>' +
               '<div x-show="m" @click.outside="m=false" x-cloak ' +
                    'class="absolute right-0 mt-2 w-44 glass-strong rounded-2xl z-40 text-left overflow-hidden">' +
-                '<a :href="\'/profile.html?id=\'+me.id" class="block px-3 py-2 hover:bg-slate-50">Hồ sơ của tôi</a>' +
-                '<a href="/profile-edit.html" class="block px-3 py-2 hover:bg-slate-50">Chỉnh sửa hồ sơ</a>' +
+                '<a :href="\'/profile/\'+me.id" class="block px-3 py-2 hover:bg-slate-50">Hồ sơ của tôi</a>' +
+                '<a href="/profile-edit" class="block px-3 py-2 hover:bg-slate-50">Chỉnh sửa hồ sơ</a>' +
                 '<button @click="logout()" class="block w-full text-left px-3 py-2 text-red-600 hover:bg-slate-50">Đăng xuất</button>' +
               '</div>' +
             '</div>' +
@@ -400,8 +503,8 @@
         // RIGHT (logged-out): Đăng nhập / Đăng ký
         '<template x-if="!isLoggedIn">' +
           '<div class="flex items-center gap-3 text-sm shrink-0">' +
-            '<a href="/login.html" class="hover:underline">Đăng nhập</a>' +
-            '<a href="/register.html" class="pro-btn px-3 py-1.5 rounded">Đăng ký</a>' +
+            '<a href="/login" class="hover:underline">Đăng nhập</a>' +
+            '<a href="/register" class="pro-btn px-3 py-1.5 rounded">Đăng ký</a>' +
           '</div>' +
         '</template>' +
       '</div>' +

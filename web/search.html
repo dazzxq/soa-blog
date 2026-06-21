@@ -6,10 +6,10 @@
   <title>ProConnect — Tìm kiếm</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { theme:{ extend:{ colors:{ navy:{ DEFAULT:'#1e3a8a', dark:'#172f6b', light:'#3b5bbd' } } } } };</script>
-  <script defer src="/assets/app.js?v=glass-5"></script>
+  <script defer src="/assets/app.js"></script>
 
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=glass-5" />
+  <link rel="stylesheet" href="/assets/styles.css" />
 </head>
 <body class="text-slate-900 min-h-screen">
 
@@ -53,7 +53,7 @@
     <ul class="space-y-3">
       <template x-for="u in results" :key="u.id">
         <li class="glass glass-hover p-4 flex items-center justify-between gap-3">
-          <a :href="'/profile.html?id=' + u.id" class="flex items-center gap-3 min-w-0 hover:underline">
+          <a :href="'/profile/' + u.id" class="flex items-center gap-3 min-w-0 hover:underline">
             <span class="avatar-fallback w-12 h-12 rounded-full overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
               <template x-if="u.avatar_url">
                 <img :src="u.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
@@ -78,7 +78,7 @@
               <button disabled class="pro-btn-ghost text-sm px-3 py-1.5 rounded-lg opacity-60 cursor-default">Đã gửi lời mời</button>
             </template>
             <template x-if="u.connection_status === 'pending_incoming'">
-              <a href="/connections.html"
+              <a href="/connections"
                  class="pro-btn-ghost text-sm px-3 py-1.5 rounded-lg">Chờ bạn phản hồi</a>
             </template>
             <template x-if="u.connection_status === 'connected'">
@@ -110,7 +110,7 @@ function searchPage() {
     searched: false,
 
     init() {
-      if (!auth.isLoggedIn()) { window.location.href = '/login.html'; return; }
+      if (!auth.isLoggedIn()) { window.location.href = '/login'; return; }
       const q0 = new URLSearchParams(location.search).get('q');
       if (q0) { this.q = q0; this.run(); }
     },
@@ -126,7 +126,7 @@ function searchPage() {
         this.results = r.data || [];
         this.degraded = !!(r.meta && r.meta.degraded);
       } catch (e) {
-        if (e.status === 401) { auth.logout(); window.location.href = '/login.html'; return; }
+        if (e.status === 401) { auth.logout(); window.location.href = '/login'; return; }
         this.results = [];
         this.error = 'Tìm kiếm không thành công: ' + e.message;
       } finally {

@@ -70,6 +70,7 @@ return static function (App $app): void {
         $g->get   ('/feed',                        [FeedController::class, 'feed'])->add($jwtMw);
         $g->post  ('/posts',                       [FeedController::class, 'createPost'])->add($jwtMw);
         $g->post  ('/posts/{id:[0-9]+}/repost',    [FeedController::class, 'repost'])->add($jwtMw);
+        $g->get   ('/posts/{id:[0-9]+}/reactions', [FeedController::class, 'postReactions'])->add($jwtMw); // ai đã react — cần đăng nhập (count vẫn public, danh sách thì không)
         $g->post  ('/posts/{id:[0-9]+}/reactions', [FeedController::class, 'react'])->add($jwtMw);
         $g->delete('/posts/{id:[0-9]+}/reactions', [FeedController::class, 'unreact'])->add($jwtMw);
         $g->get   ('/posts/{id:[0-9]+}/comments',  [FeedController::class, 'listComments']);

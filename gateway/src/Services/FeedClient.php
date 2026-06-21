@@ -71,6 +71,14 @@ final class FeedClient
         return $this->http->request('GET', '/posts/' . $id . '/comments');
     }
 
+    /** List who reacted (paginated). */
+    public function listReactions(int $id, int $page = 1, int $perPage = 100): ResponseInterface
+    {
+        return $this->http->request('GET', '/posts/' . $id . '/reactions', [
+            'query' => ['page' => $page, 'per_page' => $perPage],
+        ]);
+    }
+
     // --- Mutations (caller -> X-User-Id; body user_id never trusted) ---------
 
     public function createPost(int $author, array $body): ResponseInterface
