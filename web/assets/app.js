@@ -576,6 +576,7 @@
   // khởi tạo component CHA, TRƯỚC khi duyệt các con (template x-for) → nội dung có đúng
   // lúc, KHÔNG phụ thuộc thứ tự nạp script (app.js vs Alpine). Idempotent (chỉ điền khi rỗng).
   // (Post-card component dùng chung cho feed / single-post / profile — một nguồn markup.)
+  // Inject qua x-init đảm bảo template có nội dung trước khi Alpine duyệt x-for.
   window.injectPostCards = function () {
     document.querySelectorAll('template[data-postcard]').forEach(function (t) { if (!t.innerHTML.trim()) t.innerHTML = window.POST_CARD_HTML; });
     document.querySelectorAll('[data-lightbox-host]').forEach(function (h) { if (!h.innerHTML.trim()) h.innerHTML = window.LIGHTBOX_HTML; });

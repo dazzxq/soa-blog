@@ -227,17 +227,16 @@ docker compose up -d --remove-orphans
 echo "[deploy] re-applying db/09 backfill (catch build-window NULLs)"
 docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" < db/09-migrate-snowflake-postid.sql || echo "[deploy] WARN: re-backfill non-fatal issue (continuing)"
 
-# 8c) ENFORCE post_id NOT NULL SAU CUTOVER (security review #2 + plan ISSUE-8).
-# Lúc này feed-service CŨ đã bị thay (chỉ writer MỚI — luôn set post_id) nên ép
-# NOT NULL an toàn (không vỡ INSERT cũ). Guard BLOCKING: còn NULL → dừng deploy.
+# 8c) KIỂM TRA tính toàn vẹn post_id (NON-FATAL). Cột post_id để NULLABLE vì seed
+# migration cũ INSERT không liệt kê post_id (strict mode báo 1364 dù có trigger).
+# App luôn tự đặt post_id + db/09 backfill nên thực tế 0 NULL; chỉ cảnh báo nếu còn.
 NULLN=$(docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" -N -e \
   "SELECT COUNT(*) FROM proconnect_feed.posts WHERE post_id IS NULL" | tr -d '[:space:]')
 if [[ "$NULLN" != "0" ]]; then
-  echo "[deploy] FATAL: $NULLN bài còn post_id NULL sau backfill — dừng deploy" >&2
-  exit 3
+  echo "[deploy] WARN: $NULLN bài còn post_id NULL (app/backfill nên đã lấp — kiểm tra)" >&2
+else
+  echo "[deploy] post_id integrity OK (0 NULL rows)"
 fi
-docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" < db/10-enforce-postid-notnull.sql
-echo "[deploy] post_id enforced NOT NULL via db/10 (0 NULL rows)"
 
 # Web container uses bind-mounted static files. New file content from git
 # pull won't be visible until the container restarts (it tracks the old

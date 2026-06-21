@@ -90,16 +90,11 @@ CREATE TABLE IF NOT EXISTS comments (
 --   id 1: author 2 (duyet) — first demo post, no image, not a repost.
 --   id 2: author 3 (long)  — connected to duyet, proves timeline = self+connections.
 --   id 3: author 1 (demo)  — content '', repost_of 1 (demo reposts duyet's post 1, FEED-05).
--- Trigger: tự sinh post_id (snowflake) khi INSERT bỏ trống. Cột post_id là NOT NULL
--- (db/10) nên mọi seed INSERT cũ (không liệt kê post_id, gồm cả db/06) vẫn chạy được.
--- Idempotent (DROP + CREATE). Layout khớp backfill db/09: (ms từ 2020-01-01 << 22) | (id thấp).
--- App (feed-service) tự đặt post_id nên COALESCE giữ nguyên, trigger chỉ điền khi NULL.
-DROP TRIGGER IF EXISTS trg_posts_postid_bi;
-CREATE TRIGGER trg_posts_postid_bi BEFORE INSERT ON posts FOR EACH ROW
-  SET NEW.post_id = COALESCE(
-    NEW.post_id,
-    ((CAST(UNIX_TIMESTAMP(NOW(3)) * 1000 AS UNSIGNED) - 1577836800000) << 22) | (NEW.id & 0x3FFFFF)
-  );
+-- post_id để NULLABLE: các seed INSERT cũ (db/04 + db/06) KHÔNG liệt kê post_id, mà
+-- strict mode + INSERT...SELECT vẫn báo ERROR 1364 dù có BEFORE INSERT trigger → không
+-- thể ép NOT NULL ở cột. Đảm bảo cột nullable TRƯỚC khi seed chạy (đảo lại nếu lần
+-- deploy trước đã ép NOT NULL). App luôn tự đặt post_id; db/09 backfill các hàng NULL.
+ALTER TABLE posts MODIFY IF EXISTS post_id BIGINT UNSIGNED NULL;
 
 INSERT INTO posts (id, author_id, content, image_url, repost_of)
 SELECT 1, 2, 'Chào mừng đến với ProConnect! Đây là bài viết demo đầu tiên.', NULL, NULL

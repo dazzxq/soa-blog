@@ -4,9 +4,10 @@
 -- auto-increment làm PK NỘI BỘ. comments.post_id / reactions.post_id / repost_of
 -- vẫn tham chiếu id NỘI BỘ (feed-service dịch snowflake↔id ở biên).
 --
--- File này CHỈ add (nullable) + backfill. KHÔNG ép NOT NULL ở đây — việc đó là
--- two-phase: deploy này giữ nullable (tránh vỡ INSERT của service CŨ trong cửa sổ
--- build), một migration sau (db/10) mới enforce NOT NULL khi đã 0 NULL ổn định.
+-- File này CHỈ add (nullable) + backfill. Cột post_id GIỮ NULLABLE vĩnh viễn vì các
+-- seed migration cũ (db/04 + db/06) INSERT không liệt kê post_id, mà strict mode +
+-- INSERT...SELECT báo 1364 dù có trigger → không thể ép NOT NULL. App luôn tự đặt
+-- post_id, backfill lấp hàng cũ, UNIQUE chống trùng; deploy.sh cảnh báo nếu còn NULL.
 --
 -- Idempotent: chạy lại an toàn (ADD COLUMN IF NOT EXISTS + WHERE post_id IS NULL).
 -- Áp ở scripts/deploy.sh như bước migration CUỐI, sau mọi seed/migration cũ và
