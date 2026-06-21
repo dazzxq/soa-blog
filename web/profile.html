@@ -75,9 +75,28 @@
           <template x-if="profile.headline">
             <p class="text-slate-700" x-text="profile.headline"></p>
           </template>
-          <template x-if="profile.location">
-            <p class="subtle text-sm" x-text="profile.location"></p>
-          </template>
+
+          <!-- Dòng meta kiểu LinkedIn: công việc hiện tại · học vấn · vị trí -->
+          <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm subtle"
+               x-show="currentJob() || topSchool() || profile.location">
+            <template x-if="currentJob()">
+              <span class="inline-flex items-center gap-1.5"><i class="fa-solid fa-briefcase w-4 text-center"></i><span x-text="currentJob()"></span></span>
+            </template>
+            <template x-if="topSchool()">
+              <span class="inline-flex items-center gap-1.5"><i class="fa-solid fa-graduation-cap w-4 text-center"></i><span x-text="topSchool()"></span></span>
+            </template>
+            <template x-if="profile.location">
+              <span class="inline-flex items-center gap-1.5"><i class="fa-solid fa-location-dot w-4 text-center"></i><span x-text="profile.location"></span></span>
+            </template>
+          </div>
+
+          <!-- Thống kê nhanh: số mục thật trong hồ sơ -->
+          <div class="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs subtle">
+            <span><span class="font-semibold text-slate-700" x-text="(profile.experience || []).length"></span> kinh nghiệm</span>
+            <span><span class="font-semibold text-slate-700" x-text="(profile.education || []).length"></span> học vấn</span>
+            <span><span class="font-semibold text-slate-700" x-text="(profile.skills || []).length"></span> kỹ năng</span>
+            <span><span class="font-semibold text-slate-700" x-text="posts.length"></span> bài viết</span>
+          </div>
 
           <!-- Trạng thái kết nối + hành động ngữ cảnh -->
           <div class="mt-2 flex flex-wrap items-center gap-2">
@@ -351,6 +370,23 @@ function profilePage() {
     yearRange(start, end) {
       if (!start && !end) return '';
       return (start || '?') + ' – ' + (end || 'Hiện tại');
+    },
+
+    // Công việc HIỆN TẠI: chỉ mục đang làm (end_date null). Không có thì để trống
+    // (không lấy job cũ làm "hiện tại" — tránh hiện sai dưới icon cặp công việc).
+    currentJob() {
+      const exp = (this.profile && this.profile.experience) || [];
+      const cur = exp.find(e => !e.end_date);
+      if (!cur) return '';
+      return [cur.title, cur.company].filter(Boolean).join(' · ');
+    },
+
+    // Học vấn gần nhất (end_year null = đang học → ưu tiên trước).
+    topSchool() {
+      const edu = (this.profile && this.profile.education) || [];
+      if (!edu.length) return '';
+      const top = edu.slice().sort((a, b) => (b.end_year || 9999) - (a.end_year || 9999))[0];
+      return (top && top.school) || '';
     },
   };
 }
