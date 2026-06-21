@@ -21,7 +21,7 @@
   <style>
     /* Tắt nút đính file của Trix — ảnh chỉ qua uploader riêng (/api/uploads). */
     trix-toolbar .trix-button-group--file-tools { display: none; }
-    trix-editor { min-height: 9rem; border-radius: .5rem; }
+    trix-editor { min-height: 16rem; border-radius: .5rem; font-size: .95rem; }
   </style>
 </head>
 <body class="text-slate-900 min-h-screen">
@@ -74,7 +74,7 @@
   <!-- Modal soạn bài: WYSIWYG Trix (style trực tiếp) + ảnh ở phần riêng -->
   <div x-show="composeOpen" x-cloak @keydown.escape.window="closeCompose()"
        class="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 bg-slate-900/40 overflow-y-auto">
-    <div @click.outside="closeCompose()" class="glass-strong w-full max-w-xl my-8 p-5 max-h-[90vh] overflow-y-auto">
+    <div @click.outside="closeCompose()" class="glass-strong w-full max-w-2xl my-8 p-6 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between mb-3">
         <h2 class="text-lg font-semibold" x-text="editId ? 'Chỉnh sửa bài viết' : 'Tạo bài viết'"></h2>
         <button @click="closeCompose()" class="subtle hover:text-slate-700 px-2" title="Đóng"><i class="fa-solid fa-xmark"></i></button>
