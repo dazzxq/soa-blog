@@ -81,6 +81,14 @@ final class FeedClient
         ]);
     }
 
+    public function updatePost(int $caller, int $id, array $body): ResponseInterface
+    {
+        return $this->http->request('PATCH', '/posts/' . $id, [
+            'json'    => $body,
+            'headers' => ['Content-Type' => 'application/json', 'X-User-Id' => (string) $caller],
+        ]);
+    }
+
     public function deletePost(int $caller, int $id): ResponseInterface
     {
         return $this->http->request('DELETE', '/posts/' . $id, [
@@ -113,6 +121,14 @@ final class FeedClient
     public function addComment(int $caller, int $id, string $body): ResponseInterface
     {
         return $this->http->request('POST', '/posts/' . $id . '/comments', [
+            'json'    => ['body' => $body],
+            'headers' => ['Content-Type' => 'application/json', 'X-User-Id' => (string) $caller],
+        ]);
+    }
+
+    public function updateComment(int $caller, int $id, string $body): ResponseInterface
+    {
+        return $this->http->request('PATCH', '/comments/' . $id, [
             'json'    => ['body' => $body],
             'headers' => ['Content-Type' => 'application/json', 'X-User-Id' => (string) $caller],
         ]);

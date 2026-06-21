@@ -45,8 +45,8 @@
         </template>
 
         <div class="px-6 pb-6">
-          <!-- Ảnh đại diện chồng lên ảnh bìa -->
-          <div class="-mt-12">
+          <!-- Ảnh đại diện chồng lên ảnh bìa (chủ hồ sơ đổi inline được) -->
+          <div class="-mt-12 relative inline-block">
             <div class="avatar-fallback w-20 h-20 rounded-full border-4 border-white overflow-hidden flex items-center justify-center text-xl font-bold">
               <template x-if="profile.avatar_url">
                 <img :src="profile.avatar_url" alt="Ảnh đại diện" class="w-full h-full object-cover" />
@@ -55,6 +55,14 @@
                 <span x-text="initials()"></span>
               </template>
             </div>
+            <template x-if="isOwner">
+              <label class="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-navy text-white flex items-center justify-center cursor-pointer shadow"
+                     :class="avatarUploading ? 'opacity-50 pointer-events-none' : ''" title="Đổi ảnh đại diện">
+                <i class="fa-solid" :class="avatarUploading ? 'fa-spinner fa-spin' : 'fa-camera'" style="font-size:12px"></i>
+                <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden"
+                       @change="changeAvatar($event)" :disabled="avatarUploading" />
+              </label>
+            </template>
           </div>
 
           <div class="flex items-start justify-between gap-3 mt-3">
@@ -176,6 +184,40 @@
         </section>
       </template>
 
+      <!-- Bài viết (công khai) -->
+      <section class="glass p-6 mt-6">
+        <h2 class="text-lg font-semibold mb-3">Bài viết</h2>
+        <template x-if="postsLoading"><p class="subtle text-sm">Đang tải bài viết…</p></template>
+        <template x-if="!postsLoading && !posts.length"><p class="subtle text-sm">Chưa có bài viết nào.</p></template>
+        <div class="space-y-4">
+          <template x-for="p in posts" :key="p.id">
+            <article class="surface-soft p-4 rounded-lg">
+              <div class="subtle text-xs mb-2"><span x-text="timeAgo(p.created_at)"></span><span x-show="p.updated_at"> · đã chỉnh sửa</span></div>
+              <template x-if="p.repost_of">
+                <p class="subtle text-xs mb-1">đã chia sẻ một bài viết</p>
+              </template>
+              <template x-if="p.content">
+                <div class="text-sm leading-relaxed prose-rich break-words mb-2" x-html="renderContent(p)"></div>
+              </template>
+              <template x-if="p.repost_of && p.original">
+                <div class="border-l-4 border-slate-200 pl-3 mb-2">
+                  <div class="font-medium text-sm" x-text="p.original.author?.display_name || p.original.author?.username || 'Người dùng'"></div>
+                  <div class="text-sm prose-rich break-words" x-html="renderContent(p.original)"></div>
+                </div>
+              </template>
+              <template x-if="postImages(p).length">
+                <div class="grid grid-cols-3 gap-1">
+                  <template x-for="(img, i) in postImages(p)" :key="i">
+                    <img :src="img" alt="Ảnh bài viết" loading="lazy" class="aspect-square object-cover rounded" />
+                  </template>
+                </div>
+              </template>
+              <div class="subtle text-xs mt-2" x-text="(p.reaction_count || 0) + ' cảm xúc · ' + (p.comment_count || 0) + ' bình luận'"></div>
+            </article>
+          </template>
+        </div>
+      </section>
+
     </div>
   </template>
 </main>
@@ -190,6 +232,9 @@ function profilePage() {
     isOwner: false,
     connBusy: false,
     connError: '',
+    posts: [],
+    postsLoading: false,
+    avatarUploading: false,
 
     async load() {
       try {
@@ -207,10 +252,50 @@ function profilePage() {
         this.profile = r.data;
         this.degraded = !!(r.meta && r.meta.degraded);
         this.isOwner = !!(myId && this.profile && String(myId) === String(this.profile.id));
+        this.loadPosts(this.profile.id);   // best-effort, không chặn render hồ sơ
       } catch (e) {
         this.error = e.status === 404 ? 'Không tìm thấy hồ sơ.' : ('Không tải được hồ sơ: ' + e.message);
       } finally {
         this.loading = false;
+      }
+    },
+
+    // Bài viết của hồ sơ (công khai/permalink). Degrade riêng — lỗi không vỡ trang.
+    async loadPosts(id) {
+      this.postsLoading = true;
+      try {
+        const r = await api.get('/profiles/' + id + '/posts?limit=20');
+        this.posts = r.data || [];
+      } catch (e) { /* để trống */ } finally { this.postsLoading = false; }
+    },
+    postImages(p) {
+      if (p && Array.isArray(p.images) && p.images.length) return p.images;
+      return (p && p.image_url) ? [p.image_url] : [];
+    },
+
+    // Đổi ảnh đại diện ngay trên trang hồ sơ (chỉ chủ hồ sơ): upload → PATCH avatar_url.
+    async changeAvatar(ev) {
+      const file = ev.target && ev.target.files && ev.target.files[0];
+      if (ev.target) ev.target.value = '';
+      if (!file) return;
+      if (!/^image\/(png|jpe?g|webp|gif)$/.test(file.type)) { this.connError = 'Chỉ hỗ trợ ảnh PNG, JPG, WEBP, GIF.'; return; }
+      if (file.size > 5 * 1024 * 1024) { this.connError = 'Ảnh tối đa 5MB.'; return; }
+      this.avatarUploading = true;
+      this.connError = '';
+      try {
+        const fd = new FormData(); fd.append('file', file);
+        const res = await fetch('/api/uploads', { method: 'POST', headers: { 'Authorization': 'Bearer ' + auth.token() }, body: fd });
+        if (res.status === 401) { auth.logout(); window.location.href = '/login.html'; return; }
+        const j = await res.json().catch(() => null);
+        if (!res.ok) throw new Error((j && j.error && j.error.message) || ('HTTP ' + res.status));
+        if (j && j.data && j.data.url) {
+          await api.patch('/profiles/me', { avatar_url: j.data.url });
+          this.profile.avatar_url = j.data.url;
+        }
+      } catch (e) {
+        this.connError = 'Đổi ảnh đại diện không thành công: ' + e.message;
+      } finally {
+        this.avatarUploading = false;
       }
     },
 
@@ -237,13 +322,16 @@ function profilePage() {
       return match ? match.request_id : null;
     },
 
-    connect() {
+    async connect() {
+      if (!await proConfirm({ title: 'Gửi lời mời kết nối', message: 'Gửi lời mời kết nối tới người này?', okText: 'Kết nối' })) return;
       return this._connAct(() => api.post('/connections/requests', { target_id: this.profile.id }));
     },
-    removeConn() {
+    async removeConn() {
+      if (!await proConfirm({ title: 'Xoá kết nối', message: 'Xoá kết nối với người này?', danger: true })) return;
       return this._connAct(() => api.delete('/connections/' + this.profile.id));
     },
-    cancelInvite() {
+    async cancelInvite() {
+      if (!await proConfirm({ title: 'Huỷ lời mời', message: 'Huỷ lời mời kết nối đã gửi?', danger: true })) return;
       return this._connAct(async () => {
         const id = await this._findRequestId('outgoing');
         if (!id) throw new Error('Không tìm thấy lời mời.');

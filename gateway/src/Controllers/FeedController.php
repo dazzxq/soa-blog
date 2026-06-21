@@ -84,8 +84,52 @@ final class FeedController
         }
         $posts = (array) ($this->decode($tRes)['data'] ?? []);
 
-        // STEP 3 — resolve repost originals in ONE batch (no N+1). Collect unique
-        // repost_of ids; resolve via the Utils::settle([...]) async-client idiom.
+        // STEP 3-5 — resolve repost originals (1 batch) + enrich author union +
+        // assemble. Shared with profilePosts() via enrichPosts() (no duplication).
+        $enriched = $this->enrichPosts($posts);
+        $degraded = array_merge($degraded, $enriched['degraded']);
+
+        $meta = [];
+        if ($degraded !== []) {
+            $meta = ['degraded' => true, 'parts' => array_values(array_unique($degraded))];
+        }
+        return Json::list($res, $enriched['posts'], $meta);
+    }
+
+    /**
+     * GET /api/profiles/{id}/posts — bài viết của MỘT user (mô hình post công khai/
+     * permalink; optMw). timeline 1-author + composition ĐẦY ĐỦ giống feed()
+     * (repost originals + author enrich) qua enrichPosts(). Degrade an toàn.
+     */
+    public function profilePosts(Request $req, Response $res, array $args): Response
+    {
+        $viewer = (int) ($req->getAttribute('user_id') ?? 0);   // optional-auth: 0 = anon
+        $userId = (int) $args['id'];
+        $limit  = min(50, max(1, (int) ($req->getQueryParams()['limit'] ?? 20)));
+
+        $tRes = $this->feed->timeline([$userId], $viewer, $limit);
+        if ($tRes->getStatusCode() !== 200) {
+            return Json::raw($res, $this->decode($tRes), $tRes->getStatusCode());
+        }
+        $posts    = (array) ($this->decode($tRes)['data'] ?? []);
+        $enriched = $this->enrichPosts($posts);
+
+        $meta = $enriched['degraded'] !== []
+            ? ['degraded' => true, 'parts' => array_values(array_unique($enriched['degraded']))]
+            : [];
+        return Json::list($res, $enriched['posts'], $meta);
+    }
+
+    /**
+     * STEP 3-5 chung cho feed() và profilePosts(): resolve repost originals (1 batch,
+     * no N+1) → enrich author UNION (post ∪ original, email allowlisted) → assemble in
+     * place (giữ thứ tự newest-first, original:null khi gốc đã xoá). KHÔNG ném 500 —
+     * mọi lỗi non-core đẩy vào 'degraded'. Trả ['posts'=>array, 'degraded'=>string[]].
+     */
+    private function enrichPosts(array $posts): array
+    {
+        $degraded = [];
+
         $originalIds = [];
         foreach ($posts as $p) {
             $rid = (int) ($p['repost_of'] ?? 0);
@@ -93,22 +137,23 @@ final class FeedController
                 $originalIds[] = $rid;
             }
         }
-        $originalIds = array_values(array_unique($originalIds));
+        $originalIds   = array_values(array_unique($originalIds));
         $originalsById = [];
         if ($originalIds !== []) {
-            $settled = Utils::settle([$this->feed->getPostsAsync($originalIds)])->wait();
-            $o = $settled[0];
-            if ($o['state'] === 'fulfilled' && $o['value']->getStatusCode() === 200) {
-                foreach ((array) ($this->decode($o['value'])['data'] ?? []) as $orow) {
-                    $originalsById[(int) ($orow['id'] ?? 0)] = $orow;
+            try {
+                $oRes = $this->feed->getPosts($originalIds);
+                if ($oRes->getStatusCode() === 200) {
+                    foreach ((array) ($this->decode($oRes)['data'] ?? []) as $orow) {
+                        $originalsById[(int) ($orow['id'] ?? 0)] = $orow;
+                    }
+                } else {
+                    $degraded[] = 'reposts';
                 }
-            } else {
-                $degraded[] = 'reposts';   // originals map stays empty → original:null
+            } catch (GuzzleException $e) {
+                $degraded[] = 'reposts';
             }
         }
 
-        // STEP 4 — author enrichment over the UNION (post authors ∪ original authors).
-        // This MUST run AFTER STEP 3, because the union needs the originals' authors.
         $authorUnion = [];
         foreach ($posts as $p) {
             $authorUnion[] = (int) ($p['author_id'] ?? 0);
@@ -121,22 +166,19 @@ final class FeedController
         $cardsById = [];
         if ($authorUnion !== []) {
             try {
-                // FEED-UNION-BATCH: the one and only profile batch in feed()
                 $pRes = $this->profiles->batch($authorUnion);
                 if ($pRes->getStatusCode() === 200) {
                     foreach ((array) ($this->decode($pRes)['data'] ?? []) as $u) {
                         $cardsById[(int) ($u['id'] ?? 0)] = $this->allowlist($u);
                     }
                 } else {
-                    $degraded[] = 'profiles';   // cards null
+                    $degraded[] = 'profiles';
                 }
             } catch (GuzzleException $e) {
                 $degraded[] = 'profiles';
             }
         }
 
-        // STEP 5 — assemble IN PLACE (preserve feed-service newest-first order;
-        // NEVER re-sort by a map, Pitfall 6). Deleted original → original:null (Pitfall 5).
         $out = [];
         foreach ($posts as $p) {
             $p['author'] = $cardsById[(int) ($p['author_id'] ?? 0)] ?? null;
@@ -146,16 +188,11 @@ final class FeedController
                 $orow['author'] = $cardsById[(int) ($orow['author_id'] ?? 0)] ?? null;
                 $p['original'] = $orow;
             } elseif ($rid > 0) {
-                $p['original'] = null;   // deleted/missing original (Pitfall 5) — never a 500
+                $p['original'] = null;
             }
             $out[] = $p;
         }
-
-        $meta = [];
-        if ($degraded !== []) {
-            $meta = ['degraded' => true, 'parts' => array_values(array_unique($degraded))];
-        }
-        return Json::list($res, $out, $meta);
+        return ['posts' => $out, 'degraded' => $degraded];
     }
 
     // --- Mutations (thin passthrough; me() → X-User-Id via FeedClient) --------
@@ -166,6 +203,13 @@ final class FeedController
     {
         $me = $this->me($req);
         $up = $this->feed->createPost($me, (array) ($req->getParsedBody() ?? []));
+        return Json::raw($res, $this->decode($up), $up->getStatusCode());
+    }
+
+    public function updatePost(Request $req, Response $res, array $args): Response
+    {
+        $me = $this->me($req);
+        $up = $this->feed->updatePost($me, (int) $args['id'], (array) ($req->getParsedBody() ?? []));
         return Json::raw($res, $this->decode($up), $up->getStatusCode());
     }
 
@@ -243,6 +287,14 @@ final class FeedController
         } catch (GuzzleException $e) {
             // swallow — best-effort (D-05); the react/comment already returned 2xx.
         }
+    }
+
+    public function updateComment(Request $req, Response $res, array $args): Response
+    {
+        $me   = $this->me($req);
+        $body = (string) (((array) ($req->getParsedBody() ?? []))['body'] ?? '');
+        $up   = $this->feed->updateComment($me, (int) $args['id'], $body);
+        return Json::raw($res, $this->decode($up), $up->getStatusCode());
     }
 
     public function deleteComment(Request $req, Response $res, array $args): Response

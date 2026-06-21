@@ -30,7 +30,9 @@ return static function (App $app): void {
     $app->post('/posts/{id:[0-9]+}/comments', [CommentController::class, 'create']);
 
     $app->get('/posts/{id:[0-9]+}',    [PostController::class, 'show']);             // single post + counts (?viewer=)
+    $app->patch('/posts/{id:[0-9]+}',  [PostController::class, 'update']);           // owner only — edit content (HTML sanitized)
     $app->delete('/posts/{id:[0-9]+}', [PostController::class, 'delete']);           // owner only (cascade)
 
+    $app->patch('/comments/{id:[0-9]+}',  [CommentController::class, 'update']);     // owner only — edit body
     $app->delete('/comments/{id:[0-9]+}', [CommentController::class, 'delete']);     // owner only
 };

@@ -30,7 +30,9 @@ return static function (App $app): void {
 
         // FLAGSHIP composition — public + auth-aware (optional JWT).
         // Numeric {id} constraint keeps the literal `me` segment from colliding.
-        $g->get ('/profiles/{id:[0-9]+}/full', [AggregateController::class, 'profileFull'])->add($optMw);
+        $g->get ('/profiles/{id:[0-9]+}/full',  [AggregateController::class, 'profileFull'])->add($optMw);
+        // Bài viết của 1 user (mô hình post công khai/permalink) — auth-aware (optional JWT).
+        $g->get ('/profiles/{id:[0-9]+}/posts', [FeedController::class, 'profilePosts'])->add($optMw);
 
         // Owner-only CRUD via /me — JWT REQUIRED (maps JWT user_id -> X-User-Id)
         $g->patch ('/profiles/me',                          [ProfilesController::class, 'updateBasic'])->add($jwtMw);
@@ -72,8 +74,10 @@ return static function (App $app): void {
         $g->delete('/posts/{id:[0-9]+}/reactions', [FeedController::class, 'unreact'])->add($jwtMw);
         $g->get   ('/posts/{id:[0-9]+}/comments',  [FeedController::class, 'listComments']);
         $g->post  ('/posts/{id:[0-9]+}/comments',  [FeedController::class, 'addComment'])->add($jwtMw);
+        $g->patch ('/posts/{id:[0-9]+}',           [FeedController::class, 'updatePost'])->add($jwtMw);
         $g->delete('/posts/{id:[0-9]+}',           [FeedController::class, 'deletePost'])->add($jwtMw);
         $g->get   ('/posts/{id:[0-9]+}',           [FeedController::class, 'showPost'])->add($optMw);
+        $g->patch ('/comments/{id:[0-9]+}',        [FeedController::class, 'updateComment'])->add($jwtMw);
         $g->delete('/comments/{id:[0-9]+}',        [FeedController::class, 'deleteComment'])->add($jwtMw);
 
         // Media upload (JWT): one image → NAS object store, returns its public URL.

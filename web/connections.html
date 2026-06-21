@@ -193,11 +193,20 @@ function connectionsPage() {
       }
     },
 
-    sendInvite(targetId) { return this._act(() => api.post('/connections/requests', { target_id: targetId })); },
+    async sendInvite(targetId) {
+      if (!await proConfirm({ title: 'Gửi lời mời kết nối', message: 'Gửi lời mời kết nối tới người này?', okText: 'Kết nối' })) return;
+      return this._act(() => api.post('/connections/requests', { target_id: targetId }));
+    },
     accept(reqId)        { return this._act(() => api.post('/connections/requests/' + reqId + '/accept')); },
     reject(reqId)        { return this._act(() => api.post('/connections/requests/' + reqId + '/reject')); },
-    cancel(reqId)        { return this._act(() => api.delete('/connections/requests/' + reqId)); },
-    remove(userId)       { return this._act(() => api.delete('/connections/' + userId)); },
+    async cancel(reqId) {
+      if (!await proConfirm({ title: 'Huỷ lời mời', message: 'Huỷ lời mời kết nối đã gửi?', danger: true })) return;
+      return this._act(() => api.delete('/connections/requests/' + reqId));
+    },
+    async remove(userId) {
+      if (!await proConfirm({ title: 'Xoá kết nối', message: 'Xoá kết nối với người này?', danger: true })) return;
+      return this._act(() => api.delete('/connections/' + userId));
+    },
 
     name(profile) {
       if (!profile) return 'Người dùng';

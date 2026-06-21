@@ -171,6 +171,14 @@ echo "[deploy] applying db/07-migrate-multi-image.sql (additive)"
 docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" < db/07-migrate-multi-image.sql
 echo "[deploy] multi-image migration applied"
 
+# 7e3) EDIT-TIMESTAMPS + content_format MIGRATION (idempotent; ADD COLUMN IF NOT EXISTS).
+# BLOCKING: feed-service SELECTs p.content_format / p.updated_at và set chúng khi
+# create/update, nên cột phải tồn tại trước khi feed-service restart với code mới.
+# File tự `USE proconnect_feed;` (no DB arg).
+echo "[deploy] applying db/08-migrate-edit-timestamps.sql (additive)"
+docker compose exec -T mariadb mysql -uroot -p"$DB_ROOT_PASSWORD" < db/08-migrate-edit-timestamps.sql
+echo "[deploy] edit-timestamps migration applied"
+
 # 7f) DEMO CONTENT SEED (idempotent INSERT IGNORE; rich English fake content) --
 # Extra demo users + posts + reactions/comments + connections so the feed/search/
 # profiles look alive. Spans 3 DBs via USE blocks (no DB arg). Non-destructive +

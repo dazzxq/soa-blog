@@ -44,7 +44,7 @@ final class CommentController
         $total = (int) $countStmt->fetchColumn();
 
         $stmt = $pdo->prepare(
-            'SELECT id, post_id, author_id, body, created_at
+            'SELECT id, post_id, author_id, body, created_at, updated_at
                FROM comments WHERE post_id = :p
               ORDER BY created_at ASC, id ASC
               LIMIT :lim OFFSET :off'
@@ -110,6 +110,32 @@ final class CommentController
         return $res->withStatus(204);
     }
 
+    /** PATCH /comments/{id} — owner-only edit (plain text; hiển thị bằng x-text). */
+    public function update(Request $req, Response $res, array $args): Response
+    {
+        $caller = (int) ($req->getHeaderLine('X-User-Id') ?: 0);
+        $id     = (int) $args['id'];
+
+        $comment = $this->find($id);
+        if ($comment === null) {
+            throw new DomainError(404, 'COMMENT_NOT_FOUND', 'Không tìm thấy bình luận.');
+        }
+        if ($caller === 0 || $caller !== (int) $comment['author_id']) {
+            throw new DomainError(403, 'FORBIDDEN', 'Bạn không có quyền sửa bình luận này.');
+        }
+
+        $b    = (array) ($req->getParsedBody() ?? []);
+        $body = trim((string) ($b['body'] ?? ''));
+        if ($body === '' || mb_strlen($body) > 5000) {
+            throw new DomainError(400, 'VALIDATION_FAILED', 'Nội dung bình luận phải từ 1-5000 ký tự.');
+        }
+
+        Db::pdo()->prepare('UPDATE comments SET body = :b, updated_at = NOW() WHERE id = :id')
+            ->execute([':b' => $body, ':id' => $id]);
+
+        return Json::ok($res, $this->find($id));
+    }
+
     // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------
@@ -117,7 +143,7 @@ final class CommentController
     private function find(int $id): ?array
     {
         $stmt = Db::pdo()->prepare(
-            'SELECT id, post_id, author_id, body, created_at
+            'SELECT id, post_id, author_id, body, created_at, updated_at
                FROM comments WHERE id = :id LIMIT 1'
         );
         $stmt->execute([':id' => $id]);

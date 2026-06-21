@@ -44,20 +44,43 @@
           </label>
           <label class="block">
             <span class="text-sm subtle">Chức danh (headline)</span>
-            <input x-model="basic.headline" type="text" maxlength="160" class="glass-input mt-1 w-full px-3 py-2" />
+            <input x-model="basic.headline" type="text" maxlength="160" list="titlePresets" autocomplete="off"
+                   placeholder="VD: Kỹ sư phần mềm" class="glass-input mt-1 w-full px-3 py-2" />
+            <datalist id="titlePresets">
+              <template x-for="t in commonTitles" :key="t"><option :value="t"></option></template>
+            </datalist>
           </label>
           <label class="block">
             <span class="text-sm subtle">Địa điểm</span>
             <input x-model="basic.location" type="text" maxlength="128" class="glass-input mt-1 w-full px-3 py-2" />
           </label>
-          <label class="block">
-            <span class="text-sm subtle">URL ảnh đại diện</span>
-            <input x-model="basic.avatar_url" type="url" class="glass-input mt-1 w-full px-3 py-2" />
-          </label>
-          <label class="block">
-            <span class="text-sm subtle">URL ảnh bìa</span>
-            <input x-model="basic.cover_url" type="url" class="glass-input mt-1 w-full px-3 py-2" />
-          </label>
+          <div class="block">
+            <span class="text-sm subtle">Ảnh đại diện</span>
+            <div class="flex items-center gap-3 mt-1">
+              <span class="w-16 h-16 rounded-full avatar-fallback overflow-hidden flex items-center justify-center text-lg subtle shrink-0">
+                <template x-if="basic.avatar_url"><img :src="basic.avatar_url" alt="" class="w-full h-full object-cover" /></template>
+                <template x-if="!basic.avatar_url"><i class="fa-solid fa-user"></i></template>
+              </span>
+              <label class="pro-btn-ghost px-3 py-1.5 rounded-lg text-sm cursor-pointer" :class="uploadingAvatar ? 'opacity-50 pointer-events-none' : ''">
+                <i class="fa-solid fa-arrow-up-from-bracket mr-1"></i><span x-text="uploadingAvatar ? 'Đang tải…' : 'Tải ảnh lên'"></span>
+                <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" @change="uploadProfileImage('avatar_url', $event)" :disabled="uploadingAvatar" />
+              </label>
+              <button type="button" x-show="basic.avatar_url" @click="basic.avatar_url=''" class="text-sm text-red-600 hover:underline">Xoá ảnh</button>
+            </div>
+          </div>
+          <div class="block">
+            <span class="text-sm subtle">Ảnh bìa</span>
+            <div class="mt-1 space-y-2">
+              <template x-if="basic.cover_url"><img :src="basic.cover_url" alt="" class="w-full h-28 object-cover rounded-lg" /></template>
+              <div class="flex items-center gap-3">
+                <label class="pro-btn-ghost px-3 py-1.5 rounded-lg text-sm cursor-pointer" :class="uploadingCover ? 'opacity-50 pointer-events-none' : ''">
+                  <i class="fa-solid fa-arrow-up-from-bracket mr-1"></i><span x-text="uploadingCover ? 'Đang tải…' : 'Tải ảnh bìa'"></span>
+                  <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" @change="uploadProfileImage('cover_url', $event)" :disabled="uploadingCover" />
+                </label>
+                <button type="button" x-show="basic.cover_url" @click="basic.cover_url=''" class="text-sm text-red-600 hover:underline">Xoá ảnh bìa</button>
+              </div>
+            </div>
+          </div>
           <label class="block">
             <span class="text-sm subtle">Giới thiệu</span>
             <textarea x-model="basic.about" rows="4" class="glass-input mt-1 w-full px-3 py-2"></textarea>
@@ -77,7 +100,7 @@
                   <div>
                     <p class="font-medium" x-text="ex.title"></p>
                     <p class="text-sm subtle" x-text="ex.company"></p>
-                    <p class="text-xs subtle" x-text="(ex.start_date||'') + ' – ' + (ex.end_date || 'Hiện tại')"></p>
+                    <p class="text-xs subtle" x-text="fmtMonthYear(ex.start_date) + ' – ' + (ex.end_date ? fmtMonthYear(ex.end_date) : 'Hiện tại')"></p>
                   </div>
                   <div class="flex gap-2 text-sm shrink-0">
                     <button @click="startEditExp(ex)" class="text-navy hover:underline">Sửa</button>
@@ -89,9 +112,34 @@
                 <div class="space-y-2">
                   <input x-model="expForm.company" placeholder="Công ty" class="glass-input w-full px-3 py-2" />
                   <input x-model="expForm.title" placeholder="Chức danh" class="glass-input w-full px-3 py-2" />
-                  <div class="flex gap-2">
-                    <input x-model="expForm.start_date" type="date" class="glass-input px-3 py-2" />
-                    <input x-model="expForm.end_date" type="date" class="glass-input px-3 py-2" />
+                  <div class="space-y-2">
+                    <p class="text-xs subtle">Bắt đầu</p>
+                    <div class="flex gap-2">
+                      <select x-model="expForm.start_month" class="glass-input px-3 py-2">
+                        <option value="">— Tháng —</option>
+                        <template x-for="m in 12" :key="m"><option :value="m" x-text="'Tháng ' + m"></option></template>
+                      </select>
+                      <select x-model="expForm.start_year" class="glass-input px-3 py-2">
+                        <option value="">— Năm —</option>
+                        <template x-for="y in years" :key="y"><option :value="y" x-text="y"></option></template>
+                      </select>
+                    </div>
+                    <label class="flex items-center gap-2 text-sm"><input type="checkbox" x-model="expForm.is_current" /> Tôi hiện đang làm ở đây</label>
+                    <template x-if="!expForm.is_current">
+                      <div class="space-y-1">
+                        <p class="text-xs subtle">Kết thúc</p>
+                        <div class="flex gap-2">
+                          <select x-model="expForm.end_month" class="glass-input px-3 py-2">
+                            <option value="">— Tháng —</option>
+                            <template x-for="m in 12" :key="m"><option :value="m" x-text="'Tháng ' + m"></option></template>
+                          </select>
+                          <select x-model="expForm.end_year" class="glass-input px-3 py-2">
+                            <option value="">— Năm —</option>
+                            <template x-for="y in years" :key="y"><option :value="y" x-text="y"></option></template>
+                          </select>
+                        </div>
+                      </div>
+                    </template>
                   </div>
                   <textarea x-model="expForm.description" rows="2" placeholder="Mô tả" class="glass-input w-full px-3 py-2"></textarea>
                   <div class="flex gap-2">
@@ -107,9 +155,34 @@
           <p class="text-sm font-medium">Thêm kinh nghiệm</p>
           <input x-model="newExp.company" placeholder="Công ty" class="glass-input w-full px-3 py-2" />
           <input x-model="newExp.title" placeholder="Chức danh" class="glass-input w-full px-3 py-2" />
-          <div class="flex gap-2">
-            <input x-model="newExp.start_date" type="date" class="glass-input px-3 py-2" />
-            <input x-model="newExp.end_date" type="date" class="glass-input px-3 py-2" />
+          <div class="space-y-2">
+            <p class="text-xs subtle">Bắt đầu</p>
+            <div class="flex gap-2">
+              <select x-model="newExp.start_month" class="glass-input px-3 py-2">
+                <option value="">— Tháng —</option>
+                <template x-for="m in 12" :key="m"><option :value="m" x-text="'Tháng ' + m"></option></template>
+              </select>
+              <select x-model="newExp.start_year" class="glass-input px-3 py-2">
+                <option value="">— Năm —</option>
+                <template x-for="y in years" :key="y"><option :value="y" x-text="y"></option></template>
+              </select>
+            </div>
+            <label class="flex items-center gap-2 text-sm"><input type="checkbox" x-model="newExp.is_current" /> Tôi hiện đang làm ở đây</label>
+            <template x-if="!newExp.is_current">
+              <div class="space-y-1">
+                <p class="text-xs subtle">Kết thúc</p>
+                <div class="flex gap-2">
+                  <select x-model="newExp.end_month" class="glass-input px-3 py-2">
+                    <option value="">— Tháng —</option>
+                    <template x-for="m in 12" :key="m"><option :value="m" x-text="'Tháng ' + m"></option></template>
+                  </select>
+                  <select x-model="newExp.end_year" class="glass-input px-3 py-2">
+                    <option value="">— Năm —</option>
+                    <template x-for="y in years" :key="y"><option :value="y" x-text="y"></option></template>
+                  </select>
+                </div>
+              </div>
+            </template>
           </div>
           <textarea x-model="newExp.description" rows="2" placeholder="Mô tả" class="glass-input w-full px-3 py-2"></textarea>
           <button @click="addExp()" class="pro-btn-ghost px-4 py-2 rounded-lg">Thêm</button>
@@ -201,8 +274,23 @@ function profileEditPage() {
     experience: [],
     education: [],
     skills: [],
+    uploadingAvatar: false,
+    uploadingCover: false,
 
-    newExp: { company: '', title: '', start_date: '', end_date: '', description: '' },
+    // Năm: năm hiện tại + 1 → 1970 (đổ vào <select>).
+    years: (function () { var y = new Date().getFullYear() + 1, a = []; for (var i = y; i >= 1970; i--) a.push(i); return a; })(),
+    // Gợi ý chức danh phổ biến (datalist) — vẫn cho nhập tự do.
+    commonTitles: [
+      'Sinh viên', 'Thực tập sinh', 'Kỹ sư phần mềm', 'Lập trình viên', 'Lập trình viên Frontend',
+      'Lập trình viên Backend', 'Lập trình viên Full-stack', 'Kỹ sư DevOps', 'Kỹ sư dữ liệu',
+      'Nhà khoa học dữ liệu', 'Kỹ sư AI/Machine Learning', 'Kỹ sư QA/Kiểm thử', 'Quản trị hệ thống',
+      'Kỹ sư bảo mật', 'Chuyên viên phân tích nghiệp vụ', 'Quản lý dự án', 'Product Manager',
+      'Product Owner', 'Scrum Master', 'Thiết kế UI/UX', 'Thiết kế đồ hoạ', 'Kiến trúc sư phần mềm',
+      'Trưởng nhóm kỹ thuật', 'Giám đốc công nghệ (CTO)', 'Chuyên viên Marketing', 'Chuyên viên nhân sự',
+      'Kế toán', 'Chuyên viên kinh doanh', 'Giảng viên', 'Nghiên cứu sinh',
+    ],
+
+    newExp: { company: '', title: '', start_month: '', start_year: '', end_month: '', end_year: '', is_current: false, description: '' },
     newEdu: { school: '', degree: '', field: '', start_year: '', end_year: '' },
     newSkill: '',
 
@@ -244,8 +332,38 @@ function profileEditPage() {
       setTimeout(() => { this.msg = { text: '', ok: true }; }, 4000);
     },
 
+    fmtMonthYear(d) {
+      if (!d) return '';
+      const m = String(d).match(/^(\d{4})-(\d{2})/);
+      return m ? (m[2] + '/' + m[1]) : d;
+    },
+
+    // Upload 1 ảnh lên NAS qua gateway rồi gán URL công khai vào field (avatar_url/cover_url).
+    async uploadProfileImage(field, ev) {
+      const file = ev.target && ev.target.files && ev.target.files[0];
+      if (ev.target) ev.target.value = '';
+      if (!file) return;
+      if (!/^image\/(png|jpe?g|webp|gif)$/.test(file.type)) { this.toast('Chỉ hỗ trợ ảnh PNG, JPG, WEBP, GIF.', false); return; }
+      if (file.size > 5 * 1024 * 1024) { this.toast('Ảnh tối đa 5MB.', false); return; }
+      const flag = field === 'cover_url' ? 'uploadingCover' : 'uploadingAvatar';
+      this[flag] = true;
+      try {
+        const fd = new FormData(); fd.append('file', file);
+        const res = await fetch('/api/uploads', { method: 'POST', headers: { 'Authorization': 'Bearer ' + auth.token() }, body: fd });
+        if (res.status === 401) { auth.logout(); window.location.href = '/login.html'; return; }
+        const j = await res.json().catch(() => null);
+        if (!res.ok) throw new Error((j && j.error && j.error.message) || ('HTTP ' + res.status));
+        if (j && j.data && j.data.url) { this.basic[field] = j.data.url; this.toast('Đã tải ảnh lên. Bấm "Lưu" để áp dụng.', true); }
+      } catch (e) {
+        this.toast('Tải ảnh không thành công: ' + e.message, false);
+      } finally {
+        this[flag] = false;
+      }
+    },
+
     // ----- Cơ bản (PROF-02) -----
     async saveBasic() {
+      if (!await proConfirm({ title: 'Lưu hồ sơ', message: 'Lưu thay đổi thông tin hồ sơ?', okText: 'Lưu' })) return;
       try {
         await api.patch('/profiles/me', {
           display_name: this.basic.display_name,
@@ -260,30 +378,60 @@ function profileEditPage() {
     },
 
     // ----- Kinh nghiệm (PROF-03) -----
-    expBody(f) {
-      return {
-        company: f.company, title: f.title,
-        start_date: f.start_date || null,
-        end_date: f.end_date || null,
-        description: f.description || null,
-      };
+    // Tách YYYY-MM-DD -> {month, year} (string, KHÔNG zero-pad để khớp value của <option>).
+    _splitDate(d) {
+      if (!d) return { month: '', year: '' };
+      const m = String(d).match(/^(\d{4})-(\d{2})/);
+      return m ? { month: String(Number(m[2])), year: m[1] } : { month: '', year: '' };
+    },
+    // Validate cặp tháng/năm bắt buộc + end >= start; trả {start_date, end_date} hoặc null (đã toast).
+    _expDates(f) {
+      const pad = n => String(n).padStart(2, '0');
+      if (!f.start_month || !f.start_year) { this.toast('Vui lòng chọn đủ tháng và năm bắt đầu.', false); return null; }
+      const start = f.start_year + '-' + pad(f.start_month) + '-01';
+      let end = null;
+      if (!f.is_current) {
+        if (!f.end_month || !f.end_year) { this.toast('Vui lòng chọn đủ tháng và năm kết thúc, hoặc tích "Tôi hiện đang làm ở đây".', false); return null; }
+        end = f.end_year + '-' + pad(f.end_month) + '-01';
+        if (end < start) { this.toast('Ngày kết thúc phải sau ngày bắt đầu.', false); return null; }
+      }
+      return { start_date: start, end_date: end };
     },
     async addExp() {
+      const dates = this._expDates(this.newExp);
+      if (!dates) return;
       try {
-        await api.post('/profiles/me/experience', this.expBody(this.newExp));
-        this.newExp = { company: '', title: '', start_date: '', end_date: '', description: '' };
+        await api.post('/profiles/me/experience', {
+          company: this.newExp.company, title: this.newExp.title,
+          start_date: dates.start_date, end_date: dates.end_date,
+          description: this.newExp.description || null,
+        });
+        this.newExp = { company: '', title: '', start_month: '', start_year: '', end_month: '', end_year: '', is_current: false, description: '' };
         await this.reload();
         this.toast('Đã thêm kinh nghiệm.', true);
       } catch (e) { this.toast('Thêm thất bại: ' + e.message, false); }
     },
     startEditExp(ex) {
       this.editExpId = ex.id;
-      this.expForm = { company: ex.company, title: ex.title, start_date: ex.start_date || '', end_date: ex.end_date || '', description: ex.description || '' };
+      const s = this._splitDate(ex.start_date), e = this._splitDate(ex.end_date);
+      this.expForm = {
+        company: ex.company, title: ex.title,
+        start_month: s.month, start_year: s.year,
+        end_month: e.month, end_year: e.year,
+        is_current: !ex.end_date,
+        description: ex.description || '',
+      };
     },
     cancelEditExp() { this.editExpId = null; this.expForm = {}; },
     async saveExp(id) {
+      const dates = this._expDates(this.expForm);
+      if (!dates) return;
       try {
-        await api.patch('/profiles/me/experience/' + id, this.expBody(this.expForm));
+        await api.patch('/profiles/me/experience/' + id, {
+          company: this.expForm.company, title: this.expForm.title,
+          start_date: dates.start_date, end_date: dates.end_date,
+          description: this.expForm.description || null,
+        });
         this.cancelEditExp();
         await this.reload();
         this.toast('Đã cập nhật kinh nghiệm.', true);

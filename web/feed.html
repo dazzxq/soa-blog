@@ -10,8 +10,19 @@
   </script>
   <script defer src="/assets/app.js?v=glass-5"></script>
 
+  <!-- Trix WYSIWYG (soạn thảo style trực tiếp). Load TRƯỚC Alpine.
+       SRI sha384 + crossorigin: nếu file CDN bị sửa đổi, trình duyệt từ chối thực thi. -->
+  <link rel="stylesheet" href="https://unpkg.com/trix@2.1.4/dist/trix.css"
+        integrity="sha384-zJE+AC4c82zYYxpg6KvRyU8UnIqKSOYR72FHSk2d3MvCz46vw01YlU1d4/yArvqC" crossorigin="anonymous" />
+  <script src="https://unpkg.com/trix@2.1.4/dist/trix.umd.min.js"
+          integrity="sha384-vqeujwCjD2Xk8PPQfKQvvZ0/cEQQBE3LyrKwFbeI1BAZbPo/wP59Cer6HO7hF+ay" crossorigin="anonymous"></script>
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="/assets/styles.css?v=glass-5" />
+  <style>
+    /* Tắt nút đính file của Trix — ảnh chỉ qua uploader riêng (/api/uploads). */
+    trix-toolbar .trix-button-group--file-tools { display: none; }
+    trix-editor { min-height: 9rem; border-radius: .5rem; }
+  </style>
 </head>
 <body class="text-slate-900 min-h-screen">
 
@@ -44,8 +55,6 @@
   <!-- ===== Cột giữa: compose + timeline (NGUYÊN BẢN) ===== -->
   <div class="order-1 lg:order-2">
 
-  <h1 class="text-2xl font-bold mb-4">Bảng tin</h1>
-
   <!-- Ô soạn bài: bấm để mở modal (kiểu Facebook) -->
   <section class="glass p-3 mb-6 flex items-center gap-3">
     <span class="w-10 h-10 rounded-full avatar-fallback overflow-hidden flex items-center justify-center text-sm font-bold shrink-0">
@@ -55,32 +64,22 @@
     <button @click="openCompose()" class="flex-1 text-left glass-input px-4 py-2.5 text-sm subtle">Bạn đang nghĩ gì?</button>
   </section>
 
-  <!-- Modal soạn bài: rich text cơ bản (B/I/U/H2) + ảnh ở phần riêng -->
-  <div x-show="composeOpen" x-cloak @keydown.escape.window="composeOpen=false"
+  <!-- Modal soạn bài: WYSIWYG Trix (style trực tiếp) + ảnh ở phần riêng -->
+  <div x-show="composeOpen" x-cloak @keydown.escape.window="closeCompose()"
        class="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 bg-slate-900/40 overflow-y-auto">
-    <div @click.outside="composeOpen=false" class="glass-strong w-full max-w-xl my-8 p-5 max-h-[90vh] overflow-y-auto">
+    <div @click.outside="closeCompose()" class="glass-strong w-full max-w-xl my-8 p-5 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between mb-3">
-        <h2 class="text-lg font-semibold">Tạo bài viết</h2>
-        <button @click="composeOpen=false" class="subtle hover:text-slate-700 px-2" title="Đóng"><i class="fa-solid fa-xmark"></i></button>
+        <h2 class="text-lg font-semibold" x-text="editId ? 'Chỉnh sửa bài viết' : 'Tạo bài viết'"></h2>
+        <button @click="closeCompose()" class="subtle hover:text-slate-700 px-2" title="Đóng"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <!-- Thanh định dạng cơ bản -->
-      <div class="flex items-center gap-1 mb-2">
-        <button type="button" @click="wrapSel('**','**')" title="In đậm" class="pro-btn-ghost w-9 h-9 rounded-lg flex items-center justify-center"><i class="fa-solid fa-bold"></i></button>
-        <button type="button" @click="wrapSel('*','*')" title="In nghiêng" class="pro-btn-ghost w-9 h-9 rounded-lg flex items-center justify-center"><i class="fa-solid fa-italic"></i></button>
-        <button type="button" @click="wrapSel('__','__')" title="Gạch chân" class="pro-btn-ghost w-9 h-9 rounded-lg flex items-center justify-center"><i class="fa-solid fa-underline"></i></button>
-        <button type="button" @click="headingSel()" title="Tiêu đề (H2)" class="pro-btn-ghost w-9 h-9 rounded-lg flex items-center justify-center"><i class="fa-solid fa-heading"></i></button>
-      </div>
-      <textarea x-ref="composeText" x-model="draft.content" rows="5" placeholder="Bạn đang nghĩ gì?"
-                class="glass-input w-full p-3 text-sm resize-y"></textarea>
-      <!-- Xem trước (render an toàn) -->
-      <template x-if="draft.content.trim()">
-        <div class="mt-3">
-          <p class="subtle text-xs mb-1">Xem trước</p>
-          <div class="surface-soft p-3 text-sm prose-rich break-words" x-html="renderRich(draft.content)"></div>
-        </div>
-      </template>
-      <!-- Phần ẢNH riêng (tối đa 9) — tải lên NAS hoặc dán URL -->
-      <div class="mt-3 surface-soft p-3">
+      <p class="subtle text-xs mb-2"><i class="fa-solid fa-globe mr-1"></i>Bài viết công khai — mọi người đều có thể xem.</p>
+      <!-- Soạn thảo trực tiếp: in đậm/nghiêng/tiêu đề/danh sách hiện ngay khi gõ -->
+      <input id="composeTrix" type="hidden" />
+      <trix-editor input="composeTrix" x-ref="trix" placeholder="Bạn đang nghĩ gì?"
+                   @trix-change="draft.content = $event.target.value"
+                   class="glass-input w-full text-sm bg-white"></trix-editor>
+      <!-- Phần ẢNH riêng (tối đa 9) — tải lên NAS. Ẩn khi sửa bài (chỉ sửa nội dung). -->
+      <div class="mt-3 surface-soft p-3" x-show="!editId">
         <p class="text-sm font-medium mb-2">
           <i class="fa-regular fa-image mr-1.5"></i>Ảnh (tối đa 9)
           <span class="subtle" x-text="'· ' + draft.images.length + '/9'"></span>
@@ -93,12 +92,6 @@
                    @change="uploadImage($event)" :disabled="uploading || draft.images.length >= 9" />
           </label>
           <span x-show="uploading" class="subtle text-xs"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Đang tải ảnh…</span>
-        </div>
-        <div class="flex items-center gap-2 mt-2">
-          <input x-model="imageUrlInput" type="url" placeholder="hoặc dán URL ảnh…" @keydown.enter.prevent="addImageUrl()"
-                 class="glass-input flex-1 p-2 text-sm" />
-          <button type="button" @click="addImageUrl()" :disabled="draft.images.length >= 9"
-                  class="pro-btn-ghost px-3 py-2 rounded-lg text-sm disabled:opacity-50">Thêm</button>
         </div>
         <template x-if="draft.images.length">
           <div class="grid grid-cols-3 gap-2 mt-3">
@@ -113,9 +106,9 @@
         </template>
       </div>
       <div class="flex justify-end gap-2 mt-4">
-        <button @click="composeOpen=false" class="pro-btn-ghost px-4 py-2 rounded-lg text-sm">Huỷ</button>
-        <button @click="submit()" :disabled="busy || !draft.content.trim()"
-                class="pro-btn px-4 py-2 rounded-lg text-sm disabled:opacity-50">Đăng</button>
+        <button @click="closeCompose()" class="pro-btn-ghost px-4 py-2 rounded-lg text-sm">Huỷ</button>
+        <button @click="submit()" :disabled="busy"
+                class="pro-btn px-4 py-2 rounded-lg text-sm disabled:opacity-50" x-text="editId ? 'Lưu' : 'Đăng'"></button>
       </div>
     </div>
   </div>
@@ -143,7 +136,7 @@
   <template x-if="!loading">
     <div class="space-y-4">
       <template x-for="p in posts" :key="p.id">
-        <article class="glass glass-hover p-5">
+        <article :id="'post-' + p.id" class="glass glass-hover p-5 transition-shadow">
 
           <!-- Tác giả + thời gian -->
           <div class="flex items-center gap-3 mb-3">
@@ -158,7 +151,7 @@
             <div class="min-w-0">
               <div class="font-semibold truncate" x-text="p.author?.display_name || p.author?.username || 'Người dùng'"></div>
               <div class="subtle text-xs truncate" x-show="p.author?.headline" x-text="p.author?.headline"></div>
-              <div class="subtle text-xs" x-text="timeAgo(p.created_at)"></div>
+              <div class="subtle text-xs"><span x-text="timeAgo(p.created_at)"></span><span x-show="p.updated_at"> · đã chỉnh sửa</span></div>
             </div>
           </div>
 
@@ -169,7 +162,7 @@
               <template x-if="p.original">
                 <div class="surface-soft border-l-4 border-slate-200 p-3">
                   <div class="font-medium text-sm mb-1" x-text="p.original.author?.display_name || p.original.author?.username || 'Người dùng'"></div>
-                  <div class="text-sm prose-rich break-words" x-html="renderRich(p.original.content)"></div>
+                  <div class="text-sm prose-rich break-words" x-html="renderContent(p.original)"></div>
                   <template x-if="p.original.image_url">
                     <img :src="p.original.image_url" alt="Ảnh bài viết gốc" class="mt-2 rounded max-h-80 w-auto" />
                   </template>
@@ -185,7 +178,7 @@
 
           <!-- Nội dung -->
           <template x-if="p.content">
-            <div class="text-sm leading-relaxed prose-rich break-words mb-3" x-html="renderRich(p.content)"></div>
+            <div class="text-sm leading-relaxed prose-rich break-words mb-3" x-html="renderContent(p)"></div>
           </template>
 
           <!-- Ảnh: 1 ảnh full-width, nhiều ảnh → lưới kiểu Facebook/LinkedIn; bấm để mở -->
@@ -259,10 +252,18 @@
               <i class="fa-solid fa-retweet"></i><span>Chia sẻ</span>
             </button>
             <template x-if="p.author_id === auth.user()?.id">
-              <button @click="removePost(p.id)" :disabled="busy" title="Xoá bài viết"
-                      class="px-3 py-2 rounded-lg hover:bg-slate-100 text-red-600 disabled:opacity-50">
-                <i class="fa-regular fa-trash-can"></i>
-              </button>
+              <div class="flex items-center">
+                <template x-if="!p.repost_of">
+                  <button @click="editPost(p)" :disabled="busy" title="Sửa bài viết"
+                          class="px-3 py-2 rounded-lg hover:bg-slate-100 subtle disabled:opacity-50">
+                    <i class="fa-regular fa-pen-to-square"></i>
+                  </button>
+                </template>
+                <button @click="removePost(p.id)" :disabled="busy" title="Xoá bài viết"
+                        class="px-3 py-2 rounded-lg hover:bg-slate-100 text-red-600 disabled:opacity-50">
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
+              </div>
             </template>
           </div>
 
@@ -283,13 +284,28 @@
                     </template>
                   </span>
                   <div class="flex items-start justify-between gap-3 flex-1 min-w-0">
-                    <div class="min-w-0">
+                    <div class="min-w-0 flex-1">
                       <span class="font-medium text-sm" x-text="c.author?.display_name || c.author?.username || 'Người dùng'"></span>
-                      <p class="text-sm whitespace-pre-wrap break-words" x-text="c.body"></p>
+                      <template x-if="editCommentId === c.id">
+                        <div class="flex items-center gap-2 mt-1">
+                          <input x-model="editCommentBody" @keydown.enter="saveComment(p.id, c.id)"
+                                 class="glass-input flex-1 p-1.5 text-sm" />
+                          <button @click="saveComment(p.id, c.id)" :disabled="busy || !editCommentBody.trim()"
+                                  class="text-xs pro-btn px-2 py-1 rounded disabled:opacity-50">Lưu</button>
+                          <button @click="editCommentId=null" class="text-xs subtle hover:underline">Huỷ</button>
+                        </div>
+                      </template>
+                      <template x-if="editCommentId !== c.id">
+                        <p class="text-sm whitespace-pre-wrap break-words"><span x-text="c.body"></span><span x-show="c.updated_at" class="subtle text-xs"> · đã chỉnh sửa</span></p>
+                      </template>
                     </div>
-                    <template x-if="c.author_id === auth.user()?.id">
-                      <button @click="deleteComment(p.id, c.id)" :disabled="busy"
-                              class="text-xs text-red-600 hover:underline disabled:opacity-50 shrink-0">Xoá</button>
+                    <template x-if="c.author_id === auth.user()?.id && editCommentId !== c.id">
+                      <div class="flex items-center gap-2 shrink-0 text-xs">
+                        <button @click="startEditComment(c)" :disabled="busy"
+                                class="text-navy hover:underline disabled:opacity-50">Sửa</button>
+                        <button @click="deleteComment(p.id, c.id)" :disabled="busy"
+                                class="text-red-600 hover:underline disabled:opacity-50">Xoá</button>
+                      </div>
                     </template>
                   </div>
                 </div>
@@ -398,7 +414,7 @@
               <div class="subtle text-xs" x-text="timeAgo(lightbox.post.created_at)"></div>
             </div>
           </div>
-          <div class="text-sm leading-relaxed prose-rich break-words" x-html="renderRich(lightbox.post.content)"></div>
+          <div class="text-sm leading-relaxed prose-rich break-words" x-html="renderContent(lightbox.post)"></div>
           <div class="subtle text-xs mt-3 pt-3 border-t divider-soft"
                x-text="(lightbox.post.reaction_count || 0) + ' cảm xúc · ' + (lightbox.post.comment_count || 0) + ' bình luận'"></div>
         </div>
@@ -419,13 +435,16 @@ function feedPage() {
     me: null,
     suggestions: [],
     draft: { content: '', images: [] },
-    imageUrlInput: '',
+    editId: null,
+    editCommentId: null,
+    editCommentBody: '',
     lightbox: { open: false, post: null, index: 0 },
     openComments: {},
     commentDraft: {},
     comments: {},
     composeOpen: false,
     uploading: false,
+    didFocusPostParam: false,
     reactions: ['like', 'love', 'haha', 'wow', 'sad', 'angry'],
 
     reactionLabel(type) {
@@ -464,36 +483,34 @@ function feedPage() {
     lbPrev() { const n = this.lbImages().length; if (n) this.lightbox.index = (this.lightbox.index - 1 + n) % n; },
     lbNext() { const n = this.lbImages().length; if (n) this.lightbox.index = (this.lightbox.index + 1) % n; },
 
-    // Append a pasted image URL (http/https) to the draft, max 9.
-    addImageUrl() {
-      const u = (this.imageUrlInput || '').trim();
-      if (!u) return;
-      if (!/^https?:\/\//i.test(u)) { this.error = 'URL ảnh phải bắt đầu bằng http(s)://'; return; }
-      if (this.draft.images.length >= 9) { this.error = 'Tối đa 9 ảnh.'; return; }
-      this.draft.images.push(u);
-      this.imageUrlInput = '';
+    // ---- Trix WYSIWYG: nạp HTML vào editor (editor có sau khi Trix init) ----
+    setTrix(html) {
+      this.$nextTick(() => {
+        const t = this.$refs.trix;
+        if (t && t.editor) { t.editor.loadHTML(html || ''); }
+        else if (t) { t.value = html || ''; }
+      });
     },
-
     openCompose() {
+      this.editId = null;
+      this.draft = { content: '', images: [] };
       this.composeOpen = true;
-      this.$nextTick(() => { if (this.$refs.composeText) this.$refs.composeText.focus(); });
+      this.setTrix('');
     },
-    // Wrap the textarea selection with markers (bold/italic/underline).
-    wrapSel(pre, post) {
-      const ta = this.$refs.composeText; if (!ta) return;
-      const s = ta.selectionStart, e = ta.selectionEnd, v = this.draft.content;
-      const sel = v.slice(s, e) || 'văn bản';
-      this.draft.content = v.slice(0, s) + pre + sel + post + v.slice(e);
-      this.$nextTick(() => { ta.focus(); ta.selectionStart = s + pre.length; ta.selectionEnd = s + pre.length + sel.length; });
+    // Sửa bài: mở modal với nội dung cũ (chỉ sửa nội dung, ảnh giữ nguyên).
+    // Bài 'html' (đã sanitize) nạp thẳng; bài legacy 'md' phải qua renderRich
+    // (escape-first) để KHÔNG biến text cũ thành HTML thật khi mở/sửa.
+    editPost(p) {
+      this.editId = p.id;
+      const html = p.content_format === 'html' ? (p.content || '') : window.renderRich(p.content || '');
+      this.draft = { content: html, images: [] };
+      this.composeOpen = true;
+      this.setTrix(html);
     },
-    // Prefix the current line with "## " (H2).
-    headingSel() {
-      const ta = this.$refs.composeText; if (!ta) return;
-      const v = this.draft.content, s = ta.selectionStart;
-      const ls = v.lastIndexOf('\n', s - 1) + 1;
-      if (v.slice(ls, ls + 3) === '## ') return;
-      this.draft.content = v.slice(0, ls) + '## ' + v.slice(ls);
-      this.$nextTick(() => { ta.focus(); ta.selectionStart = ta.selectionEnd = s + 3; });
+    closeCompose() {
+      this.composeOpen = false;
+      this.editId = null;
+      this.draft = { content: '', images: [] };
     },
 
     // Upload one or more images to the NAS object store via the gateway; append each
@@ -538,23 +555,53 @@ function feedPage() {
       // Cột trái & phải — best-effort, lỗi không chặn bảng tin
       try { this.me = (await api.get('/me')).data; } catch (e) { /* degrade an toàn */ }
       try { this.suggestions = ((await api.get('/connections/suggestions')).data || []).slice(0, 5); } catch (e) { /* degrade an toàn */ }
+      // Deep-link chỉ xử lý MỘT lần cho mỗi lần mở trang (load() còn được gọi lại sau mỗi thao tác).
+      if (!this.didFocusPostParam) { this.didFocusPostParam = true; await this.focusPostParam(); }
+    },
+
+    // Deep-link từ thông báo: /feed.html?post=<id> → cuộn tới đúng bài, highlight.
+    // Giữ id dạng chuỗi số (BIGINT-safe); nếu bài không có trong feed thì fetch lẻ; 404/403 → báo nhẹ.
+    async focusPostParam() {
+      const id = new URLSearchParams(location.search).get('post');
+      if (!id || !/^[1-9]\d*$/.test(id)) return;
+      // Xoá ?post khỏi URL để reload thủ công không lặp lại deep-link.
+      try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
+      if (!this.posts.some(p => String(p.id) === id)) {
+        try {
+          const r = await api.get('/posts/' + encodeURIComponent(id));
+          if (r.data) this.posts.unshift(r.data);
+          else return;
+        } catch (e) {
+          this.error = 'Bài viết không còn nữa hoặc bạn không có quyền xem.';
+          return;
+        }
+      }
+      this.$nextTick(() => {
+        const el = document.getElementById('post-' + id);
+        if (!el) return;
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('ring-2', 'ring-navy');
+        setTimeout(() => el.classList.remove('ring-2', 'ring-navy'), 2500);
+      });
     },
 
     async submit() {
-      if (this.busy || !this.draft.content.trim()) return;
+      if (this.busy) return;
+      const html = this.draft.content || '';
+      // chặn HTML rỗng (vd "<div><br></div>") — bỏ thẻ rồi kiểm text.
+      if (!html.replace(/<[^>]*>/g, '').trim()) { this.error = 'Nội dung bài viết không được để trống.'; return; }
       this.busy = true;
       this.error = '';
       try {
-        await api.post('/posts', {
-          content: this.draft.content,
-          images: this.draft.images,
-        });
-        this.draft = { content: '', images: [] };
-        this.imageUrlInput = '';
-        this.composeOpen = false;
+        if (this.editId) {
+          await api.patch('/posts/' + this.editId, { content: html });
+        } else {
+          await api.post('/posts', { content: html, images: this.draft.images });
+        }
+        this.closeCompose();
         await this.load();
       } catch (e) {
-        this.error = 'Đăng bài không thành công: ' + e.message;
+        this.error = (this.editId ? 'Lưu bài không thành công: ' : 'Đăng bài không thành công: ') + e.message;
       } finally {
         this.busy = false;
       }
@@ -563,8 +610,14 @@ function feedPage() {
     react(id, type)   { return this._act(() => api.post('/posts/' + id + '/reactions', { type })); },
     unreact(id)       { return this._act(() => api.delete('/posts/' + id + '/reactions')); },
     repost(id)        { return this._act(() => api.post('/posts/' + id + '/repost')); },
-    removePost(id)    { return this._act(() => api.delete('/posts/' + id)); },
-    invite(id)        { return this._act(() => api.post('/connections/requests', { target_id: id })); },
+    async removePost(id) {
+      if (!await proConfirm({ title: 'Xoá bài viết', message: 'Xoá bài viết này? Hành động không thể hoàn tác.', danger: true })) return;
+      return this._act(() => api.delete('/posts/' + id));
+    },
+    async invite(id) {
+      if (!await proConfirm({ title: 'Gửi lời mời kết nối', message: 'Gửi lời mời kết nối tới người này?', okText: 'Kết nối' })) return;
+      return this._act(() => api.post('/connections/requests', { target_id: id }));
+    },
 
     async loadComments(id) {
       try {
@@ -593,8 +646,29 @@ function feedPage() {
       }
     },
 
+    startEditComment(c) {
+      this.editCommentId = c.id;
+      this.editCommentBody = c.body || '';
+    },
+    async saveComment(pid, cid) {
+      const b = (this.editCommentBody || '').trim();
+      if (!b || this.busy) return;
+      this.busy = true;
+      this.error = '';
+      try {
+        await api.patch('/comments/' + cid, { body: b });
+        this.editCommentId = null;
+        await this.loadComments(pid);
+      } catch (e) {
+        this.error = 'Sửa bình luận không thành công: ' + e.message;
+      } finally {
+        this.busy = false;
+      }
+    },
+
     async deleteComment(pid, cid) {
       if (this.busy) return;
+      if (!await proConfirm({ title: 'Xoá bình luận', message: 'Xoá bình luận này?', danger: true })) return;
       this.busy = true;
       this.error = '';
       try {
@@ -624,6 +698,10 @@ function feedPage() {
   };
 }
 </script>
-<script>document.addEventListener('DOMContentLoaded', () => window.proNav('feed'));</script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => window.proNav('feed'));
+  // Chặn đính file qua Trix (paste/drop) — ảnh chỉ qua uploader riêng (/api/uploads).
+  document.addEventListener('trix-file-accept', (e) => e.preventDefault());
+</script>
 </body>
 </html>

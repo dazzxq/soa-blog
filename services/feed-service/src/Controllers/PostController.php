@@ -41,7 +41,7 @@ final class PostController
      */
     private static function selectColumns(string $viewerPlaceholder): string
     {
-        return "p.id, p.author_id, p.content, p.image_url, p.images, p.repost_of, p.created_at,
+        return "p.id, p.author_id, p.content, p.content_format, p.image_url, p.images, p.repost_of, p.created_at, p.updated_at,
                 (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.id)                                  AS reaction_count,
                 (SELECT COUNT(*) FROM comments  c WHERE c.post_id = p.id)                                  AS comment_count,
                 (SELECT r2.type  FROM reactions r2 WHERE r2.post_id = p.id AND r2.user_id = $viewerPlaceholder) AS my_reaction";
@@ -55,6 +55,8 @@ final class PostController
         $row['reaction_count'] = (int) $row['reaction_count'];
         $row['comment_count']  = (int) $row['comment_count'];
         $row['repost_of']      = $row['repost_of'] !== null ? (int) $row['repost_of'] : null;
+        // content_format: 'html' (đã sanitize server) hoặc 'md' (legacy/escape-first ở FE).
+        $row['content_format'] = (string) ($row['content_format'] ?? 'md');
         // images: decode the JSON array (null when absent). Always an array|null.
         $imgs = $row['images'] ?? null;
         if (is_string($imgs) && $imgs !== '') {
@@ -160,10 +162,7 @@ final class PostController
         }
 
         $b       = (array) ($req->getParsedBody() ?? []);
-        $content = trim((string) ($b['content'] ?? ''));
-        if ($content === '' || mb_strlen($content) > 5000) {
-            throw new DomainError(400, 'VALIDATION_FAILED', 'Nội dung bài viết phải từ 1-5000 ký tự.');
-        }
+        $content = $this->validateContent((string) ($b['content'] ?? ''));
 
         $imageUrl = trim((string) ($b['image_url'] ?? ''));
         if ($imageUrl !== '' && (mb_strlen($imageUrl) > 512 || !preg_match('#^https?://#i', $imageUrl))) {
@@ -197,8 +196,8 @@ final class PostController
             : json_encode(array_values($images), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
         $stmt = Db::pdo()->prepare(
-            'INSERT INTO posts (author_id, content, image_url, images, repost_of)
-             VALUES (:a, :c, :img, :imgs, NULL)'
+            "INSERT INTO posts (author_id, content, content_format, image_url, images, repost_of)
+             VALUES (:a, :c, 'html', :img, :imgs, NULL)"
         );
         $stmt->execute([
             ':a'    => $author,
@@ -209,6 +208,34 @@ final class PostController
 
         $id = (int) Db::pdo()->lastInsertId();
         return Json::ok($res, $this->find($id, $author), 201);
+    }
+
+    /** PATCH /posts/{id} — owner-only edit of the post content (HTML, sanitized). */
+    public function update(Request $req, Response $res, array $args): Response
+    {
+        $caller = (int) ($req->getHeaderLine('X-User-Id') ?: 0);
+        $id     = (int) $args['id'];
+
+        $post = $this->find($id);
+        if ($post === null) {
+            throw new DomainError(404, 'POST_NOT_FOUND', 'Bài viết không tồn tại.');
+        }
+        if ($caller === 0 || $caller !== (int) $post['author_id']) {
+            throw new DomainError(403, 'FORBIDDEN', 'Bạn không có quyền sửa bài viết này.');
+        }
+        if ($post['repost_of'] !== null) {
+            throw new DomainError(400, 'VALIDATION_FAILED', 'Không thể sửa bài chia sẻ lại.');
+        }
+
+        $b       = (array) ($req->getParsedBody() ?? []);
+        $content = $this->validateContent((string) ($b['content'] ?? ''));
+
+        $stmt = Db::pdo()->prepare(
+            "UPDATE posts SET content = :c, content_format = 'html', updated_at = NOW() WHERE id = :id"
+        );
+        $stmt->execute([':c' => $content, ':id' => $id]);
+
+        return Json::ok($res, $this->find($id, $caller));
     }
 
     /** POST /posts/{id}/reactions — upsert the caller's reaction (D-02). */
@@ -343,6 +370,45 @@ final class PostController
         $stmt->execute([':id' => $id]);
         $row = $stmt->fetch();
         return $row === false ? null : $row;
+    }
+
+    /**
+     * Validate + sanitize post content (WYSIWYG HTML). Raw char guard BEFORE purify,
+     * byte guard AFTER (TEXT = 65535 byte; utf8mb4 ≤ 4 byte/ký tự → cap theo BYTE),
+     * rồi chặn HTML rỗng. Trả HTML đã sạch (an toàn cho x-html ở client).
+     */
+    private function validateContent(string $raw): string
+    {
+        $content = trim($raw);
+        if ($content === '' || mb_strlen($content) > 10000) {
+            throw new DomainError(400, 'VALIDATION_FAILED', 'Nội dung bài viết phải từ 1-10000 ký tự.');
+        }
+        $content = $this->purify($content);
+        if (strlen($content) > 60000) {
+            throw new DomainError(400, 'VALIDATION_FAILED', 'Nội dung bài viết quá dài.');
+        }
+        // Chặn HTML rỗng kể cả khi chỉ chứa entity/nbsp (vd "<p>&nbsp;</p>").
+        $text = html_entity_decode(strip_tags($content), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = preg_replace('/\x{00A0}/u', ' ', $text);
+        if (trim((string) $text) === '') {
+            throw new DomainError(400, 'VALIDATION_FAILED', 'Nội dung bài viết không được để trống.');
+        }
+        return $content;
+    }
+
+    /** HTMLPurifier sanitize: allowlist hẹp khớp Trix, chỉ scheme http/https/mailto. */
+    private function purify(string $html): string
+    {
+        static $purifier = null;
+        if ($purifier === null) {
+            $config = \HTMLPurifier_Config::createDefault();
+            $config->set('HTML.Allowed', 'p,br,strong,em,b,i,u,h1,h2,h3,ul,ol,li,blockquote,pre,a[href]');
+            $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true]);
+            $config->set('HTML.TargetBlank', true);
+            $config->set('Cache.SerializerPath', sys_get_temp_dir());
+            $purifier = new \HTMLPurifier($config);
+        }
+        return $purifier->purify($html);
     }
 
     /** Parse a comma list into unique positive ints (preserves order). */

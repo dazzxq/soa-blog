@@ -149,6 +149,65 @@
   window.escapeHtml = escapeHtml;
   window.renderRich = renderRich;
 
+  // Render nội dung post theo cờ tin cậy do SERVER cấp (content_format):
+  //   'html' = đã HTMLPurifier sanitize ở server → bind x-html trực tiếp;
+  //   ngược lại (legacy 'md'/thiếu cờ) → renderRich (escape-first).
+  // KHÔNG đoán an toàn bằng regex — trust boundary nằm ở server.
+  function renderContent(post) {
+    if (!post) return '';
+    if (post.content_format === 'html') return post.content || '';
+    return renderRich(post.content || '');
+  }
+  window.renderContent = renderContent;
+
+  // ---------- Shared confirm dialog (glass) ----------
+  // Vanilla Promise-based confirm so every page can `if (!await proConfirm(...)) return;`
+  // before a destructive/irreversible action. NOT an Alpine component (avoids initTree
+  // timing on a body-appended node). XSS-safe: all user-facing text via textContent.
+  window.proConfirm = function (opts) {
+    opts = opts || {};
+    var title   = opts.title   || 'Xác nhận';
+    var message = opts.message || '';
+    var okText  = opts.okText  || (opts.danger ? 'Xoá' : 'Đồng ý');
+    var cancel  = opts.cancelText || 'Huỷ';
+    return new Promise(function (resolve) {
+      var overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(15,23,42,0.45)';
+      var box = document.createElement('div');
+      box.className = 'glass-strong';
+      box.style.cssText = 'max-width:24rem;width:100%;padding:1.25rem;border-radius:1rem';
+      var h = document.createElement('h3');
+      h.style.cssText = 'font-weight:600;font-size:1rem;margin-bottom:.5rem';
+      h.textContent = title;
+      var p = document.createElement('p');
+      p.style.cssText = 'font-size:.875rem;color:#475569;margin-bottom:1rem';
+      p.textContent = message;
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;justify-content:flex-end;gap:.5rem';
+      var bC = document.createElement('button');
+      bC.className = 'pro-btn-ghost';
+      bC.style.cssText = 'padding:.5rem 1rem;border-radius:.5rem;font-size:.875rem';
+      bC.textContent = cancel;
+      var bO = document.createElement('button');
+      bO.style.cssText = 'padding:.5rem 1rem;border-radius:.5rem;font-size:.875rem;color:#fff;background:' + (opts.danger ? '#dc2626' : '#1e3a8a');
+      bO.textContent = okText;
+      row.appendChild(bC); row.appendChild(bO);
+      box.appendChild(h); box.appendChild(p); box.appendChild(row);
+      overlay.appendChild(box); document.body.appendChild(overlay);
+      var done = function (val) {
+        if (overlay.parentNode) document.body.removeChild(overlay);
+        document.removeEventListener('keydown', onKey);
+        resolve(val);
+      };
+      var onKey = function (e) { if (e.key === 'Escape') done(false); else if (e.key === 'Enter') done(true); };
+      bC.addEventListener('click', function () { done(false); });
+      bO.addEventListener('click', function () { done(true); });
+      overlay.addEventListener('click', function (e) { if (e.target === overlay) done(false); });
+      document.addEventListener('keydown', onKey);
+      setTimeout(function () { bO.focus(); }, 0);
+    });
+  };
+
   // ---------- Profile loader (Phase-1 endpoints only) ----------
   // Uses /api/me (JWT) to resolve the current account, then /api/profiles/{id}
   // for the public basic profile {id, username, display_name}. The retired blog
@@ -213,6 +272,18 @@
         try { await api.post('/notifications/read-all'); } catch (e) { /* swallow */ }
         this.load();
       },
+      // Click a notification → mark read, then deep-link to its target.
+      // reaction/comment: ref_id is the post id → /feed.html?post=<id>. invite → connections.
+      async openNotif(n) {
+        await this.markOne(n.id);
+        // Giữ ID dạng chuỗi số (BIGINT-safe, không để Number() làm tròn ID 64-bit).
+        var rid = String(n.ref_id == null ? '' : n.ref_id);
+        if ((n.type === 'reaction' || n.type === 'comment') && /^[1-9]\d*$/.test(rid)) {
+          window.location.href = '/feed.html?post=' + encodeURIComponent(rid);
+        } else if (n.type === 'invite') {
+          window.location.href = '/connections.html';
+        }
+      },
       message(n) {
         const who = (n.actor && n.actor.display_name) || 'Ai đó';
         if (n.type === 'invite')   return who + ' đã gửi cho bạn lời mời kết nối';
@@ -241,7 +312,7 @@
   // ===========================================================================
 
   // Chain-link logo (two interlocking navy rings) — self-designed inline SVG, no
-  // third-party brand assets (T-06-04). Vietnamese tagline "Kết nối chuyên nghiệp".
+  // third-party brand assets (T-06-04). Brand text: "ProConnect".
   var PRONAV_HTML =
     '<nav class="glass-nav z-30">' +
       '<div class="max-w-[1248px] mx-auto px-4 py-2 flex items-center justify-between gap-4">' +
@@ -253,7 +324,6 @@
             '<rect x="9" y="8" width="13" height="8" rx="4"></rect>' +
           '</svg>' +
           '<span class="font-bold text-lg" style="color:#1e3a8a">ProConnect</span>' +
-          '<span class="hidden md:inline text-xs subtle">Kết nối chuyên nghiệp</span>' +
         '</a>' +
         // MIDDLE: search (logged-in only) → /search.html?q=
         '<template x-if="isLoggedIn">' +
@@ -297,7 +367,7 @@
                 '</template>' +
                 '<ul class="max-h-80 overflow-y-auto divide-y">' +
                   '<template x-for="n in items" :key="n.id">' +
-                    '<li @click="markOne(n.id)" ' +
+                    '<li @click="openNotif(n)" ' +
                         ':class="n.read_at ? \'hover:bg-slate-50\' : \'pro-surface hover:bg-slate-100 font-semibold\'" ' +
                         'class="px-3 py-2 cursor-pointer">' +
                       '<p class="text-sm" x-text="message(n)"></p>' +

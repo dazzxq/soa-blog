@@ -3,9 +3,10 @@ FROM php:8.2-fpm-alpine
 # nginx serves HTTP :80 and forwards .php to php-fpm via FastCGI.
 # supervisord is PID 1, runs both processes; wget is for healthcheck.
 # mbstring (with oniguruma) — required by mb_strlen / mb_strtolower used in controllers.
-RUN apk add --no-cache nginx supervisor wget oniguruma \
-    && apk add --no-cache --virtual .build-deps oniguruma-dev \
-    && docker-php-ext-install pdo pdo_mysql opcache mbstring \
+# dom (libxml2) — required by ezyang/htmlpurifier (HTML sanitize cho nội dung bài viết).
+RUN apk add --no-cache nginx supervisor wget oniguruma libxml2 \
+    && apk add --no-cache --virtual .build-deps oniguruma-dev libxml2-dev \
+    && docker-php-ext-install pdo pdo_mysql opcache mbstring dom \
     && apk del --no-network .build-deps
 
 WORKDIR /app
