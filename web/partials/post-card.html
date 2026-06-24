@@ -26,7 +26,7 @@
           <a :href="'/profile/' + p.original.author_id" class="font-medium text-sm mb-1 hover:underline block" x-text="p.original.author?.display_name || p.original.author?.username || 'Người dùng'"></a>
           <div class="text-sm prose-rich break-words" x-html="renderContent(p.original)"></div>
           <template x-if="p.original.image_url">
-            <img :src="p.original.image_url" alt="Ảnh bài viết gốc" class="mt-2 rounded max-h-80 w-auto" />
+            <img :src="p.original.image_url" alt="Ảnh bài viết gốc" class="mt-2 rounded w-full max-h-96 object-cover" />
           </template>
         </div>
       </template>
@@ -47,7 +47,7 @@
   <template x-if="postImages(p).length === 1">
     <button type="button" @click="openLightbox(p, 0)" class="block w-full mb-3">
       <img :src="postImages(p)[0]" alt="Ảnh bài viết" loading="lazy"
-           class="w-full max-h-[510px] object-contain rounded-lg bg-slate-50 cursor-pointer" />
+           class="w-full max-h-[85vh] object-cover rounded-lg bg-slate-50 cursor-pointer" />
     </button>
   </template>
   <template x-if="postImages(p).length > 1">
@@ -63,11 +63,15 @@
 
   <!-- Tóm tắt cảm xúc + bình luận (gom lại kiểu LinkedIn) -->
   <div class="flex items-center gap-3 text-xs subtle mt-3" x-show="p.reaction_count > 0 || p.comment_count > 0">
-    <button x-show="p.reaction_count > 0" @click="openReactors(p.id)" class="flex items-center gap-1.5 hover:underline" title="Xem ai đã bày tỏ cảm xúc">
-      <span class="inline-flex items-center justify-center w-4 h-4 rounded-full" style="background:var(--navy)">
-        <i class="fa-solid fa-thumbs-up text-white" style="font-size:9px"></i>
+    <button x-show="p.reaction_count > 0" @click="openReactors(p.id)" class="flex items-center gap-1 hover:underline" title="Xem ai đã bày tỏ cảm xúc">
+      <span class="flex items-center">
+        <template x-for="(rt, ri) in topReactionTypes(p)" :key="rt">
+          <span class="inline-flex items-center justify-center w-4 h-4 rounded-full ring-1 ring-white" :class="ri ? '-ml-1' : ''" :style="'background:' + reactionColor(rt)">
+            <i class="fa-solid text-white" :class="reactionIcon(rt)" style="font-size:8px"></i>
+          </span>
+        </template>
       </span>
-      <span x-text="p.reaction_count"></span>
+      <span class="ml-0.5" x-text="p.reaction_count"></span>
     </button>
     <button x-show="p.comment_count > 0" @click="loadComments(p.id)" class="hover:underline"
             x-text="p.comment_count + ' bình luận'"></button>

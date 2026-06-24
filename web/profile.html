@@ -258,12 +258,14 @@ function profilePage() {
         this.profile = r.data;
         this.degraded = !!(r.meta && r.meta.degraded);
         this.isOwner = !!(myId && this.profile && String(myId) === String(this.profile.id));
-        this.loadPosts(this.profile.id);   // best-effort, không chặn render hồ sơ
       } catch (e) {
         this.error = e.status === 404 ? 'Không tìm thấy hồ sơ.' : ('Không tải được hồ sơ: ' + e.message);
       } finally {
         this.loading = false;
       }
+      // Nạp bài SAU khi render hồ sơ (không chặn header), nhưng AWAIT để sau mỗi hành động
+      // (react/comment trong lightbox) → _resyncLightbox thấy danh sách bài MỚI.
+      if (this.profile) { try { await this.loadPosts(this.profile.id); } catch (e) { /* best-effort */ } }
     },
 
     // Bài viết của hồ sơ (công khai/permalink). Degrade riêng — lỗi không vỡ trang.

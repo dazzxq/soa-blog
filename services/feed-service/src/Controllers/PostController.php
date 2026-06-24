@@ -47,6 +47,7 @@ final class PostController
     {
         return "p.post_id, p.author_id, p.content, p.content_format, p.image_url, p.images, p.repost_of AS repost_of_internal, op.post_id AS repost_of_sid, p.created_at, p.updated_at,
                 (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.id)                                  AS reaction_count,
+                (SELECT GROUP_CONCAT(DISTINCT r4.type) FROM reactions r4 WHERE r4.post_id = p.id)          AS reaction_types,
                 (SELECT COUNT(*) FROM comments  c WHERE c.post_id = p.id)                                  AS comment_count,
                 (SELECT r2.type  FROM reactions r2 WHERE r2.post_id = p.id AND r2.user_id = $viewerPlaceholder) AS my_reaction";
     }
@@ -68,6 +69,11 @@ final class PostController
         $row['author_id']      = (int) $row['author_id'];
         $row['reaction_count'] = (int) $row['reaction_count'];
         $row['comment_count']  = (int) $row['comment_count'];
+        // reaction_types: các loại cảm xúc CÓ trên bài (cho FE hiện icon kiểu Facebook).
+        $rt = $row['reaction_types'] ?? null;
+        $row['reaction_types'] = ($rt !== null && $rt !== '')
+            ? array_values(array_filter(explode(',', (string) $rt)))
+            : [];
         // is_repost: marker tin cậy từ id NỘI BỘ (không null kể cả khi bài gốc đã xoá).
         // repost_of: snowflake bài gốc — NULL khi gốc đã bị xoá (LEFT JOIN không khớp).
         $row['is_repost']      = ($row['repost_of_internal'] ?? null) !== null;

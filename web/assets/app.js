@@ -227,12 +227,18 @@
       reactionLabel(t) { return ({ like: 'Thích', love: 'Yêu thích', haha: 'Haha', wow: 'Wow', sad: 'Buồn', angry: 'Phẫn nộ' })[t] || t; },
       reactionIcon(t) { return ({ like: 'fa-thumbs-up', love: 'fa-heart', haha: 'fa-face-laugh-squint', wow: 'fa-face-surprise', sad: 'fa-face-sad-tear', angry: 'fa-face-angry' })[t] || 'fa-thumbs-up'; },
       reactionColor(t) { return ({ like: '#2563eb', love: '#e0245e', haha: '#f59e0b', wow: '#eab308', sad: '#f59e0b', angry: '#f97316' })[t] || '#2563eb'; },
+      // Các loại cảm xúc có trên bài (tối đa 3 icon kiểu Facebook); fallback 'like' nếu có đếm mà thiếu chi tiết.
+      topReactionTypes(p) {
+        const t = (p && Array.isArray(p.reaction_types)) ? p.reaction_types.filter(Boolean) : [];
+        if (t.length) return t.slice(0, 3);
+        return (p && p.reaction_count > 0) ? ['like'] : [];
+      },
 
       postImages(p) { if (p && Array.isArray(p.images) && p.images.length) return p.images; return (p && p.image_url) ? [p.image_url] : []; },
       gridClass(n) { return (n === 2 || n === 3 || n === 4) ? 'grid-cols-2' : 'grid-cols-3'; },
       cellClass(n, i) { if (n === 3 && i === 0) return 'col-span-2 aspect-[16/9]'; if (n === 2) return 'aspect-[4/3]'; return 'aspect-square'; },
-      openLightbox(p, i) { this.lightbox = { open: true, post: p, index: i }; },
-      closeLightbox() { this.lightbox.open = false; },
+      openLightbox(p, i) { this.lightbox = { open: true, post: p, index: i }; this._scrollLock(); this.loadComments(p.id); },
+      closeLightbox() { this.lightbox.open = false; this._scrollLock(); },
       lbImages() { return this.lightbox.post ? this.postImages(this.lightbox.post) : []; },
       lbPrev() { const n = this.lbImages().length; if (n) this.lightbox.index = (this.lightbox.index - 1 + n) % n; },
       lbNext() { const n = this.lbImages().length; if (n) this.lightbox.index = (this.lightbox.index + 1) % n; },
@@ -253,7 +259,7 @@
         const b = (this.commentDraft[id] || '').trim();
         if (!b || this.busy) return;
         this.busy = true; this.error = '';
-        try { await api.post('/posts/' + id + '/comments', { body: b }); this.commentDraft[id] = ''; await this.loadComments(id); await this.load(); }
+        try { await api.post('/posts/' + id + '/comments', { body: b }); this.commentDraft[id] = ''; await this.loadComments(id); await this.load(); this._resyncLightbox(); }
         catch (e) { this.error = 'Gửi bình luận không thành công: ' + e.message; }
         finally { this.busy = false; }
       },
@@ -270,7 +276,7 @@
         if (this.busy) return;
         if (!await proConfirm({ title: 'Xoá bình luận', message: 'Xoá bình luận này?', danger: true })) return;
         this.busy = true; this.error = '';
-        try { await api.delete('/comments/' + cid); await this.loadComments(pid); await this.load(); }
+        try { await api.delete('/comments/' + cid); await this.loadComments(pid); await this.load(); this._resyncLightbox(); }
         catch (e) { this.error = 'Xoá bình luận không thành công: ' + e.message; }
         finally { this.busy = false; }
       },
@@ -278,6 +284,7 @@
       // Ai đã react — modal (lấy 100 đầu; nếu total lớn hơn thì hiện "và N người khác").
       async openReactors(id) {
         this.reactorsModal = { open: true, loading: true, items: [], total: 0, error: '' };
+        this._scrollLock();
         try {
           const r = await api.get('/posts/' + id + '/reactions?per_page=100');
           this.reactorsModal.items = r.data || [];
@@ -285,12 +292,22 @@
         } catch (e) { this.reactorsModal.error = 'Không tải được danh sách cảm xúc.'; }
         finally { this.reactorsModal.loading = false; }
       },
-      closeReactors() { this.reactorsModal.open = false; },
+      closeReactors() { this.reactorsModal.open = false; this._scrollLock(); },
+
+      // Khoá scroll nền khi có lightbox/modal mở; mở lại khi đóng hết.
+      _scrollLock() { document.body.style.overflow = (this.lightbox.open || this.reactorsModal.open) ? 'hidden' : ''; },
+      // Sau khi load() thay this.posts, trỏ lightbox.post về bài MỚI cùng id (để react/comment trong lightbox cập nhật đúng).
+      _resyncLightbox() {
+        if (!this.lightbox.open || !this.lightbox.post) return;
+        const id = String(this.lightbox.post.id);
+        const f = (this.posts || []).find(x => String(x.id) === id);
+        if (f) this.lightbox.post = f;
+      },
 
       async _act(fn) {
         if (this.busy) return;
         this.busy = true; this.error = '';
-        try { await fn(); await this.load(); }
+        try { await fn(); await this.load(); this._resyncLightbox(); }
         catch (e) { this.error = 'Thao tác không thành công: ' + e.message; }
         finally { this.busy = false; }
       },
