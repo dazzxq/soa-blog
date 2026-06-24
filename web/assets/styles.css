@@ -12,11 +12,11 @@ html, body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto,
   --navy-accent:  #3b5bbd;
   --navy-surface: #eef2ff;
 
-  --glass-fill:        rgba(255, 255, 255, 0.58);
-  --glass-fill-strong: rgba(255, 255, 255, 0.74);
-  --glass-fill-nav:    rgba(255, 255, 255, 0.62);
-  --glass-stroke:      rgba(255, 255, 255, 0.65);
-  --glass-blur:        18px;
+  --glass-fill:        rgba(255, 255, 255, 0.74);
+  --glass-fill-strong: rgba(255, 255, 255, 0.87);
+  --glass-fill-nav:    rgba(255, 255, 255, 0.78);
+  --glass-stroke:      rgba(255, 255, 255, 0.70);
+  --glass-blur:        28px;
   --glass-radius:      1rem;
   /* depth: soft tinted drop + crisp hairline rim + inner top highlight (no gradient) */
   --glass-shadow:
@@ -57,8 +57,8 @@ body {
 /* ---- Floating glass navigation bar ----------------------------------------- */
 .glass-nav {
   border-radius: 0 0 var(--glass-radius) var(--glass-radius);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-          backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+          backdrop-filter: blur(32px) saturate(180%);
   background: var(--glass-fill-nav);
   box-shadow:
       0 6px 20px -12px rgba(30, 58, 138, 0.18),
@@ -67,7 +67,7 @@ body {
 }
 
 /* ---- Nested surfaces (NO glass-on-glass): plain translucent tint ------------ */
-.surface-soft { background: rgba(255, 255, 255, 0.55); border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 0.75rem; }
+.surface-soft { background: rgba(255, 255, 255, 0.68); border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 0.75rem; }
 .surface-tint { background: var(--navy-surface); border-radius: 0.75rem; }
 
 /* ---- Buttons: FLAT solid navy (no gradient, no transform) ------------------- */
