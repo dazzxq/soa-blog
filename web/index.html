@@ -12,6 +12,8 @@
   <script>document.write('<link rel="stylesheet" href="/assets/styles.css?v=' + Date.now() + '">');</script>
 </head>
 <body class="text-slate-900 min-h-screen">
+<!-- Đã đăng nhập → vào thẳng bảng tin, không hiện landing (chạy sớm, tránh nháy) -->
+<script>try { if (localStorage.getItem('soa_blog_token')) location.replace('/feed'); } catch (e) {}</script>
 
 <div id="pronav"></div>
 

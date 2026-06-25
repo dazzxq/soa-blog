@@ -12,6 +12,8 @@
   <script>document.write('<link rel="stylesheet" href="/assets/styles.css?v=' + Date.now() + '">');</script>
 </head>
 <body class="text-slate-900 min-h-screen">
+<!-- Đã đăng nhập thì khỏi xem trang đăng ký → vào thẳng bảng tin -->
+<script>try { if (localStorage.getItem('soa_blog_token')) location.replace('/feed'); } catch (e) {}</script>
 
 <div id="pronav"></div>
 
@@ -69,7 +71,7 @@ function registerPage() {
           display_name: this.displayName,
         });
         auth.save(r.data.user, r.data.token);
-        window.location.href = '/';
+        window.location.href = '/feed';
       } catch (e) {
         this.error = e.message;
       } finally {
