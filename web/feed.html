@@ -16,6 +16,29 @@
         integrity="sha384-zJE+AC4c82zYYxpg6KvRyU8UnIqKSOYR72FHSk2d3MvCz46vw01YlU1d4/yArvqC" crossorigin="anonymous" />
   <script src="https://unpkg.com/trix@2.1.4/dist/trix.umd.min.js"
           integrity="sha384-vqeujwCjD2Xk8PPQfKQvvZ0/cEQQBE3LyrKwFbeI1BAZbPo/wP59Cer6HO7hF+ay" crossorigin="anonymous"></script>
+  <script>
+    // Mở rộng Trix — set TRƯỚC khi editor khởi tạo (script Trix nạp đồng bộ ở trên).
+    // Gạch ngang về thẻ <s> cho ổn định; thêm GẠCH CHÂN và CHỮ ĐỎ.
+    if (window.Trix) {
+      Trix.config.textAttributes.strike    = { tagName: 's', inheritable: true };
+      Trix.config.textAttributes.underline = { tagName: 'u', inheritable: true };
+      Trix.config.textAttributes.red = {
+        style: { color: '#dc2626' },
+        parser: function (el) { return el.style.color === 'rgb(220, 38, 38)'; },
+        inheritable: true
+      };
+    }
+    // Thêm nút "Gạch chân" (U) + "Chữ đỏ" (A) vào nhóm công cụ chữ của thanh Trix.
+    document.addEventListener('trix-initialize', function (e) {
+      var bar = e.target && e.target.toolbarElement;
+      if (!bar) return;
+      var grp = bar.querySelector('.trix-button-group--text-tools');
+      if (!grp || grp.querySelector('[data-trix-attribute="underline"]')) return;
+      grp.insertAdjacentHTML('beforeend',
+        '<button type="button" class="trix-button" data-trix-attribute="underline" title="Gạch chân" tabindex="-1" style="text-decoration:underline;font-weight:700">U</button>' +
+        '<button type="button" class="trix-button" data-trix-attribute="red" title="Chữ đỏ" tabindex="-1" style="color:#dc2626;font-weight:800">A</button>');
+    });
+  </script>
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <script>document.write('<link rel="stylesheet" href="/assets/styles.css?v=' + Date.now() + '">');</script>
   <style>

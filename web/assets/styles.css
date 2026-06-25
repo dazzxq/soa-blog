@@ -118,14 +118,25 @@ body {
 
 /* ---- Brand / utility helpers ----------------------------------------------- */
 .prose-vn p { white-space: pre-wrap; line-height: 1.65; }
-/* Rendered basic-rich-text (renderRich output: p / br / strong / em / u / h2). */
+/* Rendered rich text (WYSIWYG Trix HTML + legacy renderRich). Tailwind Preflight
+   reset xoá style mặc định của h1-h3/ul/ol/blockquote/pre → phải khai báo lại đây
+   thì heading/danh sách/trích dẫn mới hiện rõ. */
 .prose-rich { line-height: 1.6; }
 .prose-rich p { margin: 0 0 0.5rem; }
 .prose-rich p:last-child { margin-bottom: 0; }
-.prose-rich h2 { line-height: 1.3; }
-.prose-rich strong { font-weight: 700; }
-.prose-rich em { font-style: italic; }
+.prose-rich h1 { font-size: 1.3rem;  font-weight: 700; line-height: 1.3; margin: .6rem 0 .35rem; }
+.prose-rich h2 { font-size: 1.15rem; font-weight: 700; line-height: 1.3; margin: .55rem 0 .3rem; }
+.prose-rich h3 { font-size: 1.05rem; font-weight: 600; line-height: 1.3; margin: .5rem 0 .3rem; }
+.prose-rich ul { list-style: disc;    padding-left: 1.5rem; margin: .4rem 0; }
+.prose-rich ol { list-style: decimal; padding-left: 1.6rem; margin: .4rem 0; }
+.prose-rich li { margin: .15rem 0; }
+.prose-rich blockquote { border-left: 3px solid #c7d2fe; padding: .1rem 0 .1rem .8rem; margin: .5rem 0; color: #475569; font-style: italic; }
+.prose-rich pre { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: .4rem; padding: .55rem .75rem; margin: .5rem 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85rem; white-space: pre-wrap; overflow-x: auto; }
+.prose-rich strong, .prose-rich b { font-weight: 700; }
+.prose-rich em, .prose-rich i { font-style: italic; }
 .prose-rich u { text-decoration: underline; }
+.prose-rich s, .prose-rich del, .prose-rich strike { text-decoration: line-through; }
+.prose-rich a { color: #1e3a8a; text-decoration: underline; }
 .subtle { color: rgb(71 85 105); }
 .pro-link-active { color: var(--navy); font-weight: 600; }
 .pro-badge { background: #dc2626; color: #fff; }

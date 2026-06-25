@@ -505,7 +505,11 @@ final class PostController
         static $purifier = null;
         if ($purifier === null) {
             $config = \HTMLPurifier_Config::createDefault();
-            $config->set('HTML.Allowed', 'p,br,strong,em,b,i,u,h1,h2,h3,ul,ol,li,blockquote,pre,a[href]');
+            // Allowlist khớp Trix: + s/del (gạch ngang), + span[style] cho CHỮ ĐỎ.
+            $config->set('HTML.Allowed', 'p,br,strong,em,b,i,u,s,del,h1,h2,h3,ul,ol,li,blockquote,pre,a[href],span[style]');
+            // CHỈ cho phép thuộc tính CSS 'color' (HTMLPurifier tự validate giá trị → an toàn,
+            // không lọt style độc như background:url(javascript:...)).
+            $config->set('CSS.AllowedProperties', ['color']);
             $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true]);
             $config->set('HTML.TargetBlank', true);
             $config->set('Cache.SerializerPath', sys_get_temp_dir());
